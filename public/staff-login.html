@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Staff Login - Peoples Family Restaurant</title>
+  <link rel="icon" type="image/jpeg" href="LOGO NEW.jpg">
+  <script src="js/firebase-config.js?v=58"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="js/auth-guard.js?v=19"></script>
+  <style>
+    [data-station].active { background: #fbbf24; color: #0f172a; border-color: #fbbf24; }
+    #staffPass2.hidden, #setupBox.hidden, #staffSetupBtn.hidden, #staffLoginBtn.hidden, #staffLoginError.hidden { display: none !important; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex items-center justify-center p-4 font-sans">
+  <div class="max-w-sm w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-2xl space-y-4">
+    <div class="text-center space-y-2">
+      <img src="LOGO NEW.jpg" alt="Logo" class="w-16 h-16 rounded-full border-2 border-amber-400 mx-auto object-cover">
+      <h1 class="text-lg font-black">Staff Login</h1>
+      <p id="destHint" class="text-[11px] text-slate-400 font-bold">Station එකක් තෝරලා username + password</p>
+    </div>
+
+    <div id="setupBox" class="hidden space-y-2 bg-amber-950/40 border border-amber-700 rounded-2xl p-3">
+      <p class="text-[11px] text-amber-200 font-bold">Admin account එකක් නැහැ. Username + password දෙපාරක් දාලා Create admin ඔබන්න.</p>
+    </div>
+
+    <div class="space-y-3">
+      <div>
+        <label class="text-[10px] font-black uppercase text-slate-400 block mb-1.5">Station</label>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button type="button" data-station="admin" onclick="pickStation('admin')" class="rounded-2xl border border-slate-700 bg-slate-800 px-2 py-2.5 text-[10px] font-black leading-tight">👑<br>Admin</button>
+          <button type="button" data-station="cashier" onclick="pickStation('cashier')" class="rounded-2xl border border-slate-700 bg-slate-800 px-2 py-2.5 text-[10px] font-black leading-tight">🛍️<br>Cashier</button>
+          <button type="button" data-station="steward" onclick="pickStation('steward')" class="rounded-2xl border border-slate-700 bg-slate-800 px-2 py-2.5 text-[10px] font-black leading-tight">🍽️<br>Steward</button>
+        </div>
+        <input type="hidden" id="staffRole" value="admin">
+      </div>
+      <input id="staffUser" type="text" placeholder="Username" autocomplete="username" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs outline-none" onkeypress="if(event.key==='Enter') document.getElementById('staffPass').focus()">
+      <div class="relative">
+        <input id="staffPass" type="password" placeholder="Password (min 6)" autocomplete="current-password" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 pr-14 text-xs outline-none" onkeypress="if(event.key==='Enter') staffLogin()">
+        <button type="button" onclick="togglePasswordField('staffPass', this)" class="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-amber-300">Show</button>
+      </div>
+      <input id="staffPass2" type="password" placeholder="Confirm password" autocomplete="new-password" class="hidden w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2.5 text-xs outline-none" onkeypress="if(event.key==='Enter') staffFirstSetup()">
+      <p id="staffLoginError" class="hidden text-[11px] text-rose-400 font-bold"></p>
+      <button type="button" onclick="staffLogin()" id="staffLoginBtn" class="w-full bg-amber-400 text-slate-950 font-black py-2.5 rounded-xl text-xs">Login</button>
+      <button type="button" onclick="staffFirstSetup()" id="staffSetupBtn" class="hidden w-full bg-emerald-600 text-white font-black py-2.5 rounded-xl text-xs">Create admin account</button>
+    </div>
+
+    <p id="stationHint" class="text-[10px] text-slate-500 font-bold text-center leading-relaxed">Admin panel එකට යනවා</p>
+    <a href="/" class="block text-center text-[11px] text-amber-300 font-bold">← Customer takeaway</a>
+  </div>
+
+  <script>
+    const firebaseConfig = window.PEOPLES_FIREBASE_CONFIG;
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const params = new URLSearchParams(location.search);
+    const nextPage = (params.get('next') || 'pos.html').replace(/[^a-z0-9.-]/gi, '');
+    const PREF_KEY = 'peoples_staff_login_pref';
+
+    function destLabel(page) {
+      switch (page) {
+        case 'admin.html': return 'Admin panel';
+        case 'cashier.html': return 'Cashier';
+        case 'steward.html': return 'Steward / Waiter';
+        case 'waiter.html': return 'Waiter POS';
+        case 'pos.html': return 'POS Home';
+        default: return page || 'POS';
+      }
+    }
+
+    function stationOpens(role) {
+      switch (role) {
+        case 'admin': return 'Admin panel';
+        case 'cashier': return 'Cashier';
+        case 'steward': return 'Steward / Waiter POS';
+        default: {
+          var _x = role;
+          return _x ? String(_x) : 'POS';
+        }
+      }
+    }
+
+    function setError(msg) {
+      const el = document.getElementById('staffLoginError');
+      if (!msg) {
+        el.classList.add('hidden');
+        el.innerText = '';
+        return;
+      }
+      el.classList.remove('hidden');
+      el.innerText = msg;
+    }
+
+    function pickStation(role) {
+      document.getElementById('staffRole').value = role;
+      document.querySelectorAll('[data-station]').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-station') === role);
+      });
+      document.getElementById('stationHint').innerText = stationOpens(role) + ' එකට යනවා';
+    }
+
+    function rememberPref(role, username) {
+      try {
+        localStorage.setItem(PREF_KEY, JSON.stringify({ role: role, username: username || '' }));
+      } catch (e) {}
+    }
+
+    function loadPref() {
+      try {
+        return JSON.parse(localStorage.getItem(PREF_KEY) || 'null');
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function goNext(role) {
+      const allowed = STAFF_PAGE_ROLES[nextPage];
+      if (!nextPage || (allowed && allowed.indexOf(role) < 0)) {
+        location.replace(staffHomeForRole(role));
+        return;
+      }
+      location.replace(nextPage);
+    }
+
+    function firebasePasswordFrom(plain) {
+      const text = String(plain || '');
+      if (text.length >= 6) return text;
+      return text + '000000'.slice(text.length);
+    }
+
+    function findRoleRecord(users, role, username) {
+      const rec = users && users[role];
+      if (!rec) return null;
+      const storedName = String(rec.username || '').trim();
+      if (storedName && storedName !== username) return null;
+      if (!rec.password) return null;
+      return rec;
+    }
+
+    async function signInEmail(email, password) {
+      if (firebase.auth().currentUser) await firebase.auth().signOut();
+      await firebase.auth().signInWithEmailAndPassword(email, firebasePasswordFrom(password));
+    }
+
+    async function ensureFirebaseStaff(role, password, allowCreate) {
+      const email = staffEmailForRole(role);
+      const pass = firebasePasswordFrom(password);
+      try {
+        if (firebase.auth().currentUser) await firebase.auth().signOut();
+      } catch (e) {}
+
+      async function signIn(p) {
+        await firebase.auth().signInWithEmailAndPassword(email, p);
+      }
+
+      try {
+        await signIn(pass);
+        return 'auth';
+      } catch (err) {
+        const code = (err && err.code) || '';
+        if (code === 'auth/operation-not-allowed') {
+          throw new Error('Email/password login Firebase එකේ enable කරන්න ඕනේ.');
+        }
+        if (code !== 'auth/user-not-found' && code !== 'auth/invalid-email') {
+          throw new Error('Password වැරදියි. Station + username + password ආයෙන් බලන්න.');
+        }
+      }
+
+      if (!allowCreate) {
+        throw new Error('මේ station එකට login එකක් නැහැ. Admin panel එකෙන් password set කරන්න.');
+      }
+      try {
+        await firebase.auth().createUserWithEmailAndPassword(email, pass);
+        return 'auth';
+      } catch (e) {
+        var createCode = (e && e.code) || '';
+        if (createCode === 'auth/email-already-in-use') {
+          throw new Error('Password වැරදියි. Station + username + password ආයෙන් බලන්න.');
+        }
+        throw e;
+      }
+    }
+
+    async function signInMappedLogin(key, password, mapped) {
+      const row = mapped || await lookupStationLogin(key);
+      const loginId = row && row.loginId;
+      if (!loginId) return false;
+      try {
+        await signInEmail(staffEmailForId(loginId), password);
+        return row;
+      } catch (err) {
+        const code = (err && err.code) || '';
+        if (code === 'auth/user-not-found' || code === 'auth/invalid-email' || code === 'auth/invalid-login-credentials' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+          return false;
+        }
+        throw err;
+      }
+    }
+
+    async function staffLogin() {
+      setError('');
+      const role = document.getElementById('staffRole').value;
+      const username = (document.getElementById('staffUser').value || '').trim();
+      const password = (document.getElementById('staffPass').value || '').trim();
+      const btn = document.getElementById('staffLoginBtn');
+      if (!password) return setError('Password දාන්න.');
+      btn.disabled = true;
+      try {
+        const extraId = username ? staffIdFromUsername(role, username) : '';
+        if (extraId) {
+          try {
+            const extraMap = await lookupStationLogin(extraId);
+            const signedExtra = await signInMappedLogin(extraId, password, extraMap);
+            if (!signedExtra) await signInEmail(staffEmailForId(extraId), password);
+            const row = (await db.ref('staff/' + extraId).once('value')).val();
+            if (!row || row.role !== role) {
+              await firebase.auth().signOut();
+              throw new Error('Username/station වැරදියි.');
+            }
+            if (row.status === 'pending') {
+              await firebase.auth().signOut();
+              throw new Error('Admin approve එනකම් ඉන්න.');
+            }
+            if (row.status !== 'approved') {
+              await firebase.auth().signOut();
+              throw new Error('Account disable වෙලා. Admin ට කතා කරන්න.');
+            }
+            rememberPref(role, row.username || username);
+            setStaffSession(role, row.username || username);
+            goNext(role);
+            return;
+          } catch (extraErr) {
+            const code = (extraErr && extraErr.code) || '';
+            if (code !== 'auth/user-not-found' && code !== 'auth/invalid-login-credentials' && code !== 'auth/wrong-password' && code !== 'auth/invalid-email' && code !== 'auth/invalid-credential') {
+              throw extraErr;
+            }
+          }
+        }
+
+        const stationMap = await lookupStationLogin(role);
+        const signedStation = await signInMappedLogin(role, password, stationMap);
+        if (!signedStation) {
+          await ensureFirebaseStaff(role, password, false);
+        }
+        if (username && stationMap && stationMap.username && String(stationMap.username).trim() !== username) {
+          await firebase.auth().signOut();
+          throw new Error('Username/station වැරදියි.');
+        }
+        rememberPref(role, username || (stationMap && stationMap.username) || role);
+        setStaffSession(role, username || (stationMap && stationMap.username) || role);
+        goNext(role);
+      } catch (err) {
+        setError(err.message || 'Login failed.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function staffFirstSetup() {
+      setError('');
+      const username = (document.getElementById('staffUser').value || '').trim();
+      const password = (document.getElementById('staffPass').value || '').trim();
+      const password2 = (document.getElementById('staffPass2').value || '').trim();
+      if (!username || !password) return setError('Admin username සහ password දාන්න.');
+      if (password.length < 6) return setError('Password අකුරු 6ක් වත් ඕනේ.');
+      if (password !== password2) return setError('Password දෙකම එකම වෙන්න ඕනේ.');
+      try {
+        const snap = await db.ref('settings/users').once('value');
+        const users = snap.val() || {};
+        if (users.admin && users.admin.password) return setError('Admin account එකක් තියෙනවා. Login වෙන්න.');
+        const hashed = await hashPassword(password);
+        const loginId = await ensureStaffAuthUser('admin', password);
+        await ensureFirebaseStaff('admin', password, true);
+        await db.ref('settings/users/admin').set({ username: username, password: hashed, loginId: loginId });
+        await saveStationLoginMap('admin', loginId, username);
+        rememberPref('admin', username);
+        setStaffSession('admin', username);
+        location.replace('admin.html');
+      } catch (err) {
+        setError(err.message || 'Setup failed.');
+      }
+    }
+
+    firebase.auth().onAuthStateChanged(function () {});
+
+    document.getElementById('destHint').innerText = destLabel(nextPage) + ' — station තෝරලා username + password';
+
+    const pref = loadPref();
+    if (pref && pref.role) pickStation(pref.role);
+    else pickStation('admin');
+    if (pref && pref.username) document.getElementById('staffUser').value = pref.username;
+
+    db.ref('settings/users').once('value', function (snap) {
+      const users = snap.val() || {};
+      const needsSetup = !(users.admin && users.admin.password);
+      document.getElementById('setupBox').classList.toggle('hidden', !needsSetup);
+      document.getElementById('staffSetupBtn').classList.toggle('hidden', !needsSetup);
+      document.getElementById('staffLoginBtn').classList.toggle('hidden', needsSetup);
+      document.getElementById('staffPass2').classList.toggle('hidden', !needsSetup);
+      if (needsSetup) pickStation('admin');
+    }, function () {
+      document.getElementById('setupBox').classList.add('hidden');
+      document.getElementById('staffSetupBtn').classList.add('hidden');
+      document.getElementById('staffLoginBtn').classList.remove('hidden');
+      document.getElementById('staffPass2').classList.add('hidden');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+{
+  "rules": {
+    "categories": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
+    },
+    "menu_items": {
+      ".read": true,
+      ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
+    },
+    "order_seq": {
+      "$day": {
+        ".read": "auth != null",
+        ".write": "auth != null && newData.isNumber() && newData.val() > 0 && (!data.exists() || newData.val() === data.val() + 1)"
+      }
+    },
+    "orders": {
+      ".read": "auth != null && ((auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))) || root.child('approved_riders').child(auth.uid).val() === true)",
+      ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+      "$id": {
+        ".read": "auth != null && (data.child('customerUid').val() === auth.uid || !data.child('customerUid').exists() || (auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))) || root.child('approved_riders').child(auth.uid).val() === true)",
+        ".write": "auth != null && ((!data.exists() && newData.exists() && newData.child('customerUid').val() === auth.uid && (newData.child('status').val() === 'Received' || newData.child('status').val() === 'PendingPayment') && (!newData.child('payment').child('status').exists() || newData.child('payment').child('status').val() === 'unpaid' || newData.child('payment').child('status').val() === 'pending_verify') && !newData.child('assignedRiderId').exists() && !newData.child('cashCollected').exists()) || (data.exists() && newData.exists() && data.child('customerUid').val() === auth.uid && newData.child('customerUid').val() === data.child('customerUid').val() && newData.child('total').val() === data.child('total').val() && newData.child('type').val() === data.child('type').val() && newData.child('foodTotal').val() === data.child('foodTotal').val() && newData.child('deliveryFee').val() === data.child('deliveryFee').val() && newData.child('assignedRiderId').val() === data.child('assignedRiderId').val() && newData.child('cashCollected').val() === data.child('cashCollected').val() && (newData.child('status').val() === data.child('status').val() || (newData.child('status').val() === 'Cancelled' && (data.child('status').val() === 'PendingPayment' || data.child('status').val() === 'Received' || data.child('status').val() === 'WaiterRequested'))) && (newData.child('payment').child('status').val() === data.child('payment').child('status').val() || (newData.child('payment').child('status').val() === 'pending_verify' && data.child('payment').child('status').val() !== 'paid' && data.child('payment').child('status').val() !== 'collected'))) || (auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))) || (root.child('approved_riders').child(auth.uid).val() === true && root.child('rider_uids').child(auth.uid).isString() && data.exists() && newData.exists() && newData.child('customerUid').val() === data.child('customerUid').val() && newData.child('total').val() === data.child('total').val() && newData.child('type').val() === data.child('type').val() && newData.child('foodTotal').val() === data.child('foodTotal').val() && newData.child('deliveryFee').val() === data.child('deliveryFee').val() && (((data.child('assignedRiderId').val() === root.child('rider_uids').child(auth.uid).val() || data.child('assignedRiderId').val() === auth.uid) && (newData.child('assignedRiderId').val() === root.child('rider_uids').child(auth.uid).val() || newData.child('assignedRiderId').val() === auth.uid || !newData.child('assignedRiderId').exists())) || (!data.child('assignedRiderId').exists() && (newData.child('assignedRiderId').val() === root.child('rider_uids').child(auth.uid).val() || newData.child('assignedRiderId').val() === auth.uid))) && (newData.child('status').val() === data.child('status').val() || ((newData.child('assignedRiderId').val() === root.child('rider_uids').child(auth.uid).val() || newData.child('assignedRiderId').val() === auth.uid) && (newData.child('status').val() === 'Dispatched' || newData.child('status').val() === 'Arrived' || newData.child('status').val() === 'PickedUp'))) && (newData.child('payment').child('status').val() === data.child('payment').child('status').val() || ((newData.child('assignedRiderId').val() === root.child('rider_uids').child(auth.uid).val() || newData.child('assignedRiderId').val() === auth.uid) && newData.child('payment').child('status').val() === 'collected')) && (newData.child('cashCollected').val() === data.child('cashCollected').val() || newData.child('assignedRiderId').val() === root.child('rider_uids').child(auth.uid).val() || newData.child('assignedRiderId').val() === auth.uid)))",
+        "items": {
+          "$i": {
+            "$f": {
+              ".validate": "!data.exists() || !(newData.isString() || newData.isNumber() || newData.isBoolean()) || newData.val() === data.val() || (auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/)))"
+            }
+          }
+        }
+      }
+    },
+    "rider_locations": {
+      "$orderKey": {
+        ".read": "auth != null && (root.child('orders').child($orderKey).child('customerUid').val() === auth.uid || (auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))) || (root.child('approved_riders').child(auth.uid).val() === true && root.child('orders').child($orderKey).child('assignedRiderId').exists() && (root.child('orders').child($orderKey).child('assignedRiderId').val() === root.child('rider_uids').child(auth.uid).val() || root.child('orders').child($orderKey).child('assignedRiderId').val() === auth.uid)))",
+        ".write": "auth != null && ((auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))) || (root.child('approved_riders').child(auth.uid).val() === true && root.child('orders').child($orderKey).child('assignedRiderId').exists() && (root.child('orders').child($orderKey).child('assignedRiderId').val() === root.child('rider_uids').child(auth.uid).val() || root.child('orders').child($orderKey).child('assignedRiderId').val() === auth.uid) && (!newData.exists() || root.child('orders').child($orderKey).child('status').val() === 'Dispatched' || root.child('orders').child($orderKey).child('status').val() === 'Arrived')))",
+        ".validate": "newData.hasChildren(['lat', 'lng', 'at', 'riderId'])",
+        "lat": { ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90" },
+        "lng": { ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180" },
+        "acc": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "hdg": { ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 360" },
+        "spd": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "at": { ".validate": "newData.isNumber() && newData.val() <= now + 60000" },
+        "riderId": { ".validate": "newData.isString() && newData.val() === root.child('orders').child($orderKey).child('assignedRiderId').val()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "email_otps": {
+      ".read": false,
+      ".write": false
+    },
+    "feedback": {
+      ".read": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+      "$id": {
+        ".write": "auth != null && !data.exists() && newData.exists() && newData.child('uid').val() === auth.uid && newData.child('text').isString() && newData.child('text').val().length > 0 && newData.child('text').val().length <= 800 && newData.child('at').isNumber()",
+        ".validate": "newData.hasChildren(['text', 'at', 'uid']) && newData.child('at').isNumber()"
+      }
+    },
+    "customer_orders": {
+      ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))))",
+        ".write": "auth != null && (auth.uid === $uid || (auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))))"
+      }
+    },
+    "waiter_calls": {
+      ".read": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+      ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+      "$callId": {
+        ".write": "auth != null && !data.exists() && newData.exists() && newData.child('status').val() === 'open'"
+      }
+    },
+    "table_carts": {
+      ".read": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+      ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
+    },
+    "settings": {
+      "users": {
+        ".read": "(auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))) || !data.child('admin').child('password').exists()",
+        ".write": "(auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))) || (!data.child('admin').child('password').exists() && newData.child('admin').child('password').exists())"
+      },
+      "payhere_secret": {
+        ".read": false,
+        ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
+      },
+      "shop_hours": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
+      },
+      "delivery_pricing": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
+      },
+      "restaurant_profile": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
+      },
+      "payhere": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
+      },
+      "email_otp": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
+      },
+      "delivery_options": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
+      },
+      "$other": {
+        ".read": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+        ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
+      },
+      "station_logins": {
+        ".read": false,
+        "$key": {
+          ".read": "$key.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?$/)",
+          ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+          ".validate": "$key.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?$/) && newData.hasChildren(['loginId']) && (newData.child('loginId').val() === $key || newData.child('loginId').val().beginsWith($key + '_') || newData.child('loginId').val().beginsWith('station_' + $key + '_'))",
+          "loginId": {
+            ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]+$/)"
+          },
+          "username": {
+            ".validate": "newData.isString() && newData.val().length <= 60"
+          },
+          "$other": {
+            ".validate": false
+          }
+        }
+      }
+    },
+    "customers": {
+      ".read": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))))",
+        ".write": "auth != null && (auth.uid === $uid || (auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))))"
+      }
+    },
+    "customer_ignore": {
+      ".read": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+      ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+      "$phoneKey": {
+        ".read": "$phoneKey.matches(/^[0-9]{9}$/)",
+        ".validate": "newData.isBoolean() || newData.val() === true"
+      }
+    },
+    "rider_logins": {
+      "$id": {
+        ".read": "$id.matches(/^[0-9]{9}$/)",
+        ".write": "(auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))) || (auth != null && auth.token.email != null && !data.exists() && (auth.token.email === 'rider_' + $id + '@peoples-family-restaurant.web.app' || auth.token.email.beginsWith('rider_' + $id + '_')) && auth.token.email === newData.val() + '@peoples-family-restaurant.web.app')",
+        ".validate": "$id.matches(/^[0-9]{9}$/) && newData.isString() && (newData.val() === 'rider_' + $id || newData.val().matches(/^rider_[0-9]{9}_[a-z0-9]+$/) && newData.val().beginsWith('rider_' + $id + '_'))"
+      }
+    },
+    "rider_uids": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))))",
+        ".write": "(auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))) || (auth != null && auth.token.email != null && auth.uid === $uid && (!newData.exists() || (newData.isString() && newData.val().matches(/^[0-9]{9}$/) && (auth.token.email === 'rider_' + newData.val() + '@peoples-family-restaurant.web.app' || auth.token.email.beginsWith('rider_' + newData.val() + '_')))))"
+      }
+    },
+    "riders": {
+      ".read": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+      "$id": {
+        ".read": "(auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))) || (auth != null && auth.token.email != null && ((data.exists() && ((data.child('loginId').exists() && auth.token.email === data.child('loginId').val() + '@peoples-family-restaurant.web.app') || (!data.child('loginId').exists() && auth.token.email === 'rider_' + $id + '@peoples-family-restaurant.web.app'))) || (!data.exists() && (auth.token.email === 'rider_' + $id + '@peoples-family-restaurant.web.app' || auth.token.email.beginsWith('rider_' + $id + '_')))))",
+        ".write": "(auth != null && auth.token.email != null && !data.exists() && (auth.token.email === 'rider_' + $id + '@peoples-family-restaurant.web.app' || auth.token.email.beginsWith('rider_' + $id + '_')) && newData.child('status').val() === 'pending' && newData.child('loginId').isString() && auth.token.email === newData.child('loginId').val() + '@peoples-family-restaurant.web.app') || (auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))) || (auth != null && auth.token.email != null && data.exists() && newData.exists() && ((data.child('loginId').exists() && auth.token.email === data.child('loginId').val() + '@peoples-family-restaurant.web.app') || (!data.child('loginId').exists() && auth.token.email === 'rider_' + $id + '@peoples-family-restaurant.web.app')) && newData.child('status').val() === data.child('status').val() && newData.child('loginId').val() === data.child('loginId').val() && newData.child('role').val() === data.child('role').val())"
+      }
+    },
+    "staff": {
+      ".read": "auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+      "$id": {
+        ".read": "auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/) || (auth.token.email === $id + '@peoples-family-restaurant.web.app' || (auth.token.email.beginsWith($id + '_') && auth.token.email.endsWith('@peoples-family-restaurant.web.app'))))",
+        ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
+      }
+    },
+    "approved_riders": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || (auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))))",
+        ".write": "(auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))) || (auth != null && auth.uid === $uid && newData.val() === true && root.child('rider_uids').child($uid).isString() && root.child('riders').child(root.child('rider_uids').child($uid).val()).child('status').val() === 'approved')",
+        ".validate": "!newData.exists() || newData.val() === true"
+      }
+    }
+  }
+}

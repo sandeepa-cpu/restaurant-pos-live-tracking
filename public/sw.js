@@ -1,0 +1,12 @@
+self.addEventListener('install', function (e) { self.skipWaiting(); });
+self.addEventListener('activate', function (e) { e.waitUntil(self.clients.claim()); });
+self.addEventListener('notificationclick', function (event) {
+  event.notification.close();
+  var url = (event.notification.data && event.notification.data.url) || '/';
+  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (wins) {
+    for (var i = 0; i < wins.length; i++) {
+      if (wins[i].url.indexOf(self.location.origin) === 0 && 'focus' in wins[i]) return wins[i].focus();
+    }
+    if (clients.openWindow) return clients.openWindow(url);
+  }));
+});

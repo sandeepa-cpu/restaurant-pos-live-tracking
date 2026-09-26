@@ -1,0 +1,197 @@
+{
+  "database": {
+    "rules": "database.rules.json"
+  },
+  "auth": {
+    "providers": {
+      "anonymous": true,
+      "emailPassword": true
+    },
+    "authorizedDomains": [
+      "localhost",
+      "peoples-family-restaurant.firebaseapp.com",
+      "peoples-family-restaurant.web.app",
+      "peoplesfamilyrestaurant.lk",
+      "www.peoplesfamilyrestaurant.lk"
+    ]
+  },
+  "hosting": {
+    "public": "public",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/",
+        "destination": "/takeaway.html"
+      },
+      {
+        "source": "/index.html",
+        "destination": "/table.html"
+      },
+      {
+        "source": "/pos",
+        "destination": "/pos.html"
+      },
+      {
+        "source": "/order",
+        "destination": "/order.html"
+      },
+      {
+        "source": "/rider",
+        "destination": "/rider.html"
+      },
+      {
+        "source": "/admin",
+        "destination": "/admin.html"
+      },
+      {
+        "source": "/cashier",
+        "destination": "/cashier.html"
+      },
+      {
+        "source": "/staff-login",
+        "destination": "/staff-login.html"
+      },
+      {
+        "source": "/payhere/start",
+        "function": {
+          "functionId": "payhereStart",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/payhere/notify",
+        "function": {
+          "functionId": "payhereNotify",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/otp/send",
+        "function": {
+          "functionId": "sendEmailOtp",
+          "region": "us-central1"
+        }
+      },
+      {
+        "source": "/otp/verify",
+        "function": {
+          "functionId": "verifyEmailOtp",
+          "region": "us-central1"
+        }
+      }
+    ],
+    "redirects": [
+      {
+        "source": "/takeaway.html",
+        "destination": "/",
+        "type": 301
+      },
+      {
+        "source": "/takeaway",
+        "destination": "/",
+        "type": 301
+      }
+    ],
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" }
+        ]
+      },
+      {
+        "source": "/sitemap.xml",
+        "headers": [
+          { "key": "Content-Type", "value": "application/xml; charset=utf-8" },
+          { "key": "Cache-Control", "value": "public, max-age=300" }
+        ]
+      },
+      {
+        "source": "**/*.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/takeaway",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/order",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/rider",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/admin",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/cashier",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/pos",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/staff-login",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      },
+      {
+        "source": "/sw.js",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      }
+    ]
+  },
+  "emulators": {
+    "hosting": {
+      "port": 5055,
+      "host": "0.0.0.0"
+    },
+    "ui": {
+      "enabled": false
+    }
+  },
+  "functions": [
+    {
+      "source": "functions",
+      "codebase": "default",
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ]
+}

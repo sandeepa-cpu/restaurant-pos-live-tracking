@@ -1,0 +1,2873 @@
+<!DOCTYPE html>
+<html lang="en-LK">
+<head>
+  <meta charset="UTF-8">
+  <script>
+    if (location.protocol === 'http:' && /peoplesfamilyrestaurant\.lk$/i.test(location.hostname)) {
+      location.replace('https://' + location.host + location.pathname + location.search + location.hash);
+    }
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
+  <title>Peoples Bakers | Peoples Family Restaurant Horana Takeaway</title>
+  <meta name="description" content="Peoples Bakers — Peoples Family Restaurant, Horana. Order takeaway and delivery online. Pickup, PickMe or doorstep. හොරණ Peoples Bakers / Family Restaurant එකෙන් order දාන්න.">
+  <meta name="robots" content="index, follow">
+  <meta name="keywords" content="Peoples Bakers, Peoples Baker, People's Bakers, Peoples Family Restaurant, Horana takeaway, Horana delivery">
+  <link rel="canonical" href="https://peoplesfamilyrestaurant.lk/">
+  <link rel="icon" href="https://peoplesfamilyrestaurant.lk/favicon.png" type="image/png" sizes="192x192">
+  <link rel="shortcut icon" href="https://peoplesfamilyrestaurant.lk/favicon.png">
+  <link rel="apple-touch-icon" href="https://peoplesfamilyrestaurant.lk/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_LK">
+  <meta property="og:site_name" content="Peoples Bakers">
+  <meta property="og:title" content="Peoples Bakers | Peoples Family Restaurant Horana">
+  <meta property="og:description" content="Peoples Bakers, Horana — takeaway සහ delivery online order දාන්න.">
+  <meta property="og:url" content="https://peoplesfamilyrestaurant.lk/">
+  <meta property="og:image" content="https://peoplesfamilyrestaurant.lk/LOGO%20NEW.jpg">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Peoples Bakers | Peoples Family Restaurant Horana">
+  <meta name="twitter:description" content="Order takeaway and delivery from Peoples Bakers, Horana.">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#3b0764">
+  <script id="seoJsonLd" type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Restaurant",
+    "name": "Peoples Family Restaurant",
+    "alternateName": ["Peoples Bakers", "People's Bakers", "Peoples Baker", "Peoples Family Restaurant Horana"],
+    "alternateName": ["Peoples Bakers", "People's Bakers", "Peoples Baker", "Peoples Family Restaurant Horana"],
+    "url": "https://peoplesfamilyrestaurant.lk/",
+    "logo": "https://peoplesfamilyrestaurant.lk/favicon.png",
+    "image": [
+      "https://peoplesfamilyrestaurant.lk/favicon.png",
+      "https://peoplesfamilyrestaurant.lk/LOGO%20NEW.jpg"
+    ],
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Horana",
+      "addressRegion": "Kalutara",
+      "addressCountry": "LK"
+    },
+    "servesCuisine": ["Sri Lankan"],
+    "priceRange": "$$"
+  }
+  </script>
+  <script src="js/firebase-config.js?v=58"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    body { background: #0f172a; }
+    .shop-shell { max-width: 28rem; margin: 0 auto; min-height: 100vh; background: #f1f5f9; }
+    .hdr-btn { flex-shrink: 0; white-space: nowrap; font-weight: 800; font-size: 10px; line-height: 1; padding: 6px 8px; border-radius: 10px; }
+    .welcome-splash { position: fixed; inset: 0; z-index: 80; max-width: 28rem; margin: 0 auto; background: #3b0764; display: flex; flex-direction: column; }
+    .welcome-splash.is-off { display: none; }
+    .welcome-photos { flex: 1; position: relative; overflow: hidden; min-height: 0; }
+    .welcome-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .welcome-overlay { position: absolute; left: 0; right: 0; bottom: 0; padding: 96px 18px 28px; background: linear-gradient(180deg, rgba(15,23,42,0) 0%, rgba(15,23,42,.22) 28%, rgba(59,7,100,.78) 68%, rgba(46,16,101,.95) 100%); display: flex; justify-content: center; pointer-events: none; }
+    .welcome-card { pointer-events: auto; width: 100%; text-align: center; color: #fff; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.28); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 22px; padding: 16px 16px 14px; box-shadow: 0 18px 40px -16px rgba(0,0,0,.55); }
+    .welcome-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin: 10px 0 12px; }
+    .welcome-badge { font-size: 10px; font-weight: 800; background: rgba(255,255,255,.16); border: 1px solid rgba(253,230,138,.5); color: #fef3c7; border-radius: 999px; padding: 4px 10px; }
+    .welcome-order-btn { width: 100%; background: #fbbf24; color: #3b0764; font-weight: 900; padding: 14px 18px; border-radius: 999px; font-size: 15px; box-shadow: 0 10px 22px -8px rgba(251,191,36,.85); animation: pfrOrderPulse 1.9s ease-in-out infinite; }
+    @keyframes pfrOrderPulse { 0%,100% { transform: scale(1); box-shadow: 0 10px 22px -8px rgba(251,191,36,.85), 0 0 0 0 rgba(251,191,36,.45); } 50% { transform: scale(1.035); box-shadow: 0 12px 26px -6px rgba(251,191,36,.95), 0 0 0 10px rgba(251,191,36,0); } }
+    @media (prefers-reduced-motion: reduce) { .welcome-order-btn { animation: none; } }
+    #arrivedAlertBox.hidden,
+    #authModal.hidden,
+    #takeawayModal.hidden,
+    #checkoutOptionsModal.hidden,
+    #historyModal.hidden,
+    #chatDrawer.hidden,
+    #custOtpBox.hidden,
+    #returningCustomerHint.hidden,
+    #doorstepSubOptions.hidden,
+    #checkoutPayOptions.hidden,
+    #cartItems.hidden {
+      display: none !important;
+    }
+    .pfr-checkout-bar {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      max-width: 28rem;
+      margin: 0 auto;
+      z-index: 70;
+      padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(180deg, #5b21b6 0%, #3b0764 100%);
+      border-radius: 22px 22px 0 0;
+      box-shadow: 0 -14px 36px -12px rgba(59, 7, 100, .65);
+      transform: translate3d(0, 110%, 0);
+      transition: transform .28s ease;
+      pointer-events: none;
+      visibility: hidden;
+    }
+    .pfr-checkout-bar.is-on,
+    #cartBottomBar.is-on,
+    #cartBottomBar.hidden.is-on {
+      display: block !important;
+      transform: translate3d(0, 0, 0);
+      visibility: visible;
+      pointer-events: auto;
+    }
+    #checkoutOptionsModal { z-index: 90; }
+    #takeawayModal { z-index: 90; }
+    body.pfr-checkout-modal-open .pfr-checkout-bar.is-on,
+    body.pfr-checkout-modal-open #cartBottomBar.is-on,
+    body.pfr-portion-modal-open .pfr-checkout-bar.is-on,
+    body.pfr-portion-modal-open #cartBottomBar.is-on {
+      visibility: hidden;
+      pointer-events: none;
+      transform: translate3d(0, 110%, 0);
+    }
+    .pfr-checkout-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: nowrap;
+    }
+    .pfr-checkout-summary {
+      min-width: 0;
+      flex: 1 1 auto;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      text-align: left;
+    }
+    .pfr-checkout-item {
+      min-width: 0;
+      flex: 1 1 auto;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: -0.01em;
+      color: #fde68a;
+    }
+    .pfr-checkout-price {
+      flex: 0 0 auto;
+      white-space: nowrap;
+      font-size: 16px;
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.1;
+    }
+    @keyframes pfrBarPop { 0% { transform: translateY(0) scale(1); } 40% { transform: translateY(-6px) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
+    .pfr-checkout-bar.is-on.is-pop { animation: pfrBarPop .42s ease; }
+    .pfr-checkout-bar.is-expanded #cartItems { margin-bottom: 8px; }
+    @media (prefers-reduced-motion: reduce) {
+      .pfr-checkout-bar { transition: none; }
+      .pfr-checkout-bar.is-on.is-pop { animation: none; }
+    }
+    .pfr-checkout-cta {
+      flex: 0 0 auto;
+      flex-shrink: 0;
+      white-space: nowrap;
+      min-width: 6.75rem;
+      background: #fbbf24;
+      color: #3b0764;
+      font-weight: 900;
+      font-size: 13px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      box-shadow: 0 8px 18px -8px rgba(251, 191, 36, .85);
+    }
+    .pfr-checkout-cta.is-closed {
+      background: #94a3b8;
+      color: #f8fafc;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+    @media (max-width: 360px) {
+      .pfr-checkout-cta { min-width: 5.6rem; padding: 11px 10px; font-size: 12px; }
+      .pfr-checkout-price { font-size: 14px; }
+    }
+    body.has-cart-bar { padding-bottom: 8rem; }
+    body.has-cart-expanded { padding-bottom: 14rem; }
+    .mode-choice {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 16px;
+      border: 1.5px solid #e2e8f0;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color .15s ease, background .15s ease, box-shadow .15s ease;
+    }
+    .mode-choice.is-on {
+      border-color: #7c3aed;
+      background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 70%, #fff 100%);
+      box-shadow: 0 8px 18px -12px rgba(91, 33, 182, .5);
+    }
+    .mode-choice-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background: #fff;
+      color: #6d28d9;
+      border: 1px solid #ede9fe;
+      font-size: 15px;
+    }
+    .mode-choice.is-on .mode-choice-icon {
+      background: linear-gradient(180deg, #8b5cf6, #5b21b6);
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 6px 12px -6px rgba(91, 33, 182, .7);
+    }
+    .pay-choice {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1.5px solid #c4b5fd;
+      background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 55%, #fff 100%);
+      box-shadow: 0 10px 22px -14px rgba(91, 33, 182, .55);
+    }
+    .pay-choice.is-cash {
+      border-color: #6ee7b7;
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 55%, #fff 100%);
+      box-shadow: 0 10px 22px -14px rgba(4, 120, 87, .45);
+    }
+    .pay-choice-icon {
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, #8b5cf6, #5b21b6);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+      box-shadow: 0 6px 12px -6px rgba(91, 33, 182, .7);
+    }
+    .pay-choice.is-cash .pay-choice-icon {
+      background: linear-gradient(180deg, #34d399, #047857);
+      box-shadow: 0 6px 12px -6px rgba(4, 120, 87, .7);
+    }
+    .pay-choice-tag {
+      font-size: 9px;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #5b21b6;
+      background: rgba(255,255,255,.85);
+      border: 1px solid #ddd6fe;
+      border-radius: 999px;
+      padding: 3px 8px;
+      white-space: nowrap;
+    }
+    .pay-choice.is-cash .pay-choice-tag {
+      color: #047857;
+      border-color: #a7f3d0;
+    }
+    @media (max-width: 380px) {
+      #headerCallBtn { display: none !important; }
+      .hdr-btn { padding: 5px 7px; font-size: 9px; }
+    }
+  </style>
+</head>
+<body class="font-sans pb-40 text-slate-800 antialiased selection:bg-purple-200" onclick="initAudioContext()">
+<div class="shop-shell">
+
+  <div id="welcomeSplash" class="welcome-splash">
+    <div class="welcome-photos">
+      <img src="shop-front-v24.jpg" alt="Peoples Family Restaurant" class="welcome-photo">
+    </div>
+    <div class="welcome-overlay">
+      <div class="welcome-card">
+        <p class="text-[10px] font-black uppercase tracking-wider text-amber-300">Peoples Family Restaurant</p>
+        <h2 class="text-lg font-black leading-tight mt-1" data-i18n="welcomeTitle">Welcome</h2>
+        <div class="welcome-badges">
+          <span class="welcome-badge">🚀 Fast Takeaway &amp; Delivery</span>
+          <span class="welcome-badge">📍 Horana</span>
+        </div>
+        <button type="button" onclick="dismissWelcomeSplash()" class="welcome-order-btn" data-i18n="orderNow">Order now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delivery Rider Arrived Alert -->
+  <div id="arrivedAlertBox" class="fixed top-4 left-4 right-4 bg-emerald-600 text-white p-4 rounded-2xl shadow-2xl z-50 hidden animate-bounce flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="text-3xl">🛵</span>
+      <div>
+        <h3 class="font-black text-sm" data-i18n="arrivedTitle">Delivery Rider Arrived!</h3>
+        <p class="text-[11px] font-bold" data-i18n="arrivedBody">Please collect your order at the doorstep.</p>
+      </div>
+    </div>
+    <button onclick="document.getElementById('arrivedAlertBox').classList.add('hidden')" class="bg-emerald-900 px-3 py-1 rounded-lg text-xs font-black">OK</button>
+  </div>
+
+  <div id="authModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+      <div class="text-center space-y-1">
+        <img src="LOGO NEW.jpg" alt="Peoples Family Restaurant" class="w-16 h-16 rounded-full border-2 border-amber-400 mx-auto object-cover shadow">
+        <h2 class="text-base font-black text-slate-900 mt-2" data-i18n="authTitle">Your Details</h2>
+        <p class="text-[11px] text-slate-500" data-i18n="authHint">Name, mobile and address. Same phone keeps you signed in until you use another device.</p>
+      </div>
+      <div class="space-y-3">
+        <input id="custPhone" type="tel" placeholder="Mobile (e.g. 0712345678)" class="w-full border rounded-2xl p-2.5 text-xs font-semibold outline-none bg-slate-50" onblur="lookupCustomerFromAuthPhone()">
+        <input id="custName" type="text" placeholder="Your Name" class="w-full border rounded-2xl p-2.5 text-xs font-semibold outline-none bg-slate-50">
+        <input id="custAddress" type="text" placeholder="Address / house details" class="w-full border rounded-2xl p-2.5 text-xs font-semibold outline-none bg-slate-50">
+        <input id="custEmail" type="email" placeholder="Email (optional)" class="w-full border rounded-2xl p-2.5 text-xs font-semibold outline-none bg-slate-50">
+        <p class="text-[10px] text-slate-500 font-bold" data-i18n="otpHint">SMS code එක PB HORANA එකෙන් යනවා. එක device එකකින් එක පාරක් ඇති.</p>
+        <div id="custOtpBox" class="hidden space-y-2">
+          <input id="custOtp" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit OTP" class="w-full border rounded-2xl p-2.5 text-xs font-semibold outline-none bg-amber-50 tracking-[0.4em] text-center" onkeypress="if(event.key==='Enter') verifyCustomerSmsOtp()">
+          <p id="custOtpStatus" class="text-[11px] text-emerald-700 font-bold text-center"></p>
+          <button type="button" id="custOtpVerifyBtn" onclick="verifyCustomerSmsOtp()" class="w-full bg-amber-400 text-purple-950 font-black py-2.5 rounded-2xl text-xs" data-i18n="verifyOtp">Verify OTP</button>
+          <button type="button" id="custOtpResendBtn" onclick="resendCustomerSmsOtp()" class="w-full text-[11px] text-purple-800 font-black">Resend code</button>
+        </div>
+        <p id="returningCustomerHint" class="hidden text-[11px] text-emerald-700 font-bold text-center">Welcome back — your details were filled.</p>
+        <button type="button" onclick="continueWithPhoneOnly()" class="w-full bg-purple-900 text-white font-black py-2.5 rounded-2xl text-xs" data-i18n="continueBtn">Continue</button>
+        <button onclick="closeAuthModal()" class="w-full text-[11px] text-slate-500 font-bold" data-i18n="browseMenu">Browse menu instead</button>
+      </div>
+    </div>
+  </div>
+
+  <header class="bg-purple-950 text-white sticky top-0 z-30 shadow-lg">
+    <div class="px-3 py-2 space-y-1.5">
+      <div class="flex items-center gap-2 min-w-0">
+        <img src="LOGO NEW.jpg" alt="Peoples Family Restaurant" class="w-11 h-11 rounded-full border-2 border-amber-400 object-cover shrink-0">
+        <div class="min-w-0 flex-1">
+          <h1 class="text-[12px] font-black leading-tight">Peoples Family Restaurant</h1>
+          <span id="displayCustName" class="block text-[10px] font-bold text-amber-300 truncate leading-tight mt-0.5">Guest</span>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-1">
+        <select id="langSelect" onchange="changeLanguage(this.value)" class="hdr-btn bg-purple-900 text-white border border-purple-700 outline-none" aria-label="Language">
+          <option value="en">EN</option>
+          <option value="si">සිං</option>
+        </select>
+        <a id="headerCallBtn" href="tel:" class="hdr-btn hidden bg-emerald-500 text-white">Call</a>
+        <button type="button" onclick="openHistoryModal()" class="hdr-btn bg-purple-900 border border-purple-700 text-amber-300" data-i18n="myOrders">My Orders</button>
+        <button type="button" id="signInHeaderBtn" onclick="openAuthModal()" class="hdr-btn bg-amber-400 text-purple-950" data-i18n="signIn">Sign in</button>
+        <button type="button" id="logoutHeaderBtn" onclick="logoutTakeawayUser()" class="hdr-btn hidden bg-purple-900 border border-purple-700 text-white" data-i18n="logout">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="px-3.5 pt-3">
+    <div class="bg-purple-950 text-white rounded-3xl p-3.5 shadow-lg space-y-1.5">
+      <p class="text-[10px] font-black uppercase tracking-wider text-amber-300" data-i18n="heroKicker">Peoples Family Restaurant</p>
+      <h2 class="text-[15px] font-black leading-tight" data-i18n="heroTitle">Horana shop එකෙන් order දාන්න</h2>
+      <p class="text-[11px] text-purple-100 font-bold leading-snug" data-i18n="heroBody">Menu එක බලලා cart එකට දාන්න. Delivery නම් ගෙදර pin කරන්න. Pickup නම් shop එකට එන්න.</p>
+      <p id="shopAddressLine" class="text-[11px] text-amber-200 font-bold leading-snug">Horana, Kalutara, Sri Lanka</p>
+      <p id="shopHoursLine" class="text-[11px] font-black text-emerald-300"></p>
+      <div class="flex gap-2 pt-1">
+        <a id="heroCallBtn" href="tel:" class="hidden flex-1 bg-emerald-500 text-center text-white font-black py-2 rounded-xl text-[11px]" data-i18n="callShop">📞 Call shop</a>
+        <a id="heroWhatsAppBtn" href="#" target="_blank" rel="noopener" class="hidden flex-1 bg-white text-center text-purple-950 font-black py-2 rounded-xl text-[11px]">WhatsApp</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search & Category Header Section -->
+  <div class="bg-white/95 backdrop-blur-md border-b sticky top-[88px] z-20 shadow-sm">
+    <div class="px-3.5 py-2 space-y-2">
+      <div id="shopClosedBanner" class="hidden bg-rose-600 text-white rounded-2xl p-3 shadow space-y-0.5" aria-live="polite">
+        <p class="text-[11px] font-black uppercase tracking-wider" data-i18n="closedTitle"></p>
+        <p id="shopClosedBody" class="text-[11px] font-bold text-rose-50"></p>
+      </div>
+      <input id="searchInput" oninput="renderTakeawayMenu()" type="text" placeholder="Search takeaway dishes..." data-i18n-placeholder="searchPh" class="w-full px-3 py-1.5 bg-slate-100 rounded-2xl text-xs outline-none focus:ring-2 focus:ring-purple-700 font-medium">
+      <div class="relative">
+        <div id="categorySlider" onscroll="updateCategoryArrows()" class="relative flex gap-2 overflow-x-auto whitespace-nowrap pb-1"></div>
+        <div id="catFadeLeft" class="pfr-cat-fade is-left"></div>
+        <div id="catFadeRight" class="pfr-cat-fade is-right"></div>
+        <button id="catPrevBtn" type="button" onclick="scrollCategories(-1)" aria-label="Previous categories" class="pfr-cat-arrow is-left">&#8249;</button>
+        <button id="catNextBtn" type="button" onclick="scrollCategories(1)" aria-label="More categories" class="pfr-cat-arrow is-right">&#8250;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scrollable Menu Container -->
+  <main class="p-3.5">
+    <div id="menuList" class="space-y-2.5 pr-1 custom-scrollbar">
+      <p class="text-center text-slate-400 py-12 text-xs">Menu</p>
+    </div>
+  </main>
+  <footer class="px-3.5 pb-6 text-center">
+    <p class="text-[11px] font-bold text-slate-600">Peoples Family Restaurant</p>
+    <p class="text-[11px] text-slate-500">Horana, Kalutara, Sri Lanka. Pickup, PickMe and doorstep delivery.</p>
+    <p class="text-[11px] text-slate-500">හොරණ takeaway සහ delivery — online order දාන්න.</p>
+  </footer>
+  </div>
+  <noscript>
+    <p>Peoples Family Restaurant, Horana. Enable JavaScript to order takeaway online.</p>
+  </noscript>
+
+  <div id="takeawayModal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl p-5 pb-28 sm:pb-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-start border-b pb-2.5">
+        <h3 id="tkModalTitle" class="font-black text-slate-900 text-sm">Dish Name</h3>
+        <button onclick="setPortionModalOpen(false)" class="font-bold text-base">✕</button>
+      </div>
+      <div id="tkModalContains"></div>
+      <div id="tkModalVariationsList" class="space-y-2"></div>
+      <textarea id="tkModalNote" placeholder="Note" class="w-full border rounded-xl p-2 text-[11px] outline-none bg-amber-50 h-14 resize-none font-medium"></textarea>
+      <div class="pt-3 border-t flex justify-between items-center">
+        <span id="tkModalPrice" class="text-base font-black text-purple-950">Rs. 0</span>
+        <button onclick="commitTakeawayModalAddToCart()" class="bg-purple-900 text-white font-black px-6 py-2.5 rounded-2xl text-xs">Add to Cart</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="checkoutOptionsModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <h3 class="font-black text-slate-900 text-sm text-center border-b pb-3" data-i18n="checkoutTitle">Checkout</h3>
+      <p class="text-[10px] text-center text-purple-800 font-bold -mt-2">Delivery නම් <b>Deliver to doorstep</b> තෝරලා location pin කරන්න.</p>
+
+      <div class="space-y-2 bg-slate-50 p-3 rounded-2xl border">
+        <span class="text-[10px] font-black text-purple-950 uppercase block">Your details</span>
+        <input id="checkoutPhone" type="tel" placeholder="Mobile (e.g. 0712345678)" class="w-full border rounded-xl p-2 text-xs font-semibold outline-none bg-white" onblur="lookupCustomerFromCheckoutPhone()">
+        <input id="checkoutName" type="text" placeholder="Your Name" class="w-full border rounded-xl p-2 text-xs font-semibold outline-none bg-white">
+        <input id="checkoutEmail" type="email" placeholder="Email (optional)" class="w-full border rounded-xl p-2 text-xs font-semibold outline-none bg-white">
+        <p id="checkoutReturningHint" class="hidden text-[10px] text-emerald-700 font-bold" data-i18n="returningHint">Welcome back. Last delivery pin will load for doorstep.</p>
+      </div>
+      
+      <div class="space-y-3" id="deliveryModesContainer"></div>
+
+      <div id="checkoutPayOptions" class="hidden space-y-2">
+        <span class="text-[10px] font-black text-purple-950 uppercase tracking-wider">Payment</span>
+        <div class="pay-choice">
+          <span class="pay-choice-icon"><i class="fa-solid fa-store"></i></span>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-[13px] font-black text-slate-900">Pay at the shop</p>
+              <span class="pay-choice-tag">No pay now</span>
+            </div>
+            <p class="text-[11px] text-slate-600 font-semibold leading-snug mt-1">Pay at the counter when you collect your order.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Doorstep Options with Address Only & Automatic Distance Calculation -->
+      <div id="doorstepSubOptions" class="hidden space-y-3 bg-purple-50/60 p-3.5 rounded-2xl border border-purple-200">
+        <span class="text-[11px] font-black text-purple-950 block">Doorstep Delivery Address:</span>
+        
+        <div class="space-y-2.5">
+          <button type="button" id="useLocationBtn" onclick="useCurrentLocation()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl text-sm shadow-md">
+            📍 Use my current location
+          </button>
+          <div id="deliveryMap" class="w-full rounded-xl overflow-hidden border-2 border-emerald-500 bg-slate-100" style="height: 220px; min-height: 220px;"></div>
+          <p id="locationStatus" class="text-[10px] text-purple-800 font-semibold">Pin එක ඔබගේ ගෙදරට අදින්න. හෝ උඩ button එකෙන් දැන් ඉන්න තැන select කරන්න.</p>
+          <a id="googleMapsPreviewLink" href="#" target="_blank" rel="noopener" class="hidden text-[10px] text-purple-900 font-black underline">Open this pin in Google Maps ↗</a>
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-600 block">🏠 Address / House details</label>
+            <textarea id="doorstepAddressInput" placeholder="House No, Street, nearby place..." class="w-full border rounded-xl p-2 text-xs bg-white outline-none h-16 resize-none font-medium" onblur="calculateFeeFromAddress()"></textarea>
+          </div>
+
+          <!-- Delivery Fee Breakdown -->
+          <div id="deliveryFeeBox" class="bg-white border p-2.5 rounded-xl space-y-1 text-xs">
+            <div class="flex justify-between font-bold text-slate-600">
+              <span>Estimated Distance:</span>
+              <span id="calcDistanceText">0 km</span>
+            </div>
+            <div class="flex justify-between font-black text-purple-950">
+              <span>Delivery Fee:</span>
+              <span id="calcDeliveryFeeText">Rs. 300</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <span class="text-[10px] font-black text-purple-950 uppercase tracking-wider">Payment</span>
+            <div class="pay-choice is-cash">
+              <span class="pay-choice-icon"><i class="fa-solid fa-money-bill-wave"></i></span>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-[13px] font-black text-slate-900">Cash on delivery</p>
+                  <span class="pay-choice-tag">On arrival</span>
+                </div>
+                <p class="text-[11px] text-slate-600 font-semibold leading-snug mt-1">Pay the rider in cash when your order arrives.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-[10px] font-black text-purple-950 uppercase block">Note</label>
+        <textarea id="kitchenNoteInput" placeholder="Note" class="w-full border rounded-xl p-2 text-xs bg-slate-50 outline-none h-14 resize-none font-medium"></textarea>
+      </div>
+
+      <div class="pt-2 flex gap-2">
+        <button type="button" onclick="setCheckoutModalOpen(false)" class="w-1/2 bg-slate-200 py-2.5 rounded-xl text-xs font-bold" data-i18n="cancel">Cancel</button>
+        <button id="proceedOrderBtn" onclick="finalizeAndSubmitOrder()" class="w-1/2 bg-purple-900 text-white font-black py-2.5 rounded-2xl text-xs" data-i18n="proceed">Proceed</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="historyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="font-black text-slate-900 text-sm" data-i18n="historyTitle">📜 My Past Orders History</h3>
+        <button onclick="document.getElementById('historyModal').classList.add('hidden')" class="font-bold">✕</button>
+      </div>
+      <div id="historyOrdersList" class="space-y-3 custom-scrollbar">
+        <p class="text-center text-slate-400 text-xs py-6">Loading past orders...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="waitingConfirmationCard" class="hidden max-w-md mx-auto m-3.5 p-6 bg-white rounded-3xl border border-amber-300 shadow-xl text-center space-y-3">
+    <div id="waitingIcon" class="w-12 h-12 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center text-xl mx-auto font-bold animate-pulse">⏳</div>
+    <h3 id="waitingTitle" class="font-black text-slate-900 text-sm" data-i18n="waitingTitle">Wait Until Payment Confirm</h3>
+    <p id="waitingDesc" class="text-xs text-slate-600 leading-relaxed" data-i18n="waitingDesc">ඔබගේ ගෙවීම සහ ඇණවුම පරීක්ෂා කරමින් පවතී...</p>
+    <button id="waitingCancelBtn" type="button" onclick="customerCancelOrder()" class="hidden w-full bg-white border border-rose-300 text-rose-700 font-black py-2 rounded-xl text-xs" data-i18n="cancelOrder">✕ Cancel this order</button>
+    <button id="cancelRejectedBtn" class="hidden w-full bg-rose-600 text-white font-black py-2 rounded-xl text-xs" onclick="dismissRejectedOrder()">OK / Try Again</button>
+  </div>
+
+  <div id="activeOrdersWrap" class="hidden max-w-md mx-auto m-3.5 space-y-3"></div>
+
+  <div id="postDeliveryCard" class="hidden max-w-md mx-auto m-3.5 p-4 bg-white rounded-3xl border border-emerald-200 shadow-md space-y-3">
+    <h3 class="font-black text-slate-900 text-sm">Order delivered</h3>
+    <p id="postPayHint" class="text-[11px] font-bold text-slate-700"></p>
+    <div id="postSlipBox" class="hidden space-y-2 bg-amber-50 border border-amber-200 p-3 rounded-2xl">
+      <div id="postBankInfo" class="text-[10px] font-bold text-amber-900"></div>
+      <input id="postSlipInput" type="file" accept="image/*" class="block w-full text-[11px]">
+      <button type="button" onclick="uploadAfterDeliverySlip()" class="w-full bg-purple-900 text-white font-black py-2 rounded-xl text-[11px]">Upload slip for cashier</button>
+      </div>
+    <div id="feedbackBox" class="space-y-2 pt-1 border-t">
+      <p class="text-[11px] font-black text-purple-950">How was Peoples Family Restaurant?</p>
+      <div class="flex gap-1" id="starRow">
+        <button type="button" onclick="setFeedbackStars(1)" class="fb-star text-xl">☆</button>
+        <button type="button" onclick="setFeedbackStars(2)" class="fb-star text-xl">☆</button>
+        <button type="button" onclick="setFeedbackStars(3)" class="fb-star text-xl">☆</button>
+        <button type="button" onclick="setFeedbackStars(4)" class="fb-star text-xl">☆</button>
+        <button type="button" onclick="setFeedbackStars(5)" class="fb-star text-xl">☆</button>
+    </div>
+      <textarea id="feedbackComment" maxlength="200" placeholder="Comment (optional)" class="w-full border rounded-xl p-2 text-[11px] h-14 resize-none bg-slate-50"></textarea>
+      <div class="flex gap-2">
+        <button type="button" onclick="skipFeedback()" class="w-1/2 bg-slate-200 font-bold py-2 rounded-xl text-[11px]">Skip</button>
+        <button type="button" onclick="submitFeedback()" class="w-1/2 bg-emerald-600 text-white font-black py-2 rounded-xl text-[11px]">Send feedback</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="chatDrawer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col h-[80vh] sm:h-[550px]">
+      <div class="p-4 bg-purple-950 text-white flex justify-between items-center rounded-t-3xl">
+        <div>
+          <h3 id="chatTitle" class="font-black text-xs">💬 Order chat · Cashier & Rider</h3>
+          <span class="text-[9px] text-amber-200 block">Customer, cashier සහ rider එකම chat එකේ</span>
+        </div>
+        <button onclick="toggleChatDrawer()" class="text-white font-bold text-base px-2">✕</button>
+      </div>
+      <div id="chatMessagesContainer" class="flex-grow p-4 overflow-y-auto space-y-3 bg-slate-50 text-xs custom-scrollbar"></div>
+      <div class="p-3 bg-white border-t space-y-2">
+        <div id="audioRecordStatus" class="hidden text-[10px] text-rose-600 font-bold text-center animate-pulse">🔴 Recording Voice Note...</div>
+        <div class="flex gap-2 items-center">
+          <button id="recordAudioBtn" onclick="toggleAudioRecord()" class="bg-rose-100 text-rose-700 w-10 h-10 rounded-xl flex items-center justify-center text-sm flex-shrink-0">🎙️</button>
+          <input id="chatInputMessage" type="text" placeholder="Type to cashier & rider..." class="flex-grow border rounded-xl px-3 py-2 text-xs outline-none bg-slate-50" onkeypress="if(event.key === 'Enter') sendChatMessage()">
+          <button onclick="sendChatMessage()" class="bg-purple-900 text-white px-4 py-2 rounded-xl text-xs font-black flex-shrink-0">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="cartBottomBar" class="pfr-checkout-bar" aria-hidden="true">
+    <div id="cartItems" class="hidden text-xs text-white/90 max-h-52 overflow-y-auto space-y-2 divide-y divide-white/10 pr-1 custom-scrollbar mb-2"></div>
+    <div class="pfr-checkout-row">
+      <div class="pfr-checkout-summary">
+        <span id="cartCountLabel" class="pfr-checkout-item">0 items</span>
+        <span id="cartTotal" class="pfr-checkout-price">Rs. 0</span>
+      </div>
+      <button type="button" id="checkoutBarBtn" onclick="openCheckoutModal(event)" class="pfr-checkout-cta" data-i18n="checkoutBtn">Checkout ❯</button>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = window.PEOPLES_FIREBASE_CONFIG;
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    if (window.ensureCustomerAuth) window.ensureCustomerAuth();
+    try { if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js'); } catch (e) {}
+    const db = firebase.database();
+    try { if (window.emailjs) emailjs.init('AS5tkcxwyX3RIRKvJ'); } catch (e) {}
+
+    let verifiedUser = null;
+    try {
+      verifiedUser = JSON.parse(localStorage.getItem('peoples_takeaway_user') || 'null');
+    } catch (e) {
+      localStorage.removeItem('peoples_takeaway_user');
+      verifiedUser = null;
+    }
+    let allMenuItems = {};
+    let allCategories = [];
+    let activeCategory = '';
+    let takeawayCart = [];
+    let currentTkItem = null;
+    let currentTkId = null;
+    let selectedTkVarTitle = '';
+    let selectedTkVarPrice = 0;
+    let currentActiveOrderKey = null;
+    let countdownInterval = null;
+    let selectedDeliveryMode = 'self';
+    let selectedDoorstepPay = 'cash';
+    let payhereConfig = { enabled: false, merchantId: '', sandbox: false };
+    let otpMailUrl = 'https://script.google.com/macros/s/AKfycbxQXtkD62WBB_dMDZV4y1zIcH-B8MoSFKI0v50U93bogC1S-soXdxAogXaZM54CS9c9/exec';
+    let postDeliveryKey = '';
+    let feedbackStars = 0;
+    let computedRoadDistance = 0;
+    let slipFileBase64 = '';
+    const RESTAURANT_COORDS = window.PEOPLES_SHOP || { lat: 6.7190174, lng: 80.0682103 };
+    let adminDeliverySettings = { self: true, pickme: true, doorstep: true };
+    let deliveryPricingConfig = window.mergeDeliveryPricing();
+    let audioCtx = null;
+    let hasPlayedReadySound = false;
+    let hasPlayedDoorbell = false;
+    let previousMyStatuses = {};
+    let chatListenKey = '';
+    let isInitialLoaded = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecording = false;
+    let lastDeliveryCoords = null;
+    let lastGeocodedLandmark = '';
+    let lastOrdersCache = {};
+    let pendingAfterAuth = '';
+    let pendingAuthUser = null;
+    let pendingEmailOtp = null;
+    let dataStarted = false;
+    let deliveryMap = null;
+    let deliveryMarker = null;
+    let restaurantProfile = {};
+    let currentLang = localStorage.getItem('peoples_lang') || 'en';
+    if (verifiedUser && verifiedUser.lastCoords && verifiedUser.lastCoords.lat) {
+      lastDeliveryCoords = {
+        lat: Number(verifiedUser.lastCoords.lat),
+        lng: Number(verifiedUser.lastCoords.lng)
+      };
+    }
+    const TK_I18N = {
+      en: {
+        arrivedTitle: 'Delivery Rider Arrived!',
+        arrivedBody: 'Please collect your order at the doorstep.',
+        authTitle: 'Your Details',
+        authHint: 'Name, mobile and address. Same phone stays signed in on this device.',
+        otpHint: 'We SMS a 6-digit code from PB HORANA. One login per device.',
+        verifyOtp: 'Verify OTP',
+        continueBtn: 'Send SMS code',
+        browseMenu: 'Browse menu instead',
+        myOrders: 'My Orders',
+        signIn: 'Sign in',
+        logout: 'Logout',
+        heroKicker: 'Peoples Family Restaurant',
+        heroTitle: 'Order from the Horana shop',
+        heroBody: 'Browse the menu, add to cart. For delivery, pin your home. For pickup, come to the shop.',
+        welcomeTitle: 'Welcome',
+        orderNow: 'Order now',
+        callShop: '📞 Call shop',
+        searchPh: 'Search takeaway dishes...',
+        historyTitle: '📜 My Past Orders History',
+        waitingTitle: 'Wait Until Payment Confirm',
+        waitingDesc: 'We are checking your payment and order...',
+        cancelOrder: '✕ Cancel this order',
+        cancelHint: 'Shop already started this order. Call the shop to cancel.',
+        cartTitle: 'Takeaway Cart',
+        cartItemsOne: '1 item',
+        cartItemsMany: '{n} items',
+        cartPreviewOne: '{name} ({n})',
+        cartPreviewMore: '{name} ({n}) + {more} more',
+        addedToast: '{name} added to cart',
+        addedBtn: 'Added ✓',
+        checkoutBtn: 'Checkout ❯',
+        checkoutTitle: 'Checkout',
+        cancel: 'Cancel',
+        proceed: 'Proceed',
+        emptyCart: 'Cart is empty',
+        all: 'All',
+        ordered: 'Ordered',
+        kitchen: 'Kitchen',
+        ready: 'Ready',
+        delivery: 'Delivery',
+        delivered: 'Delivered',
+        add: '+ Add',
+        guest: 'Guest',
+        closedTitle: 'Shop is closed',
+        closedForce: 'We are closed today. Browse the menu, or call us. Orders open when we are back.',
+        closedHours: 'Online orders are closed now. Open {hours} (Sri Lanka time).',
+        closedAlways: 'Online orders are closed right now. Please try later or call the shop.',
+        closedAlert: 'Shop is closed. You can browse the menu, but new orders are not accepted now.',
+        openNow: 'Open now',
+        closedNow: 'Closed',
+        hours24: '24 hours',
+        savedPinLoaded: 'Last delivery pin loaded. Drag the pin if you moved.',
+        returningHint: 'Welcome back. Last delivery pin will load for doorstep.'
+      },
+      si: {
+        arrivedTitle: 'Delivery Rider ආවා!',
+        arrivedBody: 'දොරටුව ළඟින් order එක ගන්න.',
+        authTitle: 'ඔබේ විස්තර',
+        authHint: 'නම, phone සහ address දාන්න. මේ phone එකේ login තියෙනවා වෙන device එකක් එනකම්.',
+        otpHint: 'PB HORANA එකෙන් අංක 6යි SMS එකක් යනවා. එක device එකකින් එක පාරක්.',
+        verifyOtp: 'OTP එක හරිද බලන්න',
+        continueBtn: 'SMS කේතය යවන්න',
+        browseMenu: 'Menu එක බලන්න',
+        myOrders: 'My Orders',
+        signIn: 'Sign in',
+        logout: 'Logout',
+        heroKicker: 'Peoples Family Restaurant',
+        heroTitle: 'Horana shop එකෙන් order දාන්න',
+        heroBody: 'Menu එක බලලා cart එකට දාන්න. Delivery නම් ගෙදර pin කරන්න. Pickup නම් shop එකට එන්න.',
+        welcomeTitle: 'ආයුබෝවන්',
+        orderNow: 'Order දාන්න',
+        callShop: '📞 Call shop',
+        searchPh: 'Takeaway dishes සොයන්න...',
+        historyTitle: '📜 මගේ පෙර Orders',
+        waitingTitle: 'ගෙවීම තහවුරු වෙනකම් ඉන්න',
+        waitingDesc: 'ඔබගේ ගෙවීම සහ ඇණවුම පරීක්ෂා කරමින් පවතී...',
+        cancelOrder: '✕ Order එක cancel කරන්න',
+        cancelHint: 'Cashier / kitchen start කරලා. Cancel ඕනේ නම් shop එකට call කරන්න.',
+        cartTitle: 'Takeaway Cart',
+        cartItemsOne: 'අයිතම 1යි',
+        cartItemsMany: 'අයිතම {n}යි',
+        cartPreviewOne: '{name} ({n})',
+        cartPreviewMore: '{name} ({n}) + තව {more}',
+        addedToast: '{name} cart එකට එකතු වුණා',
+        addedBtn: 'එකතු වුණා ✓',
+        checkoutBtn: 'Checkout ❯',
+        checkoutTitle: 'Checkout',
+        cancel: 'අවලංගු',
+        proceed: 'ඉදිරියට',
+        emptyCart: 'Cart එක හිස්යි',
+        all: 'සියල්ල',
+        ordered: 'Ordered',
+        kitchen: 'Kitchen',
+        ready: 'Ready',
+        delivery: 'Delivery',
+        delivered: 'Delivered',
+        add: '+ එකතු කරන්න',
+        guest: 'Guest',
+        closedTitle: 'Shop වහලා තියෙනවා',
+        closedForce: 'අද shop එක වහලා. Menu එක බලන්න පුළුවන්, නැත්නම් call කරන්න. Open වුණාම order දාන්න.',
+        closedHours: 'දැන් online order ගන්නේ නෑ. Open වෙන වේලාව: {hours} (ශ්‍රී ලංකා වේලාව).',
+        closedAlways: 'දැන් online order ගන්නේ නෑ. පස්සේ උත්සාහ කරන්න, නැත්නම් shop එකට call කරන්න.',
+        closedAlert: 'Shop වහලා තියෙනවා. Menu එක බලන්න පුළුවන්, නමුත් දැන් order දාන්න බෑ.',
+        openNow: 'දැන් Open',
+        closedNow: 'වහලා',
+        hours24: '24 පැය',
+        savedPinLoaded: 'කලින් delivery pin එක load වුණා. වෙනස් නම් map එකේ අදින්න.',
+        returningHint: 'Welcome back. Doorstep නම් කලින් pin එක load වෙනවා.'
+      }
+    };
+
+    function t(key) {
+      return (TK_I18N[currentLang] && TK_I18N[currentLang][key]) || (TK_I18N.en[key]) || key;
+    }
+
+    function jsCallArg(value) {
+      return JSON.stringify(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    }
+
+    function applyTakeawayI18n() {
+      document.documentElement.lang = currentLang === 'si' ? 'si' : 'en';
+      const sel = document.getElementById('langSelect');
+      if (sel) sel.value = currentLang;
+      document.querySelectorAll('[data-i18n]').forEach(function (el) {
+        const key = el.getAttribute('data-i18n');
+        if (t(key)) el.innerText = t(key);
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (t(key)) el.setAttribute('placeholder', t(key));
+      });
+      updateShopHoursUi();
+    }
+
+    function changeLanguage(lang) {
+      currentLang = lang === 'si' ? 'si' : 'en';
+      localStorage.setItem('peoples_lang', currentLang);
+      applyTakeawayI18n();
+      renderCategorySlider();
+      renderTakeawayMenu();
+      renderCart();
+      renderMyActiveOrder();
+    }
+
+    function parseHmToMinutes(value) {
+      const m = String(value || '').match(/^(\d{1,2}):(\d{2})$/);
+      if (!m) return null;
+      const h = parseInt(m[1], 10);
+      const min = parseInt(m[2], 10);
+      if (h > 23 || min > 59) return null;
+      return (h * 60) + min;
+    }
+
+    function colomboMinutesNow() {
+      const parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Colombo',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23'
+      }).formatToParts(new Date());
+      const hour = parseInt((parts.find(function (p) { return p.type === 'hour'; }) || {}).value, 10);
+      const minute = parseInt((parts.find(function (p) { return p.type === 'minute'; }) || {}).value, 10);
+      return (hour * 60) + minute;
+    }
+
+    function formatShopTime(hm) {
+      const mins = parseHmToMinutes(hm);
+      if (mins == null) return hm;
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      const am = h < 12;
+      const h12 = (h % 12) || 12;
+      return h12 + ':' + String(m).padStart(2, '0') + (am ? ' AM' : ' PM');
+    }
+
+    function shopHoursLabel() {
+      const open = restaurantProfile.openTime;
+      const close = restaurantProfile.closeTime;
+      if (!open || !close) return '';
+      if (open === close) return t('hours24');
+      return formatShopTime(open) + ' – ' + formatShopTime(close);
+    }
+
+    function isShopOpen() {
+      const p = restaurantProfile || {};
+      if (p.forceClosed) return false;
+      const open = parseHmToMinutes(p.openTime);
+      const close = parseHmToMinutes(p.closeTime);
+      if (open == null || close == null) return true;
+      const now = colomboMinutesNow();
+      if (open === close) return true;
+      if (close > open) return now >= open && now < close;
+      return now >= open || now < close;
+    }
+
+    function shopClosedReasonText() {
+      if ((restaurantProfile || {}).forceClosed) return t('closedForce');
+      const hours = shopHoursLabel();
+      if (hours) return t('closedHours').replace('{hours}', hours);
+      return t('closedAlways');
+    }
+
+    function updateShopHoursUi() {
+      const open = isShopOpen();
+      const banner = document.getElementById('shopClosedBanner');
+      const body = document.getElementById('shopClosedBody');
+      const hoursLine = document.getElementById('shopHoursLine');
+      const checkoutBtn = document.getElementById('checkoutBarBtn');
+      const proceedBtn = document.getElementById('proceedOrderBtn');
+      const hours = shopHoursLabel();
+      if (banner && body) {
+        if (open) {
+          banner.classList.add('hidden');
+        } else {
+          body.innerText = shopClosedReasonText();
+          banner.classList.remove('hidden');
+        }
+      }
+      if (hoursLine) {
+        if (open) {
+          hoursLine.innerText = hours ? ('🟢 ' + t('openNow') + ' · ' + hours) : '';
+          hoursLine.className = 'text-[11px] font-black text-emerald-300';
+          if (!hours) hoursLine.innerText = '';
+        } else {
+          hoursLine.innerText = hours ? ('🔴 ' + t('closedNow') + ' · ' + hours) : ('🔴 ' + t('closedNow'));
+          hoursLine.className = 'text-[11px] font-black text-rose-200';
+        }
+      }
+      if (checkoutBtn) {
+        checkoutBtn.disabled = !open;
+        checkoutBtn.className = 'pfr-checkout-cta' + (open ? '' : ' is-closed');
+        checkoutBtn.innerText = open ? t('checkoutBtn') : t('closedNow');
+      }
+      if (proceedBtn && !open) {
+        proceedBtn.disabled = true;
+      } else if (proceedBtn && open && proceedBtn.innerText !== 'Submitting...') {
+        proceedBtn.disabled = false;
+      }
+    }
+
+    function assertShopOpenForOrder() {
+      if (isShopOpen()) return true;
+      alert(t('closedAlert'));
+      return false;
+    }
+
+    function initAudioContext() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playDoorbell() {
+      try {
+        initAudioContext();
+        if (!audioCtx) return;
+        [523.25, 659.25, 783.99].forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          const start = audioCtx.currentTime + (i * 0.3);
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, start);
+          gain.gain.setValueAtTime(0.8, start);
+          gain.gain.exponentialRampToValueAtTime(0.01, start + 0.5);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(start);
+          osc.stop(start + 0.5);
+        });
+      } catch(e) {}
+    }
+
+    function playReadySoundAlert() {
+      playDoorbell();
+      try {
+        if ('speechSynthesis' in window) {
+          const msg = new SpeechSynthesisUtterance('Your takeaway order is ready.');
+          msg.lang = 'en-US';
+          msg.rate = 0.95;
+          window.speechSynthesis.speak(msg);
+        }
+      } catch (e) {}
+    }
+
+    function normalizePhone(phone) {
+      return String(phone || '').replace(/\D/g, '');
+    }
+
+    function customerKeyFromPhone(phone) {
+      const digits = normalizePhone(phone);
+      if (digits.length < 9) return '';
+      return digits.slice(-9);
+    }
+
+    function smsOtpOn() {
+      return !!(otpMailUrl && otpMailUrl.indexOf('script.google.com') >= 0);
+    }
+
+    function isSignedIn() {
+      if (!(verifiedUser && customerKeyFromPhone(verifiedUser.phone))) return false;
+      if (smsOtpOn() && !verifiedUser.otpOk) return false;
+      return true;
+    }
+
+    function deviceOtpOk(phone) {
+      if (window.deviceOtpRemembered && window.deviceOtpRemembered(phone)) return true;
+      return !!(verifiedUser && verifiedUser.otpOk && customerKeyFromPhone(verifiedUser.phone) === customerKeyFromPhone(phone));
+    }
+
+    function isMyTakeawayOrder(order) {
+      if (!order || order.type !== 'Takeaway') return false;
+      const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
+      if (uid && order.customerUid && order.customerUid === uid) return true;
+      if (!isSignedIn()) return false;
+      const myEmail = String(verifiedUser.email || '').trim().toLowerCase();
+      const orderEmail = String(order.customerEmail || '').trim().toLowerCase();
+      if (myEmail && orderEmail && myEmail === orderEmail) return true;
+      const myPhone = normalizePhone(verifiedUser.phone);
+      const orderPhone = normalizePhone(order.customerPhone);
+      if (myPhone.length >= 9 && orderPhone.length >= 9 && myPhone.slice(-9) === orderPhone.slice(-9)) return true;
+      return false;
+    }
+
+    function updateAuthHeader() {
+      const nameEl = document.getElementById('displayCustName');
+      const signInBtn = document.getElementById('signInHeaderBtn');
+      const logoutBtn = document.getElementById('logoutHeaderBtn');
+      if (isSignedIn()) {
+        nameEl.innerText = verifiedUser.name || 'Customer';
+        signInBtn.classList.add('hidden');
+        logoutBtn.classList.remove('hidden');
+      } else {
+        nameEl.innerText = t('guest');
+        signInBtn.classList.remove('hidden');
+        logoutBtn.classList.add('hidden');
+      }
+    }
+
+    function persistTakeawayUser(user) {
+      verifiedUser = Object.assign({}, verifiedUser || {}, user);
+      if (user && user.lastCoords === null) verifiedUser.lastCoords = null;
+      localStorage.setItem('peoples_takeaway_user', JSON.stringify(verifiedUser));
+      updateAuthHeader();
+    }
+
+    function openAuthModal() {
+      document.getElementById('returningCustomerHint').classList.add('hidden');
+      pendingAuthUser = null;
+      pendingEmailOtp = null;
+      const otpBox = document.getElementById('custOtpBox');
+      const otpInput = document.getElementById('custOtp');
+      const otpStatus = document.getElementById('custOtpStatus');
+      const verifyBtn = document.getElementById('custOtpVerifyBtn');
+      if (otpBox) otpBox.classList.add('hidden');
+      if (otpInput) otpInput.value = '';
+      if (verifyBtn) verifyBtn.classList.add('hidden');
+      if (otpStatus) otpStatus.innerText = '';
+      if (verifiedUser) {
+        document.getElementById('custPhone').value = verifiedUser.phone || '';
+        document.getElementById('custName').value = verifiedUser.name || '';
+        document.getElementById('custEmail').value = verifiedUser.email || '';
+        const addrEl = document.getElementById('custAddress');
+        if (addrEl) addrEl.value = verifiedUser.lastAddress || '';
+      }
+      document.getElementById('authModal').classList.remove('hidden');
+    }
+
+    function closeAuthModal() {
+      pendingAfterAuth = '';
+        document.getElementById('authModal').classList.add('hidden');
+    }
+
+    async function fetchCustomerProfile(phone) {
+      await window.ensureCustomerAuth();
+      const user = firebase.auth().currentUser;
+      if (!user) return null;
+      const snap = await db.ref('customers/' + user.uid).once('value');
+      if (!snap.exists()) return null;
+      const profile = snap.val() || {};
+      const key = customerKeyFromPhone(phone);
+      const profilePhone = customerKeyFromPhone(profile.phone);
+      if (key && profilePhone && key !== profilePhone) return null;
+      return profile;
+    }
+
+    function applyProfileToAuth(profile) {
+      if (!profile) return;
+      const nameEl = document.getElementById('custName');
+      const emailEl = document.getElementById('custEmail');
+      const addrEl = document.getElementById('custAddress');
+      if (profile.name && !nameEl.value.trim()) nameEl.value = profile.name;
+      if (profile.email && !emailEl.value.trim()) emailEl.value = profile.email;
+      if (addrEl && profile.lastAddress && !addrEl.value.trim()) addrEl.value = profile.lastAddress;
+      document.getElementById('returningCustomerHint').classList.remove('hidden');
+    }
+
+    function applyProfileToCheckout(profile) {
+      if (!profile) return;
+      const nameEl = document.getElementById('checkoutName');
+      const emailEl = document.getElementById('checkoutEmail');
+      const addressEl = document.getElementById('doorstepAddressInput');
+      if (profile.name && !nameEl.value.trim()) nameEl.value = profile.name;
+      if (profile.email && !emailEl.value.trim()) emailEl.value = profile.email;
+      if (profile.lastAddress && !addressEl.value.trim()) addressEl.value = profile.lastAddress;
+      if (profile.lastCoords && profile.lastCoords.lat) {
+        lastDeliveryCoords = { lat: Number(profile.lastCoords.lat), lng: Number(profile.lastCoords.lng) };
+        persistTakeawayUser({ lastAddress: profile.lastAddress || '', lastCoords: lastDeliveryCoords });
+      }
+      if (profile.lastLandmark) lastGeocodedLandmark = profile.lastLandmark;
+      document.getElementById('checkoutReturningHint').classList.remove('hidden');
+    }
+
+    async function lookupCustomerFromAuthPhone() {
+      document.getElementById('returningCustomerHint').classList.add('hidden');
+      const phone = document.getElementById('custPhone').value.trim();
+      const profile = await fetchCustomerProfile(phone);
+      applyProfileToAuth(profile);
+    }
+
+    async function lookupCustomerFromCheckoutPhone() {
+      document.getElementById('checkoutReturningHint').classList.add('hidden');
+      const phone = document.getElementById('checkoutPhone').value.trim();
+      const profile = await fetchCustomerProfile(phone);
+      applyProfileToCheckout(profile);
+      if (selectedDeliveryMode === 'doorstep' && lastDeliveryCoords && lastDeliveryCoords.lat) {
+        applySavedPinToMap(false);
+      } else if (profile && profile.lastAddress && selectedDeliveryMode === 'doorstep') {
+        calculateFeeFromAddress();
+      }
+    }
+
+    function getSavedDeliveryPin() {
+      const fromUser = verifiedUser && verifiedUser.lastCoords && verifiedUser.lastCoords.lat
+        ? { lat: Number(verifiedUser.lastCoords.lat), lng: Number(verifiedUser.lastCoords.lng) }
+        : null;
+      const coords = (lastDeliveryCoords && lastDeliveryCoords.lat) ? lastDeliveryCoords : fromUser;
+      const address = (verifiedUser && verifiedUser.lastAddress) || '';
+      if (!coords || !coords.lat || !coords.lng) return null;
+      return { coords: coords, address: address };
+    }
+
+    function persistLocalSavedPin() {
+      if (!lastDeliveryCoords || !lastDeliveryCoords.lat) return;
+      const addressEl = document.getElementById('doorstepAddressInput');
+      const address = (addressEl && addressEl.value.trim()) || (verifiedUser && verifiedUser.lastAddress) || '';
+      persistTakeawayUser({
+        lastAddress: address,
+        lastCoords: { lat: lastDeliveryCoords.lat, lng: lastDeliveryCoords.lng }
+      });
+    }
+
+    async function applySavedPinToMap(doReverse) {
+      const saved = getSavedDeliveryPin();
+      if (!saved) return;
+      lastDeliveryCoords = saved.coords;
+      const addressEl = document.getElementById('doorstepAddressInput');
+      if (saved.address && addressEl && !addressEl.value.trim()) addressEl.value = saved.address;
+      showPinOnMap(saved.coords.lat, saved.coords.lng, 16);
+      await applyPickedLocation(saved.coords.lat, saved.coords.lng, !!doReverse);
+      const status = document.getElementById('locationStatus');
+      if (status) status.innerText = t('savedPinLoaded');
+    }
+
+
+    function saveCustomerProfile(user, extra) {
+      extra = extra || {};
+      const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
+      if (!uid || !user) return Promise.resolve();
+      const checkLegacy = window.isLegacyCustomerPhone
+        ? Promise.resolve(window.isLegacyCustomerPhone(user.phone))
+        : Promise.resolve(false);
+      return checkLegacy.then(function (legacy) {
+        if (legacy) return Promise.resolve();
+        return saveCustomerProfileAfterLegacyCheck(user, extra, uid);
+      });
+    }
+
+    function saveCustomerProfileAfterLegacyCheck(user, extra, uid) {
+      const ref = db.ref('customers/' + uid);
+      const payload = {
+        name: user.name,
+        phone: user.phone,
+        email: user.email || '',
+        lastAddress: extra.lastAddress || user.lastAddress || '',
+        lastLandmark: extra.lastLandmark || user.lastLandmark || '',
+        updatedAt: Date.now()
+      };
+      if (extra.orderId) payload.lastOrderId = extra.orderId;
+      if (extra.coords) payload.lastCoords = extra.coords;
+      else if (user.lastCoords) payload.lastCoords = user.lastCoords;
+      return ref.once('value').then(function (snap) {
+        if (!snap.exists() || !(snap.val() && snap.val().createdAt)) payload.createdAt = Date.now();
+        return ref.update(payload);
+      }).catch(function () {
+        return ref.update(payload);
+      });
+    }
+
+    function completeTakeawayLogin(user) {
+      persistTakeawayUser(user);
+        document.getElementById('authModal').classList.add('hidden');
+      renderMyActiveOrder();
+      const after = pendingAfterAuth;
+      pendingAfterAuth = '';
+      if (after === 'history') openHistoryModal();
+      if (after === 'checkout') openCheckoutModal();
+      const authP = window.ensureCustomerAuth ? window.ensureCustomerAuth() : Promise.resolve();
+      Promise.resolve(authP).then(function () {
+        saveCustomerProfile(verifiedUser || user);
+      }).catch(function () {});
+    }
+
+    async function continueWithPhoneOnly() {
+      const phone = document.getElementById('custPhone').value.trim();
+      const typedName = document.getElementById('custName').value.trim();
+      const email = document.getElementById('custEmail').value.trim().toLowerCase();
+      const typedAddress = ((document.getElementById('custAddress') || {}).value || '').trim();
+      if (phone.length < 9) {
+        return alert('කරුණාකර නිවැරදි දුරකථන අංකයක් ඇතුළත් කරන්න.');
+      }
+      const profile = await fetchCustomerProfile(phone);
+      const name = typedName || (profile && profile.name) || '';
+      if (!name) {
+        return alert('කරුණාකර නම ඇතුළත් කරන්න.');
+      }
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return alert('Email එක හරිද බලන්න.');
+      }
+      const localCoords = lastDeliveryCoords || (verifiedUser && verifiedUser.lastCoords) || null;
+      const localAddress = typedAddress || (verifiedUser && verifiedUser.lastAddress) || '';
+      const user = {
+        name,
+        phone,
+        email: email || (profile && profile.email) || '',
+        lastAddress: typedAddress || (profile && profile.lastAddress) || localAddress || '',
+        lastCoords: (profile && profile.lastCoords) || localCoords || null,
+        lastLandmark: (profile && profile.lastLandmark) || ''
+      };
+      if (smsOtpOn()) {
+        if (deviceOtpOk(phone)) {
+          user.otpOk = true;
+          finishTakeawayLogin(user);
+          return;
+        }
+        pendingAuthUser = user;
+        try { localStorage.setItem('peoples_pending_auth', JSON.stringify(user)); } catch (e) {}
+        const sent = await sendCustomerSmsOtp(phone);
+        if (sent) return;
+        pendingAuthUser = null;
+        try { localStorage.removeItem('peoples_pending_auth'); } catch (e) {}
+        return;
+      }
+      finishTakeawayLogin(user);
+    }
+
+    function finishTakeawayLogin(user) {
+      pendingEmailOtp = null;
+      var next = Object.assign({}, user, { otpOk: !smsOtpOn() || !!user.otpOk });
+      if (next.otpOk && window.rememberDeviceOtp) window.rememberDeviceOtp(next.phone);
+      completeTakeawayLogin(next);
+      if (verifiedUser && verifiedUser.lastCoords && verifiedUser.lastCoords.lat) {
+        lastDeliveryCoords = { lat: Number(verifiedUser.lastCoords.lat), lng: Number(verifiedUser.lastCoords.lng) };
+      } else if (user.lastCoords && user.lastCoords.lat) {
+        lastDeliveryCoords = { lat: Number(user.lastCoords.lat), lng: Number(user.lastCoords.lng) };
+      }
+      if (user.lastLandmark) lastGeocodedLandmark = user.lastLandmark;
+    }
+
+    function showOtpBox() {
+      const otpBox = document.getElementById('custOtpBox');
+      const otpStatus = document.getElementById('custOtpStatus');
+      const otpInput = document.getElementById('custOtp');
+      const verifyBtn = document.getElementById('custOtpVerifyBtn');
+      if (otpBox) otpBox.classList.remove('hidden');
+      if (otpInput) otpInput.classList.remove('hidden');
+      if (verifyBtn) verifyBtn.classList.remove('hidden');
+      if (otpStatus) otpStatus.innerText = 'PB HORANA එකෙන් අංක 6යි SMS එකක් ගියා. Phone එකේ බලලා මෙතන type කරන්න.';
+      if (otpInput) {
+        otpInput.value = '';
+        otpInput.focus();
+      }
+    }
+
+    async function sendCustomerSmsOtp(phone) {
+      const btn = document.querySelector('#authModal [data-i18n="continueBtn"]');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = '...';
+      }
+      try {
+        if (!smsOtpOn() || !window.callOtpScript) {
+          throw new Error('SMS OTP backend තවම connect කරලා නැහැ. Admin Shop එකේ script URL දාන්න.');
+        }
+        await window.callOtpScript(otpMailUrl, { action: 'send', phone: phone });
+        showOtpBox();
+        return true;
+      } catch (err) {
+        alert((err && err.message) || 'SMS යවන්න බැරි වුණා.');
+        return false;
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = t('continueBtn');
+        }
+      }
+    }
+
+    async function resendCustomerSmsOtp() {
+      const phone = ((pendingAuthUser && pendingAuthUser.phone) || document.getElementById('custPhone').value || '').trim();
+      if (!phone) return alert('මුලින් phone එක දාලා Send ඔබන්න.');
+      await sendCustomerSmsOtp(phone);
+    }
+
+    async function verifyCustomerSmsOtp() {
+      const phone = ((pendingAuthUser && pendingAuthUser.phone) || document.getElementById('custPhone').value || '').trim();
+      const otp = (document.getElementById('custOtp').value || '').trim();
+      if (!pendingAuthUser || !phone) {
+        return alert('මුලින් SMS කේතය යවන්න ඔබන්න.');
+      }
+      if (!/^\d{6}$/.test(otp)) {
+        return alert('කේතය අංක 6යි.');
+      }
+      try {
+        await window.callOtpScript(otpMailUrl, { action: 'verify', phone: phone, otp: otp });
+      } catch (err) {
+        return alert((err && err.message) || 'කේතය වැරදියි.');
+      }
+      const user = pendingAuthUser;
+      pendingAuthUser = null;
+      pendingEmailOtp = null;
+      try { localStorage.removeItem('peoples_pending_auth'); } catch (e) {}
+      finishTakeawayLogin(Object.assign({}, user, { otpOk: true }));
+    }
+
+    function verifyCustomerEmailOtp() {
+      return verifyCustomerSmsOtp();
+    }
+
+    function logoutTakeawayUser() {
+      localStorage.removeItem('peoples_takeaway_user');
+      verifiedUser = null;
+      currentActiveOrderKey = null;
+      lastDeliveryCoords = null;
+      lastGeocodedLandmark = '';
+      updateAuthHeader();
+      renderMyActiveOrder();
+    }
+
+    window.onload = function () {
+      applyTakeawayI18n();
+      updateAuthHeader();
+      startWelcomeSplash();
+      initData();
+      setInterval(updateShopHoursUi, 30000);
+    };
+
+    var welcomeTimer = null;
+    function dismissWelcomeSplash() {
+      var el = document.getElementById('welcomeSplash');
+      if (el) el.classList.add('is-off');
+      try { sessionStorage.setItem('pfr_welcome_seen_v24', '1'); } catch (e) {}
+      if (welcomeTimer) {
+        clearInterval(welcomeTimer);
+        welcomeTimer = null;
+      }
+    }
+    function startWelcomeSplash() {
+      var el = document.getElementById('welcomeSplash');
+      if (!el) return;
+      try {
+        if (sessionStorage.getItem('pfr_welcome_seen_v24') === '1') {
+          el.classList.add('is-off');
+          return;
+        }
+      } catch (e) {}
+      var photos = el.querySelectorAll('.welcome-photo');
+      if (photos.length < 2) return;
+      var i = 0;
+      welcomeTimer = setInterval(function () {
+        photos[i].classList.remove('is-on');
+        i = (i + 1) % photos.length;
+        photos[i].classList.add('is-on');
+      }, 3500);
+    }
+
+    function buildOrderPayment() {
+      if (selectedDoorstepPay === 'payhere') {
+        return { method: 'payhere', timing: 'before', status: 'unpaid', slip: null };
+      }
+      if (selectedDeliveryMode === 'doorstep') {
+        return { method: 'cash', timing: 'after', status: 'unpaid', slip: null };
+      }
+      return { method: 'shop', timing: 'after', status: 'unpaid', slip: null };
+    }
+
+    function initData() {
+      if (dataStarted) return;
+      dataStarted = true;
+      db.ref('settings/delivery_options').on('value', snap => {
+        if (snap.exists()) adminDeliverySettings = snap.val();
+      }, function (err) { window.onDbListenError(err, { optional: true }); });
+
+      db.ref('settings/delivery_pricing').on('value', snap => {
+        deliveryPricingConfig = window.mergeDeliveryPricing(snap.val());
+      }, function (err) { window.onDbListenError(err, { optional: true }); });
+
+      function applyPayhereField(field, value) {
+        payhereConfig[field] = value;
+        const on = !!(payhereConfig.enabled && payhereConfig.merchantId);
+        if (!on && selectedDoorstepPay === 'payhere') selectDoorstepPay('cash');
+      }
+      db.ref('settings/payhere/enabled').on('value', snap => {
+        applyPayhereField('enabled', snap.val() === true);
+      }, function () { applyPayhereField('enabled', false); });
+      db.ref('settings/payhere/merchantId').on('value', snap => {
+        applyPayhereField('merchantId', String(snap.val() || ''));
+      }, function () { applyPayhereField('merchantId', ''); });
+
+      db.ref('settings/restaurant_profile').on('value', snap => {
+        restaurantProfile = snap.val() || {};
+        updateShopHero();
+        updateShopHoursUi();
+      }, function (err) { window.onDbListenError(err, { optional: true }); });
+
+      db.ref('settings/email_otp').on('value', snap => {
+        const url = String((snap.val() || {}).scriptUrl || '').trim();
+        if (url) otpMailUrl = url;
+      }, function () {});
+
+      db.ref('categories').on('value', snap => {
+        const val = snap.val() || {};
+        let catArr = [];
+        Object.keys(val).forEach((k, index) => {
+          const item = val[k];
+          if (typeof item === 'object' && item !== null) {
+            catArr.push({ name: item.name, order: item.order !== undefined ? item.order : index });
+          } else {
+            catArr.push({ name: item, order: index });
+          }
+        });
+        catArr.sort((a, b) => a.order - b.order);
+        allCategories = catArr.map(c => c.name);
+
+        if (!activeCategory || !allCategories.includes(activeCategory)) {
+          activeCategory = allCategories[0] || '';
+        }
+
+        renderCategorySlider();
+        renderTakeawayMenu();
+      }, window.onDbListenError);
+
+      db.ref('menu_items').on('value', snap => {
+        if (typeof window.clearDbListenError === 'function') window.clearDbListenError();
+        allMenuItems = snap.val() || {};
+        renderTakeawayMenu();
+      }, window.onDbListenError);
+
+      listenToMyOrders();
+    }
+
+    function shopWhatsAppUrl(phone) {
+      const digits = String(phone || '').replace(/\D/g, '');
+      if (digits.length < 9) return '';
+      const intl = digits.startsWith('0') ? '94' + digits.slice(1) : (digits.startsWith('94') ? digits : '94' + digits);
+      return 'https://wa.me/' + intl;
+    }
+
+    function updateShopHero() {
+      const hotline = (restaurantProfile.hotline || '').trim();
+      const address = (restaurantProfile.address || '').trim() || 'Horana, Kalutara, Sri Lanka';
+      const addrLine = document.getElementById('shopAddressLine');
+      if (addrLine) {
+        addrLine.innerText = '📍 ' + address;
+        addrLine.classList.remove('hidden');
+      }
+      try {
+        const ld = document.getElementById('seoJsonLd');
+        if (ld) {
+          const data = JSON.parse(ld.textContent);
+          data.address = data.address || {};
+          if ((restaurantProfile.address || '').trim()) data.address.streetAddress = restaurantProfile.address.trim();
+          data.address.addressLocality = 'Horana';
+          data.address.addressRegion = 'Kalutara';
+          data.address.addressCountry = 'LK';
+          if (hotline) data.telephone = hotline;
+          ld.textContent = JSON.stringify(data);
+        }
+      } catch (e) {}
+      const callBtns = [document.getElementById('headerCallBtn'), document.getElementById('heroCallBtn')];
+      callBtns.forEach(function (btn) {
+        if (!btn) return;
+        if (hotline) {
+          btn.href = 'tel:' + hotline;
+          btn.classList.remove('hidden');
+        } else {
+          btn.classList.add('hidden');
+        }
+      });
+      const wa = document.getElementById('heroWhatsAppBtn');
+      if (wa) {
+        const url = shopWhatsAppUrl(hotline);
+        if (url) {
+          wa.href = url;
+          wa.classList.remove('hidden');
+        } else {
+          wa.classList.add('hidden');
+        }
+      }
+    }
+
+    function renderCategorySlider(smooth) {
+      const slider = document.getElementById('categorySlider');
+      slider.innerHTML = '';
+      const cats = allCategories.slice();
+      cats.forEach(cat => {
+        const isSelected = activeCategory === cat;
+        const label = cat;
+        slider.innerHTML += `
+          <button onclick="setCategory(${jsCallArg(cat)})" class="cat-btn ${isSelected ? 'is-active bg-purple-900 text-white font-black' : 'bg-slate-100 text-slate-700 font-bold'} text-xs px-3.5 py-1.5 rounded-xl transition flex-shrink-0 hover:bg-purple-200">
+            ${escapeCartHtml(label)}
+          </button>
+        `;
+      });
+      requestAnimationFrame(function () { window.centerActiveCategory(!!smooth); });
+    }
+
+    function setCategory(cat) {
+      activeCategory = cat;
+      renderCategorySlider(true);
+      renderTakeawayMenu();
+    }
+
+    function categoryHasDishes(cat) {
+      const name = String(cat || '').toLowerCase();
+      return Object.keys(allMenuItems).some(id => {
+        const d = allMenuItems[id];
+        return d && d.available !== false && (d.category || 'General').toLowerCase() === name;
+      });
+    }
+
+    function nextCategoryAfter(cat) {
+      const start = allCategories.indexOf(cat);
+      for (let step = 1; step < allCategories.length; step++) {
+        const candidate = allCategories[(start + step) % allCategories.length];
+        if (categoryHasDishes(candidate)) return { name: candidate, wrapped: start + step >= allCategories.length };
+      }
+      return null;
+    }
+
+    function goToNextCategory(cat) {
+      setCategory(cat);
+      window.scrollToMenuTop();
+    }
+
+    function renderTakeawayMenu() {
+      const container = document.getElementById('menuList');
+      const search = (document.getElementById('searchInput').value || '').toLowerCase();
+      container.innerHTML = '';
+
+      const keys = Object.keys(allMenuItems);
+      if (keys.length === 0) {
+        container.innerHTML = '<p class="text-center text-slate-400 py-12 text-xs">No takeaway items available.</p>';
+        return;
+      }
+
+      const catsToDisplay = search || !activeCategory || activeCategory === '__all__' ? allCategories : [activeCategory];
+
+      catsToDisplay.forEach(catName => {
+        const catDishes = keys.filter(id => {
+          const d = allMenuItems[id];
+          const matchesCat = (d.category || 'General').toLowerCase() === catName.toLowerCase();
+          const matchesSearch = !search || d.name.toLowerCase().includes(search) || String(d.ingredients || '').toLowerCase().includes(search);
+          return matchesCat && matchesSearch;
+        });
+
+        if (catDishes.length > 0) {
+          const catHeader = document.createElement('div');
+          catHeader.className = "pt-2 pb-1";
+          catHeader.innerHTML = `<h2 class="text-xs font-black uppercase tracking-wider text-purple-950 border-b-2 border-purple-900 pb-1">${escapeCartHtml(catName)}</h2>`;
+          container.appendChild(catHeader);
+
+          catDishes.forEach(id => {
+            const dish = allMenuItems[id];
+            if (dish.available === false) return;
+            const hasVariants = dish.variants && dish.variants.length > 0;
+            const price = dish.price || 0;
+
+            container.innerHTML += `
+              <div data-menu-id="${escapeCartHtml(id)}" onclick="selectMenuCard(this)" class="pfr-menu-card bg-white p-3 rounded-2xl border shadow-sm flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                  ${window.safeUrl(dish.image) !== '#' ? `<img src="${window.safeUrl(dish.image)}" class="w-12 h-12 rounded-2xl object-cover shrink-0">` : '<div class="w-12 h-12 bg-purple-50 text-purple-900 rounded-2xl flex items-center justify-center font-bold shrink-0">🥡</div>'}
+                  <div class="min-w-0">
+                    <h3 class="font-black text-slate-900 text-xs truncate">${escapeCartHtml(dish.name)}</h3>
+                    ${window.dishContainsHtml ? window.dishContainsHtml(dish) : ''}
+                    <span class="text-purple-950 font-black text-xs block mt-0.5">
+                      ${hasVariants ? '<span class="text-[9px] text-purple-700 font-extrabold uppercase bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">Options</span>' : 'Rs. ' + price.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+                <button onclick="handleTakeawayAdd(${jsCallArg(id)})" class="bg-purple-900 text-white font-bold px-3 py-1.5 rounded-xl text-xs shrink-0">${hasVariants ? 'Select ❯' : t('add')}</button>
+              </div>
+            `;
+          });
+        }
+      });
+      if (!search && activeCategory && activeCategory !== '__all__') {
+        const next = nextCategoryAfter(activeCategory);
+        if (next) {
+          container.innerHTML += `
+            <button type="button" onclick="goToNextCategory(${jsCallArg(next.name)})" class="pfr-next-cat">
+              <span class="min-w-0"><small>${next.wrapped ? 'Back to start' : 'Next category'}</small><span class="block truncate">Next: ${escapeCartHtml(next.name)}</span></span>
+              <span class="text-lg shrink-0">&#10095;</span>
+            </button>
+          `;
+        }
+      }
+      window.restoreMenuSelection();
+    }
+
+    function handleTakeawayAdd(id) {
+      if (!assertShopOpenForOrder()) return;
+      const dish = allMenuItems[id];
+      if (!dish || dish.available === false) return;
+      currentTkItem = dish;
+      currentTkId = id;
+      if (dish.variants && dish.variants.length > 0) {
+        document.getElementById('tkModalTitle').innerText = dish.name;
+        var containsBox = document.getElementById('tkModalContains');
+        if (containsBox) containsBox.innerHTML = window.dishContainsHtml ? window.dishContainsHtml(dish) : '';
+        selectTkVariant(dish.variants[0].variantName, dish.variants[0].price, dish.variants[0].portionSize || '2 Persons', 0);
+
+        document.getElementById('tkModalVariationsList').innerHTML = dish.variants.map((v, idx) => `
+          <div id="tkVCard-${idx}" onclick="selectTkVariantByIndex(${idx})" class="tk-vcard border ${idx === 0 ? 'border-purple-800 bg-purple-50' : 'border-slate-200'} p-3 rounded-2xl flex justify-between items-center cursor-pointer">
+            <span class="font-black text-xs">${escapeCartHtml(v.variantName)}</span>
+            <span class="text-xs font-black text-purple-950">Rs. ${Number(v.price || 0).toLocaleString()}</span>
+          </div>
+        `).join('');
+        var modal = document.getElementById('takeawayModal');
+        var noteBoxes = modal ? modal.querySelectorAll('textarea') : [];
+        for (var n = 1; n < noteBoxes.length; n++) noteBoxes[n].remove();
+        if (noteBoxes[0]) {
+          noteBoxes[0].id = 'tkModalNote';
+          noteBoxes[0].placeholder = 'Note';
+          noteBoxes[0].value = '';
+        }
+        setPortionModalOpen(true);
+      } else if (addToCart(dish.name, window.safeMoney(dish.price))) {
+        notifyCartAdd(id, dish.name);
+      }
+    }
+
+    function selectTkVariantByIndex(idx) {
+      if (!currentTkItem || !currentTkItem.variants || !currentTkItem.variants[idx]) return;
+      const v = currentTkItem.variants[idx];
+      selectTkVariant(v.variantName, v.price, v.portionSize || '2 Persons', idx);
+    }
+
+    function selectTkVariant(vName, price, portion, idx) {
+      selectedTkVarTitle = `${currentTkItem.name} (${vName}) - [Portion: ${portion}]`;
+      selectedTkVarPrice = window.safeMoney(price);
+      document.getElementById('tkModalPrice').innerText = 'Rs. ' + selectedTkVarPrice.toLocaleString();
+      document.querySelectorAll('.tk-vcard').forEach((card, i) => {
+        card.className = (i === idx) ? "tk-vcard border border-purple-800 bg-purple-50 p-3 rounded-2xl flex justify-between items-center cursor-pointer" : "tk-vcard border border-slate-200 p-3 rounded-2xl flex justify-between items-center cursor-pointer";
+      });
+    }
+
+    function commitTakeawayModalAddToCart() {
+      const note = (document.getElementById('tkModalNote').value || '').trim();
+      if (addToCart(selectedTkVarTitle, selectedTkVarPrice, note)) notifyCartAdd(currentTkId, selectedTkVarTitle);
+      document.getElementById('tkModalNote').value = '';
+      setPortionModalOpen(false);
+    }
+
+    let lastAddedCartName = '';
+
+    function cartCountLabel(qty) {
+      const n = Math.round(window.safeMoney(qty));
+      if (n === 1) return t('cartItemsOne');
+      return t('cartItemsMany').replace('{n}', String(n));
+    }
+
+    function cartPreviewLabel(items) {
+      const info = typeof window.cartBarPreview === 'function'
+        ? window.cartBarPreview(items, lastAddedCartName)
+        : { text: '', name: '', lineQty: 0, more: 0, qty: 0 };
+      if (!info.qty) return cartCountLabel(0);
+      if (info.more) {
+        return t('cartPreviewMore')
+          .replace('{name}', info.name)
+          .replace('{n}', String(info.lineQty))
+          .replace('{more}', String(info.more));
+      }
+      return t('cartPreviewOne').replace('{name}', info.name).replace('{n}', String(info.lineQty));
+    }
+
+    function notifyCartAdd(id, name) {
+      lastAddedCartName = String(name || lastAddedCartName || '').trim();
+      const qty = window.cartQtyCount(takeawayCart);
+      window.flashAddFeedback(id, name, qty, {
+        toast: t('addedToast').replace('{name}', String(name || 'Item')) + ' · ' + cartCountLabel(qty),
+        addedBtn: t('addedBtn')
+      });
+    }
+
+    function toggleCartLines() {
+      if (!takeawayCart.length) return;
+      const qty = window.cartQtyCount(takeawayCart);
+      const preview = cartPreviewLabel(takeawayCart);
+      const totalEl = document.getElementById('cartTotal');
+      if (typeof window.syncCheckoutBar === 'function') {
+        window.syncCheckoutBar({
+          qty: qty,
+          previewText: preview,
+          countText: preview,
+          totalText: totalEl ? totalEl.textContent : undefined
+        });
+      }
+    }
+
+    function addToCart(name, price, note) {
+      if (!assertShopOpenForOrder()) return false;
+      const itemNote = String(note || '').trim();
+      const existing = takeawayCart.find(i => i.name === name && (i.note || '').trim() === itemNote);
+      if (existing) existing.qty += 1;
+      else takeawayCart.push(window.normalizeCartItem(name, price, 1, itemNote));
+      lastAddedCartName = String(name || '').trim();
+      renderCart({ justAdded: true });
+      setCheckoutModalOpen(false);
+      return true;
+    }
+
+    function setTakeawayItemNote(idx, value) {
+      if (!takeawayCart[idx]) return;
+      takeawayCart[idx].note = String(value || '').slice(0, 120);
+    }
+
+    function alterCartQty(idx, change) {
+      const item = takeawayCart[idx];
+      if (!item) return;
+      item.qty += change;
+      if (item.qty <= 0) {
+        takeawayCart.splice(idx, 1);
+        const next = takeawayCart[Math.min(idx, Math.max(0, takeawayCart.length - 1))];
+        lastAddedCartName = next ? String(next.name || '') : '';
+      } else {
+        lastAddedCartName = String(item.name || '');
+      }
+      renderCart();
+    }
+
+    function removeFromCart(idx) {
+      takeawayCart.splice(idx, 1);
+      const next = takeawayCart[Math.min(idx, Math.max(0, takeawayCart.length - 1))];
+      lastAddedCartName = next ? String(next.name || '') : '';
+      renderCart();
+    }
+
+    function escapeCartHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function renderCart(opts) {
+      opts = opts || {};
+      let subtotal = 0;
+      const list = document.getElementById('cartItems');
+      if (takeawayCart.length === 0) {
+        if (list) list.innerHTML = '';
+      } else if (list) {
+        list.innerHTML = takeawayCart.map((item, idx) => {
+          subtotal += item.price * item.qty;
+          return `
+            <div class="py-1.5 space-y-1">
+              <div class="flex items-center justify-between">
+              <div class="min-w-0 pr-2">
+                  <span class="font-bold text-white text-xs block truncate">${escapeCartHtml(item.name)}</span>
+                <span class="text-[10px] text-amber-200 font-bold">Rs. ${(item.price * item.qty).toLocaleString()}</span>
+              </div>
+              <div class="flex items-center gap-1.5 flex-shrink-0 text-white">
+                <button onclick="alterCartQty(${idx}, -1)" class="w-6 h-6 bg-white/15 rounded text-xs font-bold">-</button>
+                <span class="font-black text-xs w-4 text-center">${item.qty}</span>
+                <button onclick="alterCartQty(${idx}, 1)" class="w-6 h-6 bg-amber-300 text-violet-950 rounded text-xs font-bold">+</button>
+                <button onclick="removeFromCart(${idx})" class="text-rose-200 ml-1 text-xs">🗑️</button>
+              </div>
+              </div>
+              <input value="${escapeCartHtml(item.note || '')}" oninput="setTakeawayItemNote(${idx}, this.value)" placeholder="Note" class="w-full border-0 rounded-lg px-2 py-1 text-[10px] outline-none bg-white/10 text-white font-medium placeholder:text-white/50">
+            </div>
+          `;
+        }).join('');
+      }
+
+      let deliveryFee = getComputedDeliveryFee();
+      let grandTotal = subtotal + deliveryFee;
+      const qty = window.cartQtyCount(takeawayCart);
+      const preview = cartPreviewLabel(takeawayCart);
+      const totalText = 'Rs. ' + grandTotal.toLocaleString();
+      if (typeof window.syncCheckoutBar === 'function') {
+        window.syncCheckoutBar({ qty: qty, justAdded: !!opts.justAdded, previewText: preview, countText: preview, totalText: totalText });
+      } else {
+        const totalEl = document.getElementById('cartTotal');
+        const countEl = document.getElementById('cartCountLabel');
+        if (countEl) countEl.innerText = preview;
+        if (totalEl) totalEl.innerText = totalText;
+      }
+    }
+
+    async function calculateRoadDistance(lat1, lon1, lat2, lon2) {
+      const url = `https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.code === 'Ok' && data.routes && data.routes.length > 0) {
+          return data.routes[0].distance / 1000;
+        }
+      } catch (e) {
+        console.error("Routing error, falling back to straight line", e);
+      }
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function getComputedDeliveryFee() {
+      if (selectedDeliveryMode !== 'doorstep') return 0;
+      const pricing = window.mergeDeliveryPricing(deliveryPricingConfig);
+      let fee = 0;
+      if (computedRoadDistance <= 3) {
+        fee = pricing.initCharge;
+      } else {
+        fee = window.safeMoney(computedRoadDistance) * pricing.perKm;
+      }
+      const rounded = Math.round(window.safeMoney(fee));
+      return isFinite(rounded) ? rounded : 0;
+    }
+
+    function prefillCheckoutIdentity() {
+      document.getElementById('checkoutReturningHint').classList.add('hidden');
+      document.getElementById('checkoutPhone').value = (verifiedUser && verifiedUser.phone) || '';
+      document.getElementById('checkoutName').value = (verifiedUser && verifiedUser.name) || '';
+      document.getElementById('checkoutEmail').value = (verifiedUser && verifiedUser.email) || '';
+      const lastAddress = (verifiedUser && verifiedUser.lastAddress) || '';
+      if (lastAddress) {
+        document.getElementById('doorstepAddressInput').value = lastAddress;
+      }
+      if (verifiedUser && verifiedUser.lastCoords && verifiedUser.lastCoords.lat) {
+        lastDeliveryCoords = {
+          lat: Number(verifiedUser.lastCoords.lat),
+          lng: Number(verifiedUser.lastCoords.lng)
+        };
+      }
+      if (lastAddress || (lastDeliveryCoords && lastDeliveryCoords.lat)) {
+        document.getElementById('checkoutReturningHint').classList.remove('hidden');
+      }
+    }
+
+    function readCheckoutIdentity() {
+      const phone = document.getElementById('checkoutPhone').value.trim();
+      const name = document.getElementById('checkoutName').value.trim();
+      const email = document.getElementById('checkoutEmail').value.trim();
+      if (phone.length < 9) {
+        alert('කරුණාකර නිවැරදි දුරකථන අංකයක් ඇතුළත් කරන්න.');
+        return null;
+      }
+      if (!name) {
+        alert('කරුණාකර නම ඇතුළත් කරන්න.');
+        return null;
+      }
+      return { name, phone, email };
+    }
+
+    let orderSubmitting = false;
+
+    function setCheckoutModalOpen(open) {
+      const modal = document.getElementById('checkoutOptionsModal');
+      if (modal) modal.classList.toggle('hidden', !open);
+      document.body.classList.toggle('pfr-checkout-modal-open', !!open);
+    }
+
+    function setPortionModalOpen(open) {
+      const modal = document.getElementById('takeawayModal');
+      if (modal) modal.classList.toggle('hidden', !open);
+      document.body.classList.toggle('pfr-portion-modal-open', !!open);
+    }
+
+    function openCheckoutModal(ev) {
+      if (ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+      if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+      const btn = document.getElementById('checkoutBarBtn');
+      if (btn && !window.lockButton(btn, 'Processing...')) return;
+      requestAnimationFrame(function () {
+        setTimeout(function () {
+          try { openCheckoutModalNow(); } finally { window.unlockButton(btn); }
+        }, 0);
+      });
+    }
+
+    function openCheckoutModalNow() {
+      if (!assertShopOpenForOrder()) return;
+      if (takeawayCart.length === 0) return alert('කාට් එක හිස්ය.');
+      if (smsOtpOn() && !isSignedIn()) {
+        pendingAfterAuth = 'checkout';
+        openAuthModal();
+        return;
+      }
+
+      prefillCheckoutIdentity();
+      if (!orderSubmitting) window.unlockButton(document.getElementById('proceedOrderBtn'));
+
+      const container = document.getElementById('deliveryModesContainer');
+      container.innerHTML = '';
+
+      let availableModes = [];
+      if (adminDeliverySettings.self !== false) availableModes.push({ id: 'self', title: 'Pickup', sub: 'Collect at the shop' });
+      if (adminDeliverySettings.pickme !== false) availableModes.push({ id: 'pickme', title: 'PickMe', sub: 'Your driver collects' });
+      if (adminDeliverySettings.doorstep !== false) availableModes.push({ id: 'doorstep', title: 'Delivery', sub: 'Bring to your door' });
+
+      if (availableModes.length === 0) {
+        container.innerHTML = '<p class="text-xs text-rose-600 font-bold text-center">Admin has disabled all delivery methods currently.</p>';
+        document.getElementById('proceedOrderBtn').classList.add('hidden');
+      } else {
+        document.getElementById('proceedOrderBtn').classList.remove('hidden');
+        const deliveryOpen = window.deliveryUnlocked();
+        const pickupMode = availableModes.find(m => m.id === 'self') || availableModes.find(m => m.id !== 'doorstep' || deliveryOpen);
+        selectedDeliveryMode = pickupMode ? pickupMode.id : availableModes[0].id;
+        selectedDoorstepPay = 'cash';
+        const modeIcons = { self: 'fa-bag-shopping', pickme: 'fa-car', doorstep: 'fa-motorcycle' };
+        availableModes.forEach(m => {
+          container.innerHTML += `
+            <label onclick="selectDeliveryMode('${m.id}')" id="modeCard-${m.id}" class="${deliveryModeClass(m.id)}">
+              <span class="mode-choice-icon"><i class="fa-solid ${modeIcons[m.id] || 'fa-circle'}"></i></span>
+              <div class="min-w-0 flex-1">
+                <div class="font-black text-[13px] text-slate-900">${m.title}</div>
+                <div class="text-[11px] text-slate-500 font-semibold">${m.sub}</div>
+                ${m.id === 'doorstep' ? `<div id="deliveryLockNote" class="pfr-lock-note text-[9px] leading-snug font-black mt-0.5 whitespace-normal${deliveryOpen ? ' hidden' : ''}">🔒 ${window.DELIVERY_LOCK_NOTE}</div>` : ''}
+              </div>
+            </label>
+          `;
+        });
+      }
+
+      updateCheckoutUIStates();
+      renderCart();
+      setCheckoutModalOpen(true);
+      if (selectedDeliveryMode === 'doorstep') {
+        hydrateDoorstepFromSavedPin();
+      }
+    }
+
+    function hydrateDoorstepFromSavedPin() {
+      setTimeout(function () {
+        ensureDeliveryMap();
+        if (lastDeliveryCoords && lastDeliveryCoords.lat) {
+          applySavedPinToMap(false);
+        } else if (document.getElementById('doorstepAddressInput').value.trim()) {
+          calculateFeeFromAddress();
+        }
+      }, 250);
+    }
+
+    function deliveryModeClass(m) {
+      return 'mode-choice' + (m === selectedDeliveryMode ? ' is-on' : '') + (m === 'doorstep' && !window.deliveryUnlocked() ? ' is-locked' : '');
+    }
+
+    function refreshDeliveryModeCards() {
+      ['self', 'pickme', 'doorstep'].forEach(m => {
+        const card = document.getElementById(`modeCard-${m}`);
+        if (card) card.className = deliveryModeClass(m);
+      });
+      const note = document.getElementById('deliveryLockNote');
+      if (note) note.classList.toggle('hidden', window.deliveryUnlocked());
+    }
+
+    setInterval(function () {
+      const modal = document.getElementById('checkoutOptionsModal');
+      if (!modal || modal.classList.contains('hidden') || !document.getElementById('modeCard-doorstep')) return;
+      if (selectedDeliveryMode === 'doorstep' && !window.deliveryUnlocked() && document.getElementById('modeCard-self')) {
+        selectDeliveryMode('self');
+      }
+      refreshDeliveryModeCards();
+    }, 30000);
+
+    function selectDeliveryMode(mode) {
+      if (mode === 'doorstep' && !window.deliveryUnlocked()) {
+        window.pfrToast(window.DELIVERY_LOCK_MSG);
+        return;
+      }
+      selectedDeliveryMode = mode;
+      refreshDeliveryModeCards();
+      updateCheckoutUIStates();
+      renderCart();
+      if (mode === 'doorstep') {
+        hydrateDoorstepFromSavedPin();
+      }
+    }
+
+    function updateCheckoutUIStates() {
+      const doorstepSec = document.getElementById('doorstepSubOptions');
+      const shopPay = document.getElementById('checkoutPayOptions');
+
+      doorstepSec.classList.add('hidden');
+      if (shopPay) shopPay.classList.add('hidden');
+      if (selectedDoorstepPay === 'bank') selectedDoorstepPay = 'cash';
+
+      if (selectedDeliveryMode === 'self' || selectedDeliveryMode === 'pickme') {
+        if (shopPay) shopPay.classList.remove('hidden');
+      }
+
+      if (selectedDeliveryMode === 'doorstep') {
+        doorstepSec.classList.remove('hidden');
+        if (!document.getElementById('doorstepAddressInput').value.trim() && !(lastDeliveryCoords && lastDeliveryCoords.lat)) {
+          computedRoadDistance = 0;
+        }
+        renderCart();
+      }
+    }
+
+    function selectDoorstepPay(method) {
+      if (method === 'bank') method = 'cash';
+      if (method !== 'cash' && method !== 'payhere') method = 'cash';
+      if (method === 'payhere' && !(payhereConfig.enabled && payhereConfig.merchantId)) method = 'cash';
+      selectedDoorstepPay = method;
+    }
+
+    function updateGoogleMapsLink(lat, lng) {
+      const link = document.getElementById('googleMapsPreviewLink');
+      if (!link || !lat || !lng) return;
+      link.href = `https://www.google.com/maps?q=${lat},${lng}`;
+      link.classList.remove('hidden');
+    }
+
+    function showPinOnMap(lat, lng, zoom) {
+      ensureDeliveryMap();
+      if (!deliveryMap || !deliveryMarker) return;
+      deliveryMap.setView([lat, lng], zoom || 17);
+      deliveryMarker.setLatLng([lat, lng]);
+      updateGoogleMapsLink(lat, lng);
+      setTimeout(function () { deliveryMap.invalidateSize(); }, 200);
+    }
+
+    function ensureDeliveryMap() {
+      if (!window.L) return;
+      const start = lastDeliveryCoords || RESTAURANT_COORDS;
+      if (deliveryMap) {
+        setTimeout(function () { deliveryMap.invalidateSize(); }, 200);
+        if (lastDeliveryCoords && lastDeliveryCoords.lat) {
+          deliveryMarker.setLatLng([lastDeliveryCoords.lat, lastDeliveryCoords.lng]);
+          deliveryMap.setView([lastDeliveryCoords.lat, lastDeliveryCoords.lng], 16);
+          updateGoogleMapsLink(lastDeliveryCoords.lat, lastDeliveryCoords.lng);
+        }
+        return;
+      }
+      deliveryMap = L.map('deliveryMap').setView([start.lat, start.lng], lastDeliveryCoords ? 16 : 14);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(deliveryMap);
+      deliveryMarker = L.marker([start.lat, start.lng], { draggable: true }).addTo(deliveryMap);
+      deliveryMarker.on('dragend', function () {
+        const p = deliveryMarker.getLatLng();
+        applyPickedLocation(p.lat, p.lng, true);
+      });
+      deliveryMap.on('click', function (e) {
+        deliveryMarker.setLatLng(e.latlng);
+        applyPickedLocation(e.latlng.lat, e.latlng.lng, true);
+      });
+      if (lastDeliveryCoords && lastDeliveryCoords.lat) {
+        updateGoogleMapsLink(lastDeliveryCoords.lat, lastDeliveryCoords.lng);
+      }
+      setTimeout(function () { deliveryMap.invalidateSize(); }, 250);
+    }
+
+    async function reverseGeocodeLatLng(lat, lng) {
+      try {
+        const url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&zoom=18&addressdetails=1';
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        const data = await response.json();
+        return (data && data.display_name) ? data.display_name : '';
+      } catch (e) {
+        return '';
+      }
+    }
+
+    async function applyPickedLocation(lat, lng, doReverse) {
+      lastDeliveryCoords = { lat: lat, lng: lng };
+      lastGeocodedLandmark = lastGeocodedLandmark || 'Pinned location';
+      computedRoadDistance = await calculateRoadDistance(RESTAURANT_COORDS.lat, RESTAURANT_COORDS.lng, lat, lng);
+      document.getElementById('calcDistanceText').innerText = computedRoadDistance.toFixed(1) + ' km (Approx)';
+      document.getElementById('calcDeliveryFeeText').innerText = 'Rs. ' + getComputedDeliveryFee().toLocaleString();
+      document.getElementById('locationStatus').innerText = 'Location pinned. House number ටික address එකට එකතු කරන්න.';
+      updateGoogleMapsLink(lat, lng);
+      renderCart();
+      if (doReverse) {
+        const addr = await reverseGeocodeLatLng(lat, lng);
+        if (addr) {
+          lastGeocodedLandmark = addr;
+          const box = document.getElementById('doorstepAddressInput');
+          if (!box.value.trim() || box.dataset.fromPin === '1') {
+            box.value = addr;
+            box.dataset.fromPin = '1';
+          }
+        }
+      }
+      persistLocalSavedPin();
+    }
+
+    function useCurrentLocation() {
+      const btn = document.getElementById('useLocationBtn');
+      if (!navigator.geolocation) {
+        return alert('මේ phone එකේ location support නැහැ. Map එකේ pin එක අදින්න.');
+      }
+      btn.disabled = true;
+      btn.innerText = 'Getting your location...';
+      document.getElementById('locationStatus').innerText = 'GPS එකෙන් තැන හොයනවා... Allow කරන්න.';
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        ensureDeliveryMap();
+        showPinOnMap(lat, lng, 18);
+        applyPickedLocation(lat, lng, true);
+        btn.disabled = false;
+        btn.innerText = '📍 Use my current location';
+      }, function () {
+        btn.disabled = false;
+        btn.innerText = '📍 Use my current location';
+        document.getElementById('locationStatus').innerText = 'Location allow කරන්න, නැත්නම් map එකේ pin එක අදින්න.';
+        alert('Location permission allow කරන්න. නැත්නම් map එකේ ඔබගේ ගෙදර pin කරන්න.');
+      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+    }
+
+    // Automatically geocode typed address using OpenStreetMap Nominatim
+    async function calculateFeeFromAddress() {
+      const addressText = document.getElementById('doorstepAddressInput').value.trim();
+      if (!addressText) return;
+      document.getElementById('doorstepAddressInput').dataset.fromPin = '';
+      if (lastDeliveryCoords && lastDeliveryCoords.lat && lastDeliveryCoords.lng) {
+        persistLocalSavedPin();
+        renderCart();
+        return;
+      }
+
+      const query = addressText.toLowerCase().includes('horana') ? addressText : (addressText + ', Horana, Sri Lanka');
+      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+
+      lastGeocodedLandmark = addressText;
+      try {
+        const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
+        const results = await response.json();
+        if (results && results.length > 0) {
+          const lat = parseFloat(results[0].lat);
+          const lon = parseFloat(results[0].lon);
+          lastDeliveryCoords = { lat, lng: lon };
+          lastGeocodedLandmark = results[0].display_name || addressText;
+          computedRoadDistance = await calculateRoadDistance(RESTAURANT_COORDS.lat, RESTAURANT_COORDS.lng, lat, lon);
+          showPinOnMap(lat, lon, 16);
+        } else if (!lastDeliveryCoords) {
+          computedRoadDistance = 3.5; 
+        }
+      } catch (e) {
+        if (!lastDeliveryCoords) computedRoadDistance = 3.5;
+      }
+
+      const fee = getComputedDeliveryFee();
+      document.getElementById('calcDistanceText').innerText = computedRoadDistance.toFixed(1) + ' km (Approx)';
+      document.getElementById('calcDeliveryFeeText').innerText = 'Rs. ' + fee.toLocaleString();
+      renderCart();
+    }
+
+    function finalizeAndSubmitOrder() {
+      if (orderSubmitting) return;
+      if (!assertShopOpenForOrder()) return;
+      if (selectedDeliveryMode === 'doorstep' && !window.deliveryUnlocked()) {
+        window.pfrToast(window.DELIVERY_LOCK_MSG);
+        return;
+      }
+      const identity = readCheckoutIdentity();
+      if (!identity) return;
+      persistTakeawayUser(Object.assign({}, verifiedUser || {}, identity));
+
+      const proceedBtn = document.getElementById('proceedOrderBtn');
+      if (selectedDeliveryMode === 'doorstep') {
+        const addressText = document.getElementById('doorstepAddressInput').value.trim();
+        if (!lastDeliveryCoords || !lastDeliveryCoords.lat || !lastDeliveryCoords.lng) {
+          return alert('Delivery නම් Use my location ඔබන්න, නැත්නම් map එකේ pin එක අදින්න.');
+        }
+        if (!addressText) {
+          document.getElementById('doorstepAddressInput').value = lastGeocodedLandmark || 'GPS pinned location';
+        }
+      }
+
+      if (selectedDoorstepPay === 'bank') selectedDoorstepPay = 'cash';
+      orderSubmitting = true;
+      window.lockButton(proceedBtn, 'Processing...');
+      executeOrderSubmission(selectedDoorstepPay === 'payhere' ? 'PendingPayment' : 'Received');
+    }
+
+    async function executeOrderSubmission(initialStatus) {
+      const proceedBtn = document.getElementById('proceedOrderBtn');
+      try {
+      var user = await window.ensureCustomerAuth(true);
+      if (!user) user = await window.ensureCustomerAuth(true);
+      var liveUser = firebase.auth().currentUser;
+      if (liveUser && liveUser.uid) user = liveUser;
+      if (!user || !user.uid) {
+        throw new Error('PERMISSION_DENIED — phone එකේ login/network fail. Internet on කරලා ආයෙන් try කරන්න.');
+      }
+      if (selectedDeliveryMode === 'doorstep' && lastDeliveryCoords && lastDeliveryCoords.lat) {
+        computedRoadDistance = await calculateRoadDistance(
+          RESTAURANT_COORDS.lat,
+          RESTAURANT_COORDS.lng,
+          lastDeliveryCoords.lat,
+          lastDeliveryCoords.lng
+        );
+      }
+      const foodTotal = window.cartFoodTotal(takeawayCart);
+      const deliveryFee = getComputedDeliveryFee();
+      const total = foodTotal + deliveryFee;
+      const orderRef = db.ref('orders').push();
+      const orderId = await window.nextDailyOrderId(db, orderRef.key);
+      
+      let deliveryDetail = {
+        mode: selectedDeliveryMode,
+        label: selectedDeliveryMode === 'self' ? 'Pick up myself' : (selectedDeliveryMode === 'pickme' ? 'Pick up by PickMe Driver' : 'Deliver to doorstep'),
+        deliveryFee: deliveryFee
+      };
+
+      if (selectedDeliveryMode === 'doorstep') {
+        const addressText = document.getElementById('doorstepAddressInput').value.trim();
+        deliveryDetail.recipientType = 'Self';
+        deliveryDetail.address = addressText;
+        deliveryDetail.landmark = lastGeocodedLandmark || addressText;
+        deliveryDetail.distanceKm = Number((computedRoadDistance || 0).toFixed(1));
+        deliveryDetail.coords = { lat: Number(lastDeliveryCoords.lat), lng: Number(lastDeliveryCoords.lng) };
+        deliveryDetail.mapsUrl = 'https://www.google.com/maps?q=' + deliveryDetail.coords.lat + ',' + deliveryDetail.coords.lng;
+      }
+
+      const payload = { 
+        orderId, 
+        type: 'Takeaway', 
+        deliveryOption: deliveryDetail.label,
+        deliveryMeta: deliveryDetail,
+        customerUid: user.uid,
+        customerName: (verifiedUser && verifiedUser.name) || '', 
+        customerPhone: (verifiedUser && verifiedUser.phone) || '', 
+        customerEmail: (verifiedUser && verifiedUser.email) || '',
+        items: takeawayCart.map(i => ({
+          name: i.name,
+          price: i.price,
+          qty: i.qty,
+          note: (i.note || '').trim()
+        })),
+        kitchenNote: (document.getElementById('kitchenNoteInput').value || '').trim(),
+        foodTotal,
+        deliveryFee,
+        total, 
+        status: initialStatus,
+        payment: buildOrderPayment(),
+        vehicleNumber: null,
+        prepTimeMins: 20, 
+        readyTimestamp: Date.now() + (20 * 60 * 1000), 
+        timestamp: Date.now() 
+      };
+      if (slipFileBase64) payload.paymentSlip = slipFileBase64;
+
+      const addressForProfile = selectedDeliveryMode === 'doorstep'
+        ? document.getElementById('doorstepAddressInput').value.trim()
+        : (verifiedUser.lastAddress || '');
+      const coordsForProfile = (selectedDeliveryMode === 'doorstep' && lastDeliveryCoords && lastDeliveryCoords.lat)
+        ? { lat: lastDeliveryCoords.lat, lng: lastDeliveryCoords.lng }
+        : (verifiedUser.lastCoords || null);
+
+      await orderRef.set(payload);
+        takeawayCart = [];
+        renderCart();
+        slipFileBase64 = '';
+        document.getElementById('kitchenNoteInput').value = '';
+        persistTakeawayUser({
+          name: verifiedUser.name,
+          phone: verifiedUser.phone,
+          email: verifiedUser.email || '',
+          lastAddress: addressForProfile || verifiedUser.lastAddress || '',
+          lastCoords: coordsForProfile
+        });
+        saveCustomerProfile(verifiedUser, {
+          lastAddress: addressForProfile,
+          lastLandmark: lastGeocodedLandmark || '',
+          coords: coordsForProfile,
+          orderId
+        }).catch(() => {});
+        setCheckoutModalOpen(false);
+        window.rememberOrderKey(orderRef.key);
+        var placedKey = orderRef.key;
+        function continueAfterFeedback() {
+          try {
+            if (selectedDoorstepPay === 'payhere' && typeof window.startPayHereCheckout === 'function') {
+              window.startPayHereCheckout(placedKey).catch(function (payErr) {
+                alert((payErr && payErr.message) || 'PayHere open වුණේ නැහැ. Tracker එකෙන් Pay now ඔබන්න.');
+                window.location.href = '/order.html?id=' + encodeURIComponent(placedKey);
+              });
+              return;
+            }
+          } catch (payErr) {
+            alert((payErr && payErr.message) || 'PayHere open වුණේ නැහැ. Tracker එකෙන් Pay now ඔබන්න.');
+          }
+          window.location.href = '/order.html?id=' + encodeURIComponent(placedKey);
+        }
+        try {
+          if (typeof window.showExperienceFeedbackModal === 'function') {
+            window.showExperienceFeedbackModal({
+              orderKey: placedKey,
+              orderId: orderId,
+              name: (verifiedUser && verifiedUser.name) || '',
+              phone: (verifiedUser && verifiedUser.phone) || '',
+              source: 'takeaway'
+            }, continueAfterFeedback);
+            return;
+          }
+        } catch (modalErr) {}
+        continueAfterFeedback();
+      } catch (err) {
+        var code = (err && (err.code || err.message)) || '';
+        window.unlockButton(proceedBtn);
+        alert('Order submit failed. ' + code + '\nInternet on කරලා ආයෙන් Place order ඔබන්න.');
+      } finally {
+        orderSubmitting = false;
+      }
+    }
+
+    function listenToMyOrders() {
+      window.ensureCustomerAuth().then(function () {
+        const attached = {};
+        function attach(key) {
+          if (!key || attached[key]) return;
+          attached[key] = true;
+          db.ref('orders/' + key).on('value', function (snap) {
+            if (snap.exists()) lastOrdersCache[key] = snap.val();
+            else delete lastOrdersCache[key];
+            renderMyActiveOrder();
+          }, function (err) {
+            try { db.ref('orders/' + key).off(); } catch (e) {}
+            delete attached[key];
+            if (typeof window.forgetOrderKey === 'function') window.forgetOrderKey(key);
+            if (typeof window.onDbListenError === 'function') window.onDbListenError(err, { optional: true });
+          });
+        }
+        window.getStoredOrderKeys().forEach(attach);
+        const last = localStorage.getItem('peoples_last_order_key');
+        if (last) attach(last);
+        const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
+        if (!uid) {
+          renderMyActiveOrder();
+          return;
+        }
+        db.ref('customer_orders/' + uid).on('value', function (snap) {
+          Object.keys(snap.val() || {}).forEach(attach);
+          renderMyActiveOrder();
+        }, function (err) {
+          if (typeof window.onDbListenError === 'function') window.onDbListenError(err, { optional: true });
+        });
+      }).catch(function () {
+        renderMyActiveOrder();
+      });
+    }
+
+    function getMyActiveOrderKeys() {
+      const orders = lastOrdersCache || {};
+      return Object.keys(orders).reverse().filter(function (k) {
+          const o = orders[k];
+        return isMyTakeawayOrder(o) && o.status !== 'PickedUp' && o.status !== 'Settled' && !o.customerDismissed && !o.customerHidden;
+      });
+    }
+
+    function trackerHtml(status, order) {
+      const doorstep = window.isDoorstepOrder ? window.isDoorstepOrder(order) : true;
+      if (!doorstep) {
+        const labels = [t('ordered'), t('kitchen'), t('ready'), t('delivered')];
+        let step = trackerStep(status);
+        if (status === 'PickedUp' || status === 'Settled' || status === 'Dispatched' || status === 'Arrived') step = 3;
+        return '<div class="grid grid-cols-4 gap-1 text-center">' + labels.map(function (label, i) {
+          const on = i <= step;
+          const current = i === step;
+          return '<div class="rounded-xl py-1.5 ' + (current ? 'bg-purple-900 text-white' : (on ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-100 text-slate-400')) + '"><div class="text-[9px] font-black">' + label + '</div></div>';
+        }).join('') + '</div>';
+      }
+      const labels = [t('ordered'), t('kitchen'), t('ready'), t('delivery'), t('delivered')];
+      const flags = (window.orderTrackerFlags && window.orderTrackerFlags(order)) || {};
+      const on = [!!flags.ordered, !!flags.kitchen, !!flags.ready, !!flags.delivery, !!flags.delivered];
+      let current = 0;
+      for (let i = 0; i < on.length; i++) {
+        if (on[i]) current = i;
+      }
+      return '<div class="grid grid-cols-5 gap-1 text-center">' + labels.map(function (label, i) {
+        const lit = on[i];
+        const isCurrent = lit && i === current;
+        return '<div class="rounded-xl py-1.5 ' + (isCurrent ? 'bg-purple-900 text-white' : (lit ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-100 text-slate-400')) + '"><div class="text-[9px] font-black">' + label + '</div></div>';
+      }).join('') + '</div>';
+    }
+
+    function paymentBoxHtml(order, safeKey) {
+      const pay = window.normalizePayment(order);
+      const arrived = order.status === 'Arrived' || order.status === 'Dispatched';
+      const terminal = order.status === 'PickedUp' || order.status === 'Settled' || order.status === 'Cancelled' || order.status === 'Rejected';
+      const needsBank = pay.method === 'bank' && pay.status !== 'paid' && !terminal;
+      if (pay.method === 'shop' && pay.status !== 'paid' && !terminal) {
+        return '<div class="pay-choice"><span class="pay-choice-icon"><i class="fa-solid fa-store"></i></span><div class="min-w-0"><p class="text-[12px] font-black text-slate-900">Pay at the shop · Rs. ' + (order.total || 0).toLocaleString() + '</p><p class="text-[11px] text-slate-600 font-semibold">Pay at the counter when you collect.</p></div></div>';
+      }
+      if (pay.method === 'cash' && arrived && pay.status !== 'paid') {
+        return '<div class="pay-choice is-cash"><span class="pay-choice-icon"><i class="fa-solid fa-money-bill-wave"></i></span><div class="min-w-0"><p class="text-[12px] font-black text-slate-900">Cash on delivery · Rs. ' + (order.total || 0).toLocaleString() + '</p><p class="text-[11px] text-slate-600 font-semibold">Pay the rider when the order arrives.</p></div></div>';
+      }
+      if (pay.method === 'payhere' && pay.status !== 'paid' && !terminal) {
+        return '<div class="bg-sky-50 border border-sky-200 p-3 rounded-2xl space-y-2"><p class="text-[11px] font-black text-sky-950">PayHere — card / LankaQR එකෙන් ගෙවන්න. Paid උනාම kitchen start වෙනවා.</p><button type="button" onclick="window.startPayHereCheckout(\'' + safeKey + '\').catch(function(err){alert((err&&err.message)||\'PayHere open වුණේ නැහැ.\')})" class="w-full bg-sky-700 text-white font-black py-2 rounded-xl text-[11px]">Pay now — PayHere</button></div>';
+      }
+      if (!needsBank) return '';
+      const hint = pay.status === 'pending_verify'
+        ? 'Slip එක cashier බලනවා. Confirm උනාම විතරයි rider යන්නේ.'
+        : (pay.status === 'rejected' ? 'Slip එක reject උනා. ආයෙන් upload කරන්න.' : 'Bank slip එක මෙතනින් දාන්න. Confirm උනාම rider යනවා.');
+      const btn = pay.status === 'pending_verify'
+        ? ''
+        : '<input type="file" accept="image/*" class="hidden" onchange="uploadSlipForOrder(\'' + safeKey + '\', this)">' +
+          '<button type="button" onclick="this.previousElementSibling.click()" class="w-full bg-purple-900 text-white font-black py-2 rounded-xl text-[11px]">Upload bank slip</button>';
+      return '<div class="bg-amber-50 border border-amber-200 p-3 rounded-2xl space-y-2"><p class="text-[11px] font-black text-amber-950">' + hint + '</p><div class="text-[10px] font-bold text-amber-900">' + escapeCartHtml(bankInfoText()) + '</div>' + btn + '</div>';
+    }
+
+    function buildActiveOrderCard(key, order) {
+      const safeKey = String(key).replace(/'/g, "\\'");
+      const status = order.status;
+      if (status === 'Rejected' || status === 'Cancelled') {
+        const title = status === 'Cancelled' ? 'Order Cancelled' : 'Payment Rejected';
+        const desc = status === 'Cancelled'
+          ? (order.cancelledBy === 'customer' ? 'ඔබ මේ ඇණවුම cancel කළා. අලුතින් order එකක් දාන්න පුළුවන්.' : 'Shop එකෙන් මේ ඇණවුම cancel කරලා තියෙනවා.')
+          : 'කැෂියර්වරයා විසින් ගෙවීම ප්‍රතික්ෂේප කර ඇත.';
+        return '<div class="p-4 bg-white rounded-3xl border border-rose-200 shadow-md space-y-2">' +
+          '<div class="font-black text-sm">#' + escapeCartHtml(order.orderId) + ' · ' + title + '</div>' +
+          '<p class="text-xs text-slate-600">' + desc + '</p>' +
+          '<button type="button" onclick="dismissRejectedOrder(\'' + safeKey + '\')" class="w-full bg-rose-600 text-white font-black py-2 rounded-xl text-xs">OK / Try Again</button>' +
+          '</div>';
+      }
+      if (status === 'PendingPayment') {
+        return '<div class="p-4 bg-white rounded-3xl border border-amber-300 shadow-md space-y-2 text-center">' +
+          '<div class="font-black text-sm">#' + escapeCartHtml(order.orderId) + '</div>' +
+          '<p class="text-xs text-slate-600">ගෙවීම confirm වෙනකම් ඉන්න. තව order එකක් දාන්නත් පුළුවන්.</p>' +
+          paymentBoxHtml(order, safeKey) +
+          '<button type="button" onclick="customerCancelOrder(\'' + safeKey + '\')" class="w-full bg-white border border-rose-300 text-rose-700 font-black py-2 rounded-xl text-xs">✕ Cancel this order</button>' +
+          '</div>';
+      }
+      const itemsHtml = window.orderItemRows(order).map(function (i) {
+        return '<div class="py-0.5 text-slate-800"><div class="flex justify-between"><span>' + escapeCartHtml(i.qty + 'x ' + i.name) + '</span><span class="font-bold">Rs. ' + ((i.price * i.qty) || 0).toLocaleString() + '</span></div>' +
+          (i.note ? '<div class="text-[10px] text-amber-800 font-bold">📝 ' + escapeCartHtml(i.note) + '</div>' : '') + '</div>';
+      }).join('') + (order.kitchenNote ? '<div class="text-[10px] text-amber-900 font-black pt-1">Kitchen: ' + escapeCartHtml(order.kitchenNote) + '</div>' : '');
+      const addr = (window.orderDeliveryAddress && window.orderDeliveryAddress(order)) || '';
+      const km = (window.orderDistanceLabel && window.orderDistanceLabel(order)) || '';
+      const locHtml = addr
+        ? '<div class="text-[10px] font-bold text-slate-700 bg-slate-50 border p-2 rounded-xl">🏠 ' + escapeCartHtml(addr) + (km ? '<div class="text-emerald-800 font-black mt-0.5">📏 ' + escapeCartHtml(km) + '</div>' : '') + '</div>'
+        : '';
+      const canCancel = customerCanCancel(order);
+      const vehHtml = order.deliveryOption === 'Pick up by PickMe Driver'
+        ? '<div class="bg-purple-50 p-3 rounded-2xl border space-y-1.5"><label class="block text-[10px] font-black text-purple-950 uppercase">🚗 PickMe Vehicle Number</label><div class="flex gap-1.5"><input id="veh-' + safeKey + '" type="text" value="' + escapeCartHtml(order.vehicleNumber || '') + '" placeholder="e.g. CAB-1234" class="flex-grow border rounded-xl px-2.5 py-1 text-xs font-black uppercase bg-white outline-none"><button onclick="saveCustomerVehicleNumber(\'' + safeKey + '\')" class="bg-purple-900 text-white font-black px-4 py-1 rounded-xl text-xs">Save</button></div></div>'
+        : '';
+      const ready = status === 'Ready';
+      return '<div class="p-4 bg-white rounded-3xl border border-purple-200 shadow-md space-y-3">' +
+        '<div class="flex justify-between items-start border-b pb-2">' +
+          '<div><span class="text-[10px] font-black text-purple-900 uppercase block">Active Order</span><span class="font-mono text-xs font-black text-slate-800">#' + escapeCartHtml(order.orderId) + '</span></div>' +
+          '<div class="flex items-center gap-2">' +
+            '<span class="px-2.5 py-0.5 rounded-full text-[10px] font-black ' + (ready ? 'bg-emerald-600 text-white animate-pulse' : 'bg-amber-100 text-amber-900') + '">' + escapeCartHtml(status) + '</span>' +
+            '<button onclick="openCustomerChat(\'' + safeKey + '\')" class="bg-purple-900 text-white px-3 py-1 rounded-xl text-[11px] font-bold shadow">💬 Chat</button>' +
+          '</div>' +
+        '</div>' +
+        trackerHtml(status, order) + locHtml +
+        '<div class="space-y-1.5 text-xs"><div class="font-black text-slate-700 text-[11px] uppercase">Ordered Items:</div>' +
+        '<div class="max-h-28 overflow-y-auto space-y-1 divide-y custom-scrollbar pr-1">' + itemsHtml + '</div>' +
+        '<div class="pt-2 border-t space-y-1 font-bold text-slate-600 text-[11px]">' +
+          '<div class="flex justify-between"><span>Food Subtotal:</span> <span>Rs. ' + (order.foodTotal || 0).toLocaleString() + '</span></div>' +
+          '<div class="flex justify-between"><span>Delivery Charge:</span> <span>Rs. ' + (order.deliveryFee || 0).toLocaleString() + '</span></div>' +
+          '<div class="flex justify-between font-black text-purple-950 text-xs pt-1 border-t"><span>Total Cost:</span> <span>Rs. ' + (order.total || 0).toLocaleString() + '</span></div>' +
+        '</div></div>' + vehHtml +
+        '<div class="p-3 bg-purple-50/80 rounded-2xl text-center space-y-1 border"><span class="text-[10px] font-bold text-slate-500 uppercase">Estimated Ready Time</span>' +
+        '<div class="tk-countdown text-2xl font-black text-purple-950" data-ready-ts="' + (order.readyTimestamp || 0) + '" data-status="' + escapeCartHtml(status) + '">Calculating...</div></div>' +
+        (canCancel
+          ? '<button type="button" onclick="customerCancelOrder(\'' + safeKey + '\')" class="w-full bg-white border border-rose-300 text-rose-700 font-black py-2.5 rounded-xl text-xs">✕ Cancel this order</button>'
+          : '<p class="text-[10px] text-slate-500 font-bold text-center">' + t('cancelHint') + '</p>') +
+        paymentBoxHtml(order, safeKey) +
+      '</div>';
+    }
+
+    function renderMyActiveOrder() {
+      const orders = lastOrdersCache || {};
+      if (isInitialLoaded) {
+        Object.keys(orders).forEach(function (k) {
+          const o = orders[k];
+          if (!isMyTakeawayOrder(o)) return;
+          const prev = previousMyStatuses[k];
+          if (prev && prev !== o.status && window.peoplesNotifyCopy) {
+            const c = window.peoplesNotifyCopy(o, o.status);
+            window.peoplesNotifyOnce(k, o.status, c.title, c.body, '/order.html?id=' + encodeURIComponent(k));
+          }
+          if (prev && prev !== 'PickedUp' && o.status === 'PickedUp' && prev !== 'Arrived') {
+            playDoorbell();
+          }
+        });
+      }
+      previousMyStatuses = {};
+      Object.keys(orders).forEach(function (k) {
+        if (isMyTakeawayOrder(orders[k])) previousMyStatuses[k] = orders[k].status;
+      });
+      const keys = getMyActiveOrderKeys();
+      const wrap = document.getElementById('activeOrdersWrap');
+        const waitingCard = document.getElementById('waitingConfirmationCard');
+        const cartBar = document.getElementById('cartBottomBar');
+      if (waitingCard) waitingCard.classList.add('hidden');
+      if (cartBar) cartBar.classList.remove('hidden');
+
+      if (!wrap) {
+        isInitialLoaded = true;
+            return;
+          }
+
+      if (!keys.length) {
+        wrap.innerHTML = '';
+        wrap.classList.add('hidden');
+        if (chatListenKey) stopChatListener();
+        currentActiveOrderKey = null;
+        hasPlayedReadySound = false;
+        hasPlayedDoorbell = false;
+        clearInterval(countdownInterval);
+        renderPostDeliveryCard();
+        isInitialLoaded = true;
+            return;
+      }
+
+      wrap.classList.remove('hidden');
+      if (keys.indexOf(currentActiveOrderKey) === -1) currentActiveOrderKey = keys[0];
+      wrap.innerHTML = keys.map(function (k) {
+        const o = orders[k];
+        const ready = o.status === 'Ready';
+        return '<a href="/order.html?id=' + encodeURIComponent(k) + '" class="block p-4 bg-white rounded-3xl border border-purple-200 shadow-md space-y-2">' +
+          '<div class="flex justify-between items-center">' +
+            '<div><div class="text-[10px] font-black uppercase text-purple-800">Live order</div>' +
+            '<div class="font-mono text-sm font-black">#' + escapeCartHtml(o.orderId || '') + '</div></div>' +
+            '<span class="px-2.5 py-1 rounded-full text-[10px] font-black ' + (ready ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-900') + '">' + escapeCartHtml(o.status) + '</span>' +
+          '</div>' +
+          '<p class="text-[11px] font-bold text-slate-600">Full tracker, chat සහ cancel — වෙනම page එකේ.</p>' +
+          '<div class="relative text-center bg-purple-900 text-white font-black py-2.5 rounded-xl text-xs">Track order →' + window.chatBadgeHtml(k, window.chatWatch(k, o.chats, 'customer', false)) + '</div>' +
+        '</a>';
+      }).join('');
+
+      const anyReady = keys.some(function (k) { return orders[k].status === 'Ready'; });
+      const anyArrived = keys.some(function (k) { return orders[k].status === 'Arrived'; });
+      if (anyReady) {
+            if (!hasPlayedReadySound) { playReadySoundAlert(); hasPlayedReadySound = true; }
+          } else {
+            hasPlayedReadySound = false;
+      }
+      const arrivedBox = document.getElementById('arrivedAlertBox');
+      if (anyArrived) {
+        if (arrivedBox) arrivedBox.classList.remove('hidden');
+            if (!hasPlayedDoorbell) { playDoorbell(); hasPlayedDoorbell = true; }
+          } else {
+            hasPlayedDoorbell = false;
+        if (arrivedBox) arrivedBox.classList.add('hidden');
+      }
+
+      if (chatListenKey && keys.indexOf(chatListenKey) === -1) stopChatListener();
+      startCountdowns();
+      renderPostDeliveryCard();
+        isInitialLoaded = true;
+    }
+
+    function bankInfoText() {
+      const p = restaurantProfile || {};
+      return [(p.bankName || 'Bank'), p.accNo ? ('Acc: ' + p.accNo) : '', p.accName || ''].filter(Boolean).join(' | ');
+    }
+
+    function hidePostDeliveryCard() {
+      const el = document.getElementById('postDeliveryCard');
+      if (el) el.classList.add('hidden');
+      postDeliveryKey = '';
+    }
+
+    function findPostDeliveryOrder() {
+      const orders = lastOrdersCache || {};
+      const cutoff = Date.now() - (48 * 60 * 60 * 1000);
+      return Object.keys(orders).reverse().find(function (k) {
+        const o = orders[k];
+        if (!isMyTakeawayOrder(o) || o.customerHidden || o.customerDismissed) return false;
+        if (o.status !== 'PickedUp') return false;
+        if ((o.timestamp || 0) < cutoff) return false;
+        const pay = window.normalizePayment(o);
+        const needsPay = o.payment && pay.method === 'bank' && pay.timing === 'after' && pay.status !== 'paid';
+        const needsFb = !o.feedback && !o.feedbackSkipped;
+        return needsPay || needsFb;
+      }) || '';
+    }
+
+    function renderPostDeliveryCard() {
+      const card = document.getElementById('postDeliveryCard');
+      const key = findPostDeliveryOrder();
+      postDeliveryKey = key;
+      if (!key || !card) {
+        hidePostDeliveryCard();
+        return;
+      }
+      const o = lastOrdersCache[key];
+      const pay = window.normalizePayment(o);
+      const hint = document.getElementById('postPayHint');
+      const slipBox = document.getElementById('postSlipBox');
+      const bankInfo = document.getElementById('postBankInfo');
+      const fbBox = document.getElementById('feedbackBox');
+      card.classList.remove('hidden');
+      const needsPay = o.payment && pay.method === 'bank' && pay.timing === 'after' && pay.status !== 'paid';
+      if (hint) {
+        if (needsPay && pay.status === 'pending_verify') hint.innerText = 'Slip එක cashier බලනවා. Confirm උනාම අරුන්.';
+        else if (needsPay && pay.status === 'rejected') hint.innerText = 'Slip reject උනා. නිවැරදි slip එකක් ආයෙන් දාන්න.';
+        else if (needsPay) hint.innerText = 'Bank ට Rs. ' + (o.total || 0).toLocaleString() + ' දාලා slip එක upload කරන්න.';
+        else if (pay.method === 'cash') hint.innerText = 'Cash rider ට ගෙවුවා නම් thanks. Feedback එකක් දෙන්න.';
+        else hint.innerText = 'Order එක delivered. Feedback එකක් දෙන්න.';
+      }
+      if (slipBox) slipBox.classList.toggle('hidden', !needsPay || pay.status === 'pending_verify');
+      if (bankInfo) bankInfo.innerText = bankInfoText();
+      if (fbBox) fbBox.classList.toggle('hidden', !!(needsPay && pay.status !== 'paid'));
+    }
+
+    function uploadSlipForOrder(key, input) {
+      if (!input || !input.files || !input.files[0] || !key) return alert('Slip එකක් තෝරන්න.');
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const slip = e.target.result;
+        const order = lastOrdersCache[key] || {};
+        const pay = window.normalizePayment(order);
+        db.ref('orders/' + key).update({
+          paymentSlip: slip,
+          payment: {
+            method: 'bank',
+            timing: pay.timing || 'before',
+            status: 'pending_verify',
+            slip: slip,
+            uploadedAt: Date.now()
+          }
+        }).then(function () {
+          input.value = '';
+          alert('Slip එක cashier ට යැව්වා.');
+        }).catch(function () {
+          alert('Upload failed. ආයෙන් try කරන්න.');
+        });
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+
+    function uploadAfterDeliverySlip() {
+      const input = document.getElementById('postSlipInput');
+      uploadSlipForOrder(postDeliveryKey, input);
+    }
+
+    function setFeedbackStars(n) {
+      feedbackStars = n;
+      document.querySelectorAll('.fb-star').forEach(function (el, i) {
+        el.innerText = i < n ? '★' : '☆';
+        el.className = 'fb-star text-xl ' + (i < n ? 'text-amber-400' : 'text-slate-300');
+      });
+    }
+
+    function submitFeedback() {
+      if (!postDeliveryKey) return;
+      if (!feedbackStars) return alert('Stars ටිකක් තෝරන්න.');
+      const comment = (document.getElementById('feedbackComment').value || '').trim().slice(0, 200);
+      db.ref('orders/' + postDeliveryKey).update({
+        feedback: {
+          stars: feedbackStars,
+          comment: comment,
+          at: Date.now(),
+          name: (verifiedUser && verifiedUser.name) || '',
+          phone: (verifiedUser && verifiedUser.phone) || ''
+        }
+      }).then(function () {
+        feedbackStars = 0;
+        document.getElementById('feedbackComment').value = '';
+        renderPostDeliveryCard();
+        alert('Thanks for the feedback!');
+      }).catch(window.alertDbError);
+    }
+
+    function skipFeedback() {
+      if (!postDeliveryKey) return;
+      db.ref('orders/' + postDeliveryKey).update({ feedbackSkipped: true }).then(function () {
+        renderPostDeliveryCard();
+      }).catch(window.alertDbError);
+    }
+
+    function dismissRejectedOrder(key) {
+      const orderKey = key || currentActiveOrderKey;
+      if (!orderKey) return;
+      db.ref('orders/' + orderKey).update({ customerDismissed: true }).then(function () {
+        if (currentActiveOrderKey === orderKey) currentActiveOrderKey = null;
+      });
+    }
+
+    function openHistoryModal() {
+      if (!isSignedIn()) {
+        pendingAfterAuth = 'history';
+        openAuthModal();
+        return;
+      }
+      window.ensureCustomerAuth().then(function () {
+        const keys = window.getStoredOrderKeys().slice();
+        const last = localStorage.getItem('peoples_last_order_key');
+        if (last && keys.indexOf(last) === -1) keys.push(last);
+        const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
+        const renderHistory = function (unique) {
+          Promise.all(unique.map(function (k) { return db.ref('orders/' + k).once('value'); })).then(function (snaps) {
+            const orders = {};
+            snaps.forEach(function (snap, i) {
+              if (snap.exists()) orders[unique[i]] = snap.val();
+            });
+            lastOrdersCache = Object.assign({}, lastOrdersCache, orders);
+            const myPast = unique.slice().reverse().filter(k => orders[k] && isMyTakeawayOrder(orders[k]) && !orders[k].customerHidden);
+        const list = document.getElementById('historyOrdersList');
+        list.innerHTML = myPast.length === 0 ? '<p class="text-center text-slate-400 text-xs py-6">No past orders found.</p>' : 
+          myPast.map(k => {
+            const o = orders[k];
+                let itemsText = escapeCartHtml(window.orderItemRows(o).map(i => `${i.qty}x ${i.name}${i.note ? ' (' + i.note + ')' : ''}`).join(', '));
+            return `
+              <div class="bg-slate-50 border p-3 rounded-2xl space-y-1">
+                <div class="flex justify-between items-center text-xs font-black">
+                  <span class="text-purple-950">${escapeCartHtml(o.orderId)}</span>
+                  <span class="px-2 py-0.5 rounded text-[9px] ${o.status === 'PickedUp' ? 'bg-emerald-100 text-emerald-900' : 'bg-amber-100 text-amber-900'}">${escapeCartHtml(o.status)}</span>
+                </div>
+                <p class="text-[10px] text-slate-600">${itemsText}</p>
+                <div class="flex justify-between text-[10px] text-slate-400 font-bold pt-1 border-t">
+                  <span>Rs. ${(o.total || 0).toLocaleString()}</span>
+                  <span>${new Date(o.timestamp).toLocaleString()}</span>
+                </div>
+                ${(o.status === 'PickedUp' || o.status === 'Cancelled' || o.status === 'Rejected') ? `<div class="flex gap-2 mt-1"><button onclick="reorderPastOrder(${jsCallArg(k)})" class="flex-1 bg-purple-900 text-white font-black py-1.5 rounded-xl text-[11px]">↻ Order again</button><button onclick="customerDeleteOrder(${jsCallArg(k)})" class="flex-1 bg-white border border-rose-300 text-rose-700 font-black py-1.5 rounded-xl text-[11px]">Delete</button></div>` : `<a href="/order.html?id=${encodeURIComponent(k)}" class="block mt-1 text-center bg-purple-900 text-white font-black py-1.5 rounded-xl text-[11px]">Track order →</a>`}
+              </div>
+            `;
+          }).join('');
+        document.getElementById('historyModal').classList.remove('hidden');
+          }).catch(function () {
+            alert('History load failed. ආයෙන් try කරන්න.');
+          });
+        };
+        if (!uid) return renderHistory(keys);
+        db.ref('customer_orders/' + uid).once('value').then(function (snap) {
+          Object.keys(snap.val() || {}).forEach(function (k) {
+            if (keys.indexOf(k) === -1) keys.push(k);
+          });
+          renderHistory(keys);
+        }).catch(function () { renderHistory(keys); });
+      });
+    }
+
+    function customerCanCancel(order) {
+      return window.customerCanCancelOrder ? window.customerCanCancelOrder(order) : false;
+    }
+
+    function customerCancelOrder(key) {
+      const orderKey = key || currentActiveOrderKey;
+      if (!orderKey) return;
+      const order = lastOrdersCache[orderKey];
+      if (!order || !customerCanCancel(order)) {
+        return alert(t('cancelHint'));
+      }
+      if (!confirm('මේ order එක cancel කරන්නද?')) return;
+      db.ref('orders/' + orderKey).update({
+        status: 'Cancelled',
+        cancelledAt: Date.now(),
+        cancelledBy: 'customer'
+      }).catch(window.alertDbError);
+    }
+
+    function customerDeleteOrder(key) {
+      const order = lastOrdersCache[key];
+      if (!order) return;
+      if (order.status !== 'Cancelled' && order.status !== 'Rejected' && order.status !== 'PickedUp') {
+        return alert('Live order එක delete කරන්න බැහැ. මුලින් cancel කරන්න.');
+      }
+      if (!confirm('මේ order එක history එකෙන් remove කරන්නද?')) return;
+      db.ref('orders/' + key).update({ customerHidden: true, customerDismissed: true }).then(function () {
+        openHistoryModal();
+      }).catch(window.alertDbError);
+    }
+
+    function reorderPastOrder(key) {
+      const o = lastOrdersCache[key];
+      const pastItems = window.orderItemRows(o);
+      if (!pastItems.length) return alert('මේ order එකේ items නැහැ.');
+      takeawayCart = pastItems.map(function (i) {
+        return { name: i.name, price: i.price, qty: i.qty || 1, note: i.note || '' };
+      });
+      renderCart();
+      document.getElementById('historyModal').classList.add('hidden');
+      alert('Cart එකට add උනා. Checkout ඔබන්න.');
+    }
+
+    function trackerStep(status) {
+      switch (status) {
+        case 'PendingPayment':
+        case 'Received':
+        case 'WaiterRequested':
+          return 0;
+        case 'Preparing':
+          return 1;
+        case 'Ready':
+          return 2;
+        case 'Dispatched':
+        case 'Arrived':
+          return 3;
+        case 'PickedUp':
+        case 'Settled':
+          return 4;
+        default: {
+          const _exhaustive = status;
+          return _exhaustive ? 0 : 0;
+        }
+      }
+    }
+
+
+    function saveCustomerVehicleNumber(key) {
+      const orderKey = key || currentActiveOrderKey;
+      const input = document.getElementById('veh-' + orderKey);
+      const val = input ? input.value.trim() : '';
+      if (!val || !orderKey) return alert('වාහන අංකය ඇතුළත් කරන්න.');
+      db.ref('orders/' + orderKey).update({ vehicleNumber: val }).then(function () { alert('වාහන අංකය යාවත්කාලීන විය!'); }).catch(window.alertDbError);
+    }
+
+    function startCountdowns() {
+      clearInterval(countdownInterval);
+      function update() {
+        document.querySelectorAll('.tk-countdown').forEach(function (el) {
+          const status = el.getAttribute('data-status') || '';
+          if (status === 'Ready') {
+            el.innerText = '🎉 FOOD IS READY!';
+            return;
+          }
+          const target = Number(el.getAttribute('data-ready-ts') || 0);
+          const diff = Math.max(0, target - Date.now());
+        const mins = Math.floor(diff / 60000);
+        const secs = Math.floor((diff % 60000) / 1000);
+          el.innerText = mins + 'm ' + (secs < 10 ? '0' : '') + secs + 's';
+        });
+      }
+      update();
+      countdownInterval = setInterval(update, 1000);
+    }
+
+    function openCustomerChat(key) {
+      currentActiveOrderKey = key;
+      const title = document.getElementById('chatTitle');
+      if (title) title.innerText = '💬 Order chat · Cashier & Rider';
+      document.getElementById('chatDrawer').classList.remove('hidden');
+      listenToChatMessages(key);
+    }
+
+    function toggleChatDrawer() {
+      const drawer = document.getElementById('chatDrawer');
+      if (!drawer) return;
+      drawer.classList.toggle('hidden');
+      if (drawer.classList.contains('hidden')) stopChatListener();
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chatInputMessage');
+      const text = input.value.trim();
+      if (!text || !currentActiveOrderKey) return;
+      db.ref(`orders/${currentActiveOrderKey}/chats`).push(window.chatPush('customer', (verifiedUser && verifiedUser.name) || 'Customer', text)).then(() => input.value = '').catch(window.alertDbError);
+    }
+
+    function toggleAudioRecord() {
+      if (!isRecording) {
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = () => {
+              db.ref(`orders/${currentActiveOrderKey}/chats`).push(window.chatPush('customer', (verifiedUser && verifiedUser.name) || 'Customer', reader.result, 'audio')).catch(window.alertDbError);
+            };
+          };
+          mediaRecorder.start();
+          isRecording = true;
+          document.getElementById('audioRecordStatus').classList.remove('hidden');
+          document.getElementById('recordAudioBtn').className = "bg-rose-600 text-white w-10 h-10 rounded-xl flex items-center justify-center text-sm flex-shrink-0 animate-pulse";
+        }).catch(() => alert('Microphone access denied.'));
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        document.getElementById('audioRecordStatus').classList.add('hidden');
+        document.getElementById('recordAudioBtn').className = "bg-rose-100 text-rose-700 w-10 h-10 rounded-xl flex items-center justify-center text-sm flex-shrink-0";
+      }
+    }
+
+    function stopChatListener() {
+      if (!chatListenKey) return;
+      db.ref('orders/' + chatListenKey + '/chats').off('value');
+      chatListenKey = '';
+    }
+
+    function listenToChatMessages(orderKey) {
+      if (!orderKey) return;
+      if (chatListenKey === orderKey) return;
+      stopChatListener();
+      chatListenKey = orderKey;
+      db.ref(`orders/${orderKey}/chats`).on('value', snap => {
+        const chats = snap.val() || {};
+        window.chatWatch(orderKey, chats, 'customer', true);
+        window.renderChatThread(document.getElementById('chatMessagesContainer'), chats, 'customer');
+      }, function (err) {
+        chatListenKey = '';
+        if (typeof window.onDbListenError === 'function') window.onDbListenError(err, { optional: true });
+      });
+    }
+  </script>
+</body>
+</html>

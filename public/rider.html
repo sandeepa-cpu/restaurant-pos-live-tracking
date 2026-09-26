@@ -1,0 +1,2019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Delivery Rider - Peoples Family Restaurant</title>
+  <link rel="icon" type="image/jpeg" href="LOGO NEW.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="js/firebase-config.js?v=58"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="js/auth-guard.js?v=19"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root { color-scheme: light; }
+    html, body { height: auto; min-height: 100%; overflow-x: hidden; overflow-y: auto; }
+    body { font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; }
+    @keyframes pulseAlert { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.015); } }
+    @keyframes glowPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45); } 50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); } }
+    .new-job-pulse { animation: pulseAlert 1.6s infinite ease-in-out; }
+    .live-dot { animation: glowPulse 1.8s infinite; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    .rider-input { background: #0f172a; border: 1px solid #334155; color: #fff; }
+    .rider-input::placeholder { color: #94a3b8; }
+    .rider-input:focus { outline: none; border-color: #fb7185; box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.25); }
+    .icon-tile {
+      width: 2.2rem; height: 2.2rem; border-radius: 0.8rem;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .calc-key {
+      background: #fff8dc; border: 1px solid #f6e05e; border-radius: 0.9rem;
+      font-weight: 800; font-size: 1.05rem; padding: 0.75rem 0; color: #0f172a;
+    }
+    .pickme-tab { color: #94a3b8; }
+    .pickme-tab.on { color: #0f172a; }
+    .rider-help-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 800; line-height: 1.25;
+      color: #334155; background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 999px; padding: 4px 10px;
+    }
+    #riderJobsView, #riderEarningsView, #riderAccountView {
+      padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+    }
+    .rider-bottom-nav { padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
+    #riderAuthGate.hidden,
+    #startupScreen.hidden,
+    #riderJobsView.hidden,
+    #riderEarningsView.hidden,
+    #riderAccountView.hidden,
+    #chatDrawer.hidden,
+    #newJobLocationBanner.hidden,
+    #riderSoundPanel.hidden,
+    #takenByOthersWrap.hidden,
+    #batchRouteBar.hidden,
+    #riderBikeChip.hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-800 antialiased selection:bg-rose-200" style="background:#f7f8fc;">
+
+  <div id="riderAuthGate" class="fixed inset-0 z-[110] flex flex-col items-center justify-center p-5 overflow-y-auto" style="background: radial-gradient(800px 400px at 50% -10%, #be123c 0%, #020617 42%);">
+    <div class="w-full max-w-sm space-y-4 py-6">
+      <div class="text-center space-y-2">
+        <img src="LOGO NEW.jpg" alt="Peoples Family Restaurant" class="w-16 h-16 rounded-2xl border-2 border-amber-300 object-cover shadow-2xl mx-auto">
+        <p class="text-amber-300 text-[10px] font-black uppercase tracking-[0.2em]">Peoples Family Restaurant</p>
+        <h1 class="text-white font-black text-2xl tracking-tight">Rider Portal</h1>
+        <p class="text-slate-400 text-xs leading-relaxed">Horana deliveries. Login කරලා jobs ගන්න. අලුත් නම් register කරලා admin approve එනකම් ඉන්න.</p>
+      </div>
+
+      <div id="riderLoginPanel" class="bg-white/5 backdrop-blur-md border border-white/10 rounded-[28px] p-5 space-y-3 shadow-2xl">
+        <h2 class="text-white font-black text-[11px] uppercase tracking-wider">Welcome back</h2>
+        <input id="loginPhone" type="tel" placeholder="Phone number" class="rider-input w-full rounded-2xl px-4 py-3 text-sm">
+        <input id="loginPass" type="password" placeholder="Password" class="rider-input w-full rounded-2xl px-4 py-3 text-sm" onkeypress="if(event.key==='Enter') riderLogin()">
+        <p id="loginError" class="hidden text-[11px] text-rose-300 font-bold"></p>
+        <button onclick="riderLogin()" class="w-full bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 hover:to-rose-400 text-white font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-rose-900/40">Login & Go</button>
+        <button onclick="showRiderAuthPanel('register')" class="w-full text-amber-200 text-[12px] font-bold">Account නැද්ද? Register කරන්න</button>
+      </div>
+
+      <div id="riderRegisterPanel" class="hidden bg-white/5 backdrop-blur-md border border-white/10 rounded-[28px] p-5 space-y-3 shadow-2xl">
+        <h2 class="text-white font-black text-[11px] uppercase tracking-wider">New rider</h2>
+        <input id="regName" type="text" placeholder="Full name" class="rider-input w-full rounded-2xl px-4 py-3 text-sm">
+        <input id="regPhone" type="tel" placeholder="Phone number" class="rider-input w-full rounded-2xl px-4 py-3 text-sm">
+        <input id="regBike" type="text" placeholder="Bike number (e.g. WP CAB-1234)" class="rider-input w-full rounded-2xl px-4 py-3 text-sm">
+        <input id="regPass" type="password" placeholder="Password (min 4)" class="rider-input w-full rounded-2xl px-4 py-3 text-sm">
+        <input id="regPass2" type="password" placeholder="Confirm password" class="rider-input w-full rounded-2xl px-4 py-3 text-sm">
+        <p id="regError" class="hidden text-[11px] text-rose-300 font-bold"></p>
+        <button onclick="riderRegister()" class="w-full bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black py-3.5 rounded-2xl text-sm">Register — wait for admin</button>
+        <button onclick="showRiderAuthPanel('login')" class="w-full text-amber-200 text-[12px] font-bold">Already have account? Login</button>
+      </div>
+
+      <div id="riderPendingPanel" class="hidden bg-white/5 backdrop-blur-md border border-amber-400/30 rounded-[28px] p-6 text-center space-y-3 shadow-2xl">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-amber-400/20 text-amber-300 flex items-center justify-center text-2xl">⏳</div>
+        <h2 class="text-white font-black text-sm">Admin approval එනකම් ඉන්න</h2>
+        <p id="pendingRiderHint" class="text-slate-400 text-xs leading-relaxed">Account එක හැදුණා. Shop admin approve කළාම login වෙන්න පුළුවන්.</p>
+        <button onclick="riderLogout(true)" class="w-full bg-white/10 text-white font-black py-3 rounded-2xl text-xs">Back to login</button>
+      </div>
+
+      <div id="riderBlockedPanel" class="hidden bg-white/5 backdrop-blur-md border border-rose-400/30 rounded-[28px] p-6 text-center space-y-3 shadow-2xl">
+        <div class="w-14 h-14 mx-auto rounded-2xl bg-rose-500/20 text-rose-300 flex items-center justify-center text-2xl">🚫</div>
+        <h2 id="blockedTitle" class="text-white font-black text-sm">Account not active</h2>
+        <p id="blockedHint" class="text-slate-400 text-xs">Admin එකට කතා කරන්න.</p>
+        <button onclick="riderLogout(true)" class="w-full bg-white/10 text-white font-black py-3 rounded-2xl text-xs">Back to login</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="startupScreen" class="hidden fixed inset-0 z-[100] flex flex-col items-center justify-center p-6 text-center" style="background: radial-gradient(800px 400px at 50% -10%, #be123c 0%, #020617 42%);">
+    <img src="LOGO NEW.jpg" alt="" class="w-16 h-16 rounded-2xl border-2 border-amber-300 object-cover shadow-2xl mb-4">
+    <h1 class="text-white font-black text-2xl mb-1">Go Online</h1>
+    <p id="startupRiderName" class="text-amber-300 text-sm font-black mb-2"></p>
+    <p class="text-slate-400 text-xs mb-3 max-w-xs leading-relaxed">Sound on කරලා jobs එනකොට voice alert එක අහන්න. Location සහ collectable amount කියනවා.</p>
+    <div id="riderStartupVolume" class="w-full max-w-xs text-left mb-4"></div>
+    <p id="startupJobHint" class="text-amber-200 text-xs font-black mb-4 min-h-[1rem]">Jobs load වෙනවා…</p>
+    <button onclick="startRiderApp()" class="bg-gradient-to-r from-rose-600 to-rose-500 text-white font-black px-7 py-3.5 rounded-2xl text-sm shadow-xl shadow-rose-900/50 transition active:scale-95 flex items-center gap-2">
+      <i class="fa-solid fa-volume-high"></i> Enable Sound & Go Online
+    </button>
+    <button onclick="riderLogout(true)" class="mt-4 text-slate-400 text-[11px] font-bold">Logout</button>
+  </div>
+
+  <header class="sticky top-0 z-30 text-white px-4 py-3 shadow-lg" style="background: linear-gradient(135deg, #111827 0%, #1f2937 55%, #881337 140%);">
+    <div class="max-w-md mx-auto flex justify-between items-center gap-3">
+      <div class="flex items-center gap-3 min-w-0">
+        <img src="LOGO NEW.jpg" alt="" class="w-10 h-10 rounded-xl border border-amber-300/70 object-cover shadow">
+        <div class="min-w-0">
+          <h1 class="text-[11px] font-black tracking-wide uppercase text-amber-200">Rider</h1>
+          <div class="flex items-center gap-1.5 mt-0.5">
+            <span class="live-dot w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span class="text-[11px] text-white font-bold truncate" id="riderStatusText">Online & Ready</span>
+          </div>
+          <div id="riderBikeChip" class="hidden text-[10px] text-slate-300 font-bold truncate mt-0.5"></div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <button type="button" onclick="toggleRiderSoundPanel()" class="bg-white/10 border border-white/15 text-white px-3 py-2 rounded-xl text-[10px] font-black">Sound</button>
+        <button type="button" onclick="riderLogout(true)" class="bg-white/10 border border-white/15 text-white px-3 py-2 rounded-xl text-[10px] font-black">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="riderSoundPanel" class="hidden max-w-md mx-auto px-4 pt-3">
+    <div id="riderVolumeMount"></div>
+  </div>
+
+  <div id="newJobLocationBanner" class="hidden sticky top-[88px] z-40 max-w-md mx-auto px-4 pt-3">
+    <a id="newJobLocationLink" href="#" target="_blank" rel="noopener" class="block w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-center font-black py-4 rounded-2xl text-sm shadow-2xl animate-pulse">
+      🗺️ TAP TO OPEN CUSTOMER LOCATION
+    </a>
+  </div>
+
+  <main id="riderJobsView" class="max-w-md mx-auto p-4 space-y-5">
+    <div class="grid grid-cols-2 gap-2">
+      <button type="button" onclick="openRiderEarnings()" class="text-left bg-white border border-amber-100 rounded-2xl p-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="text-[9px] font-black uppercase tracking-wider text-amber-700">Cash in hand</div>
+          <div class="icon-tile bg-amber-50 text-amber-500"><i class="fa-solid fa-wallet"></i></div>
+        </div>
+        <div id="riderCashBalance" class="text-xl font-black text-amber-700 mt-1">Rs. 0</div>
+        <div class="text-[9px] font-bold text-slate-400">Shop ට ගෙන්න ඕන</div>
+      </button>
+      <button type="button" onclick="openRiderEarnings()" class="text-left bg-white border border-sky-100 rounded-2xl p-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="text-[9px] font-black uppercase tracking-wider text-sky-700">Today collected</div>
+          <div class="icon-tile bg-sky-50 text-sky-500"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+        </div>
+        <div id="riderCashToday" class="text-xl font-black text-sky-700 mt-1">Rs. 0</div>
+        <div class="text-[9px] font-bold text-slate-400">අද හොයපු ගාන · open</div>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-3 gap-2">
+      <div class="bg-white border border-slate-200 rounded-2xl p-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="text-[9px] font-black uppercase tracking-wider text-slate-400">Available</div>
+          <div class="icon-tile bg-rose-50 text-rose-500"><i class="fa-solid fa-motorcycle"></i></div>
+        </div>
+        <div id="riderLiveCount" class="text-2xl font-black text-slate-900 mt-1">0</div>
+        <div class="text-[9px] font-bold text-slate-400">Take කරන්න</div>
+      </div>
+      <div class="bg-white border border-emerald-100 rounded-2xl p-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="text-[9px] font-black uppercase tracking-wider text-emerald-600">My jobs</div>
+          <div class="icon-tile bg-emerald-50 text-emerald-500"><i class="fa-solid fa-user-check"></i></div>
+        </div>
+        <div id="riderMineCount" class="text-2xl font-black text-emerald-600 mt-1">0</div>
+        <div class="text-[9px] font-bold text-slate-400">මම අරන්</div>
+      </div>
+      <div class="bg-white border border-violet-100 rounded-2xl p-3 shadow-sm">
+        <div class="flex items-center justify-between">
+          <div class="text-[9px] font-black uppercase tracking-wider text-violet-600">Kitchen</div>
+          <div class="icon-tile bg-violet-50 text-violet-500"><i class="fa-solid fa-fire-burner"></i></div>
+        </div>
+        <div id="riderKitchenCount" class="text-2xl font-black text-violet-600 mt-1">0</div>
+        <div class="text-[9px] font-bold text-slate-400">හදනවා</div>
+      </div>
+    </div>
+    
+    <div class="space-y-3">
+      <h2 class="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+        <i class="fa-solid fa-person-biking text-rose-600"></i> Active deliveries
+      </h2>
+      <div class="bg-white p-4 rounded-[24px] border border-white shadow-sm space-y-2">
+        <div class="text-[10px] font-black text-slate-500 uppercase tracking-wider">Maps start point</div>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" id="originShopBtn" onclick="setRouteOrigin('shop')" class="bg-emerald-500 text-slate-950 py-2.5 rounded-xl text-[11px] font-black shadow-sm">Horana shop</button>
+          <button type="button" id="originGpsBtn" onclick="setRouteOrigin('gps')" class="bg-slate-50 border border-slate-200 text-slate-800 py-2.5 rounded-xl text-[11px] font-black">My GPS</button>
+      </div>
+        <div class="flex flex-wrap gap-1.5">
+          <span id="batchOriginHint" class="rider-help-badge">🏪 Shop start · then 5–6 stops</span>
+        </div>
+      </div>
+      <div id="batchRouteBar" class="hidden bg-white border border-slate-200 p-4 rounded-[24px] space-y-2 shadow-sm">
+        <div class="text-[11px] font-black text-slate-800"><i class="fa-solid fa-route text-rose-500 mr-1"></i> Shop එකෙන් collect කරලා selected stops deliver කරන්න</div>
+        <div class="flex justify-between text-xs font-bold text-slate-600">
+          <span id="batchCount">0 orders selected</span>
+          <span id="batchTotal" class="text-rose-600">Rs. 0</span>
+        </div>
+        <div class="flex gap-2">
+          <button type="button" onclick="selectAllActiveJobs()" class="flex-1 bg-slate-50 border border-slate-200 text-slate-700 py-2 rounded-xl text-[10px] font-black">Select all</button>
+          <button type="button" onclick="clearBatchSelection()" class="flex-1 bg-slate-50 border border-slate-200 text-slate-700 py-2 rounded-xl text-[10px] font-black">Clear</button>
+        </div>
+        <button type="button" onclick="takeSelectedOrders()" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-2xl text-xs">
+          <i class="fa-solid fa-hand"></i> Take these orders
+        </button>
+        <button type="button" onclick="openBatchRouteFromShop()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3 rounded-2xl text-xs">
+          <i class="fa-solid fa-map-location-dot"></i> Open Google route: Shop → all selected
+        </button>
+      </div>
+      <div id="takenByOthersWrap" class="hidden space-y-2">
+        <h3 class="text-[11px] font-black text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-user-check"></i> Rider කෙනෙක් අරන්
+        </h3>
+        <p class="text-[10px] font-bold text-slate-500">මේ jobs අනිත් rider කෙනෙක්ගේ. Address / phone මෙතන නැහැ.</p>
+        <div id="takenByOthersList" class="space-y-2"></div>
+      </div>
+      <div id="activeDeliveriesList" class="space-y-4"></div>
+    </div>
+
+    <div class="space-y-3 pt-1">
+      <h2 class="text-[11px] font-black text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
+        <i class="fa-solid fa-utensils text-violet-600"></i> Kitchen — upcoming / Ready
+      </h2>
+      <div class="flex flex-wrap gap-1.5 -mt-1">
+        <span class="rider-help-badge">🍳 Ready stays in My jobs</span>
+        <span class="rider-help-badge">🏠 Hidden only after Delivered</span>
+      </div>
+      <div id="upcomingOrdersList" class="space-y-3">
+        <p class="text-xs text-slate-400 italic bg-white p-4 rounded-2xl border text-center">No upcoming orders.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <section id="riderEarningsView" class="hidden max-w-md mx-auto p-4 space-y-3">
+    <div class="bg-[#FFD100] rounded-[28px] p-4">
+      <p class="text-[10px] font-black uppercase tracking-wider text-slate-800">Today's earnings</p>
+      <p id="riderEarningsDate" class="text-[11px] font-bold text-slate-700"></p>
+      <div id="riderSheetToday" class="text-4xl font-black text-slate-950 mt-1">Rs. 0</div>
+      <p class="text-[11px] font-bold text-slate-800 mt-2">Shop ට ගෙන්න ඕන <span id="riderSheetBalance" class="font-black">Rs. 0</span></p>
+    </div>
+    <div class="grid grid-cols-3 gap-2">
+      <div class="bg-white rounded-2xl p-3 shadow-sm">
+        <div class="text-[9px] font-black uppercase text-slate-400">Trips</div>
+        <div id="riderTripCount" class="text-xl font-black text-slate-900">0</div>
+      </div>
+      <div class="bg-white rounded-2xl p-3 shadow-sm">
+        <div class="text-[9px] font-black uppercase text-amber-700">In hand</div>
+        <div id="riderCashBalanceEarn" class="text-lg font-black text-amber-700">Rs. 0</div>
+      </div>
+      <div class="bg-white rounded-2xl p-3 shadow-sm">
+        <div class="text-[9px] font-black uppercase text-emerald-700">Given</div>
+        <div id="riderCashGiven" class="text-lg font-black text-emerald-700">Rs. 0</div>
+      </div>
+    </div>
+    <div id="riderEarningsList" class="space-y-2"></div>
+    <div class="bg-white rounded-[28px] p-4 space-y-3 shadow-sm">
+      <div class="flex justify-between items-end">
+        <div>
+          <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Cash counter</p>
+          <p class="text-[11px] font-bold text-slate-500">අතේ තියෙන notes count කරන්න</p>
+        </div>
+        <div id="riderCalcDisplay" class="text-3xl font-black text-slate-900">0</div>
+      </div>
+      <div id="riderCalcMatch" class="text-[11px] font-black text-center py-2 rounded-xl bg-slate-50 text-slate-500">Shop ට ගෙන්න ඕන Rs. 0</div>
+      <div class="grid grid-cols-3 gap-2">
+        <button type="button" onclick="riderCalcDigit('1')" class="calc-key">1</button>
+        <button type="button" onclick="riderCalcDigit('2')" class="calc-key">2</button>
+        <button type="button" onclick="riderCalcDigit('3')" class="calc-key">3</button>
+        <button type="button" onclick="riderCalcDigit('4')" class="calc-key">4</button>
+        <button type="button" onclick="riderCalcDigit('5')" class="calc-key">5</button>
+        <button type="button" onclick="riderCalcDigit('6')" class="calc-key">6</button>
+        <button type="button" onclick="riderCalcDigit('7')" class="calc-key">7</button>
+        <button type="button" onclick="riderCalcDigit('8')" class="calc-key">8</button>
+        <button type="button" onclick="riderCalcDigit('9')" class="calc-key">9</button>
+        <button type="button" onclick="riderCalcClear()" class="calc-key text-rose-600">C</button>
+        <button type="button" onclick="riderCalcDigit('0')" class="calc-key">0</button>
+        <button type="button" onclick="riderCalcDigit('00')" class="calc-key">00</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="riderAccountView" class="hidden max-w-md mx-auto p-4 space-y-4">
+    <div class="bg-white rounded-[28px] p-6 shadow-sm text-center space-y-3">
+      <div id="riderAccountAvatar" class="w-20 h-20 mx-auto rounded-full bg-slate-950 text-amber-300 font-black text-3xl flex items-center justify-center">R</div>
+      <div class="space-y-0.5">
+        <h2 id="riderAccountName" class="font-black text-slate-900 text-xl">Rider</h2>
+        <p id="riderAccountPhone" class="text-sm font-bold text-slate-500"></p>
+        <p id="riderAccountBike" class="text-[12px] font-bold text-slate-500"></p>
+      </div>
+      <div class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-800 text-[11px] font-black px-3 py-1 rounded-full"><span class="live-dot w-2 h-2 rounded-full bg-emerald-500"></span> Online</div>
+      <div class="bg-[#FFD100] rounded-2xl px-4 py-3">
+        <p class="text-[10px] font-black uppercase tracking-wider text-slate-800">Cash in hand</p>
+        <div id="riderAccountCash" class="text-3xl font-black text-slate-950 mt-0.5">Rs. 0</div>
+        <p class="text-[11px] font-bold text-slate-800 mt-1">Until cashier confirms</p>
+      </div>
+      <button type="button" onclick="riderLogout(true)" class="w-full bg-rose-600 text-white font-black py-3.5 rounded-2xl text-sm">Logout</button>
+    </div>
+  </section>
+
+  <nav class="rider-bottom-nav fixed bottom-0 left-1/2 -translate-x-1/2 z-40 max-w-md w-full bg-white border-t border-slate-200 px-2 pt-2 grid grid-cols-3">
+    <button type="button" id="tabJobsBtn" onclick="showRiderTab('jobs')" class="pickme-tab on py-1 text-center">
+      <i class="fa-solid fa-motorcycle block text-lg mb-0.5"></i>
+      <span class="text-[10px] font-black">Jobs</span>
+    </button>
+    <button type="button" id="tabEarnBtn" onclick="showRiderTab('earnings')" class="pickme-tab py-1 text-center">
+      <i class="fa-solid fa-wallet block text-lg mb-0.5"></i>
+      <span class="text-[10px] font-black">Earnings</span>
+    </button>
+    <button type="button" id="tabAccBtn" onclick="showRiderTab('account')" class="pickme-tab py-1 text-center">
+      <i class="fa-solid fa-user block text-lg mb-0.5"></i>
+      <span class="text-[10px] font-black">Account</span>
+    </button>
+  </nav>
+
+  <!-- CHAT DRAWER FOR RIDER -->
+  <div id="chatDrawer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col h-[80vh] sm:h-[550px]">
+      <div class="p-4 bg-white text-slate-900 flex justify-between items-center rounded-t-3xl border-b border-slate-100">
+        <div>
+          <h3 id="chatTitle" class="font-black text-sm"><i class="fa-solid fa-comments text-rose-500 mr-1"></i> Order chat · Customer, Cashier, Rider</h3>
+          <a id="chatCallBtn" href="tel:" class="text-[11px] text-emerald-700 font-bold block mt-0.5"><i class="fa-solid fa-phone mr-1"></i>Call customer</a>
+        </div>
+        <button onclick="toggleChatDrawer()" class="bg-slate-50 text-slate-500 font-black w-8 h-8 rounded-xl">✕</button>
+      </div>
+      <div id="chatMessagesContainer" class="flex-grow p-4 overflow-y-auto space-y-3 bg-slate-50 text-xs custom-scrollbar"></div>
+      <div class="p-3 bg-white border-t flex gap-2 items-center">
+        <input id="chatInputMessage" type="text" placeholder="Type to customer & cashier..." class="flex-grow border rounded-xl px-3 py-2 text-xs outline-none bg-slate-50 focus:ring-2 focus:ring-rose-600" onkeypress="if(event.key === 'Enter') sendChatMessage()">
+        <button onclick="sendChatMessage()" class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl text-xs font-black flex-shrink-0 shadow transition">Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const firebaseConfig = window.PEOPLES_FIREBASE_CONFIG;
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const SHOP_ORIGIN = window.PEOPLES_SHOP || { name: 'Horana shop', lat: 6.7190174, lng: 80.0682103 };
+    let routeOriginMode = 'shop';
+    let riderGpsCoords = null;
+    const RESTAURANT_COORDS = { lat: 6.7190174, lng: 80.0682103 };
+    let allOrders = {};
+    let previousIncomingKeys = [];
+    let previousDispatchedKeys = [];
+    let isInitialLoaded = false;
+    let ordersListenerOn = false;
+    let riderBlockedNotice = false;
+    let audioCtx = null;
+    let currentChatOrderKey = null;
+    let selectedBatchKeys = {};
+    let lastActiveJobKeys = [];
+    let lastTakenJobKeys = [];
+    let lastUpcomingJobKeys = [];
+    let previousUpcomingStatus = {};
+    let previousJobStatus = {};
+    const RIDER_ID_KEY = 'pfr_rider_id';
+    const RIDER_NAME_KEY = 'pfr_rider_name';
+    const RIDER_SESSION_KEY = 'pfr_rider_session';
+    let riderAccountUnsub = null;
+
+    function getRiderSession() {
+      try {
+        return JSON.parse(sessionStorage.getItem(RIDER_SESSION_KEY) || 'null');
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function setRiderSession(account) {
+      sessionStorage.setItem(RIDER_SESSION_KEY, JSON.stringify(account));
+      localStorage.setItem(RIDER_ID_KEY, account.id);
+      localStorage.setItem(RIDER_NAME_KEY, account.name);
+    }
+
+    function getRiderId() {
+      const session = getRiderSession();
+      return (session && session.id) || localStorage.getItem(RIDER_ID_KEY) || '';
+    }
+
+    function getRiderName() {
+      const session = getRiderSession();
+      return ((session && session.name) || localStorage.getItem(RIDER_NAME_KEY) || '').trim();
+    }
+
+    function getRiderBike() {
+      const session = getRiderSession();
+      return ((session && session.bikeNumber) || '').trim();
+    }
+
+    function riderInitial(name) {
+      const n = String(name || 'R').trim();
+      return (n.charAt(0) || 'R').toUpperCase();
+    }
+
+    function refreshRiderHeader() {
+      const status = document.getElementById('riderStatusText');
+      const name = getRiderName();
+      const bike = getRiderBike();
+      if (status) status.innerText = 'Online';
+      const initial = riderInitial(name);
+      const accAvatar = document.getElementById('riderAccountAvatar');
+      if (accAvatar) accAvatar.innerText = initial;
+      const bikeChip = document.getElementById('riderBikeChip');
+      if (bikeChip) {
+        if (bike) {
+          bikeChip.classList.remove('hidden');
+          bikeChip.innerText = '🛵 ' + bike;
+        } else {
+          bikeChip.classList.add('hidden');
+          bikeChip.innerText = '';
+        }
+      }
+      const startupName = document.getElementById('startupRiderName');
+      if (startupName) startupName.innerText = name ? ('Hi ' + name) : '';
+      refreshRiderAccount();
+    }
+
+    function riderTrackerHtml(order) {
+      const labels = ['Ordered', 'Kitchen', 'Ready', 'Delivery', 'Delivered'];
+      const flags = (window.orderTrackerFlags && window.orderTrackerFlags(order)) || {};
+      const on = [!!flags.ordered, !!flags.kitchen, !!flags.ready, !!flags.delivery, !!flags.delivered];
+      let current = 0;
+      for (let i = 0; i < on.length; i++) {
+        if (on[i]) current = i;
+      }
+      return '<div class="grid grid-cols-5 gap-1">' + labels.map(function (label, i) {
+        const lit = on[i];
+        const isCurrent = lit && i === current;
+        const cls = isCurrent
+          ? 'bg-rose-600 text-white'
+          : (lit ? 'bg-emerald-100 text-emerald-900' : 'bg-slate-100 text-slate-400');
+        return '<div class="rounded-lg py-1.5 px-0.5 text-center ' + cls + '"><div class="text-[8px] font-black leading-tight">' + label + '</div></div>';
+      }).join('') + '</div>';
+    }
+
+    function riderEmptyState(icon, title, sub) {
+      return '<div class="bg-white/80 border border-white rounded-[24px] p-6 text-center shadow-sm">' +
+        '<div class="text-2xl mb-2">' + icon + '</div>' +
+        '<div class="text-sm font-black text-slate-800">' + title + '</div>' +
+        '<p class="text-[11px] text-slate-500 font-bold mt-1">' + sub + '</p></div>';
+    }
+
+    function setRiderJobCounts(available, mine, kitchen) {
+      const liveEl = document.getElementById('riderLiveCount');
+      const mineEl = document.getElementById('riderMineCount');
+      const kitEl = document.getElementById('riderKitchenCount');
+      if (liveEl) liveEl.innerText = String(available || 0);
+      if (mineEl) mineEl.innerText = String(mine || 0);
+      if (kitEl) kitEl.innerText = String(kitchen || 0);
+    }
+
+    function showRiderAuthPanel(panel) {
+      const login = document.getElementById('riderLoginPanel');
+      const register = document.getElementById('riderRegisterPanel');
+      const pending = document.getElementById('riderPendingPanel');
+      const blocked = document.getElementById('riderBlockedPanel');
+      if (login) login.classList.toggle('hidden', panel !== 'login');
+      if (register) register.classList.toggle('hidden', panel !== 'register');
+      if (pending) pending.classList.toggle('hidden', panel !== 'pending');
+      if (blocked) blocked.classList.toggle('hidden', panel !== 'blocked');
+    }
+
+    function showAuthGate() {
+      const gate = document.getElementById('riderAuthGate');
+      const sound = document.getElementById('startupScreen');
+      if (gate) gate.classList.remove('hidden');
+      if (sound) sound.classList.add('hidden');
+    }
+
+    function hideAuthGate() {
+      const gate = document.getElementById('riderAuthGate');
+      if (gate) gate.classList.add('hidden');
+    }
+
+    function mountRiderVolumeUi() {
+      if (typeof window.mountStaffVolumeControl !== 'function') return;
+      window.mountStaffVolumeControl(document.getElementById('riderStartupVolume'), 'dark');
+      window.mountStaffVolumeControl(document.getElementById('riderVolumeMount'), 'dark');
+    }
+
+    function applyRiderStatus(record, session) {
+      const status = (record && record.status) || '';
+      switch (status) {
+        case 'approved':
+          setRiderSession({
+            id: session.id,
+            name: record.name || session.name,
+            phone: record.phone || session.phone,
+            bikeNumber: record.bikeNumber || session.bikeNumber || '',
+            status: 'approved'
+          });
+          hideAuthGate();
+          claimApprovedRider();
+          listenToDeliveryJobs();
+          if (sessionStorage.getItem('rider_online')) {
+            document.getElementById('startupScreen').classList.add('hidden');
+            refreshRiderHeader();
+            refreshOriginButtons();
+          } else {
+            document.getElementById('startupScreen').classList.remove('hidden');
+            refreshRiderHeader();
+            mountRiderVolumeUi();
+          }
+          return;
+        case 'pending':
+          stopRiderLiveData();
+          sessionStorage.removeItem('rider_online');
+          showAuthGate();
+          showRiderAuthPanel('pending');
+          return;
+        case 'rejected':
+          blockRider('Account rejected', 'Admin මේ account එක reject කරලා තියෙනවා. Shop එකට කතා කරන්න.');
+          return;
+        case 'disabled':
+          blockRider('Account disabled', 'Admin මේ rider account එක off කරලා තියෙනවා.');
+          return;
+        default: {
+          const _exhaustive = status;
+          riderLogout(true);
+          return _exhaustive;
+        }
+      }
+    }
+
+    function stopRiderAccountWatch() {
+      if (riderAccountUnsub) {
+        db.ref('riders/' + riderAccountUnsub).off();
+        riderAccountUnsub = null;
+      }
+    }
+
+    function stopRiderLiveData() {
+      if (ordersListenerOn) {
+        db.ref('orders').off();
+        ordersListenerOn = false;
+      }
+      stopRiderChatListener();
+      stopLiveLocationSharing();
+      if (typeof window._riderAuthWait === 'function') window._riderAuthWait();
+      window._riderAuthWait = null;
+      allOrders = {};
+    }
+
+    function blockRider(title, hint) {
+      riderBlockedNotice = true;
+      stopRiderLiveData();
+      stopRiderAccountWatch();
+      sessionStorage.removeItem(RIDER_SESSION_KEY);
+      sessionStorage.removeItem('rider_online');
+      document.getElementById('startupScreen').classList.add('hidden');
+      document.getElementById('blockedTitle').innerText = title;
+      document.getElementById('blockedHint').innerText = hint;
+      showAuthGate();
+      showRiderAuthPanel('blocked');
+      firebase.auth().signOut().catch(function () {});
+    }
+
+    function linkRiderUid(id) {
+      const user = firebase.auth().currentUser;
+      if (!user || !id) return Promise.reject(new Error('Rider login missing'));
+      const patch = {};
+      patch['rider_uids/' + user.uid] = String(id);
+      patch['riders/' + id + '/authUid'] = user.uid;
+      return db.ref().update(patch);
+    }
+
+    function claimApprovedRider() {
+      const user = firebase.auth().currentUser;
+      if (!user) return Promise.resolve();
+      return db.ref('approved_riders/' + user.uid).set(true).catch(function (err) {
+        console.warn('approved_riders claim failed', err);
+      });
+    }
+
+    function watchRiderAccount(id) {
+      stopRiderAccountWatch();
+      if (!id) return;
+      riderAccountUnsub = id;
+      db.ref('riders/' + id).on('value', function (snap) {
+        const record = snap.val();
+        if (!record) {
+          riderLogout(true);
+          return;
+        }
+        applyRiderStatus(record, { id: id, name: record.name, phone: record.phone });
+      }, function () {
+        showAuthGate();
+        showRiderAuthPanel('login');
+      });
+    }
+
+    function setAuthError(id, message) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (!message) {
+        el.classList.add('hidden');
+        el.innerText = '';
+        return;
+      }
+      el.classList.remove('hidden');
+      el.innerText = message;
+    }
+
+    async function riderRegister() {
+      const name = (document.getElementById('regName').value || '').trim();
+      const phone = (document.getElementById('regPhone').value || '').trim();
+      const bikeNumber = (document.getElementById('regBike').value || '').trim();
+      const pass = (document.getElementById('regPass').value || '').trim();
+      const pass2 = (document.getElementById('regPass2').value || '').trim();
+      const id = riderPhoneKey(phone);
+      setAuthError('regError', '');
+      if (!name || !id) return setAuthError('regError', 'Name සහ හරි phone number එකක් දාන්න.');
+      if (!bikeNumber) return setAuthError('regError', 'Bike number එක දාන්න.');
+      if (pass.length < 4) return setAuthError('regError', 'Password අඩුම තරමේ අකුරු 4ක්.');
+      if (pass !== pass2) return setAuthError('regError', 'Passwords match වෙන්නේ නැහැ.');
+      try {
+        const loginId = await ensureRiderAuthUser(id, pass, null, true);
+        const email = riderAuthEmail(loginId);
+        if (!(firebase.auth().currentUser && firebase.auth().currentUser.email === email)) {
+          await firebase.auth().signInWithEmailAndPassword(email, firebasePasswordFrom(pass));
+        }
+      } catch (err) {
+        console.warn('Rider register failed', err);
+        return setAuthError('regError', riderAuthErrorMessage(err));
+      }
+      const accountExistsMsg = 'මේ phone එකට account එකක් තියෙනවා. Login වෙන්න.';
+      try {
+        let existing = null;
+        try {
+          existing = await db.ref('riders/' + id).once('value');
+        } catch (readErr) {
+          if (readErr && /permission/i.test(String(readErr.code || readErr.message))) {
+            await firebase.auth().signOut().catch(function () {});
+            return setAuthError('regError', accountExistsMsg);
+          }
+          throw readErr;
+        }
+        if (existing.exists()) return setAuthError('regError', accountExistsMsg);
+        const password = await hashPassword(pass);
+        const loginId = (firebase.auth().currentUser && firebase.auth().currentUser.email || '').split('@')[0] || ('rider_' + id);
+        await db.ref('riders/' + id).set({
+          name: name,
+          phone: phone,
+          bikeNumber: bikeNumber,
+          password: password,
+          loginId: loginId,
+          role: 'rider',
+          status: 'pending',
+          createdAt: Date.now(),
+          createdBy: 'self'
+        });
+        await saveRiderLoginId(id, loginId).catch(function () {});
+        await linkRiderUid(id);
+      } catch (err) {
+        console.warn('Rider register save failed', err);
+        await firebase.auth().signOut().catch(function () {});
+        return setAuthError('regError', 'Register save වුණේ නැහැ' + (err && err.code ? ' (' + err.code + ')' : '') + '. Internet එක බලලා ආයෙත් try කරන්න.');
+      }
+      setRiderSession({ id: id, name: name, phone: phone, bikeNumber: bikeNumber, status: 'pending' });
+      document.getElementById('pendingRiderHint').innerText = name + ' / ' + phone + ' — Admin approve කරනකම් ඉන්න.';
+      showRiderAuthPanel('pending');
+      watchRiderAccount(id);
+    }
+
+    async function riderLogin() {
+      const phone = (document.getElementById('loginPhone').value || '').trim();
+      const pass = (document.getElementById('loginPass').value || '').trim();
+      const id = riderPhoneKey(phone);
+      setAuthError('loginError', '');
+      if (!id || !pass) return setAuthError('loginError', 'Phone සහ password දාන්න.');
+      riderBlockedNotice = false;
+      try {
+        await signInExistingRider(id, pass);
+      } catch (err) {
+        console.warn('Rider login failed', err);
+        return setAuthError('loginError', riderAuthErrorMessage(err));
+      }
+      try {
+        await linkRiderUid(id);
+      } catch (err) {
+        console.warn('Rider uid link failed', err);
+        try { await firebase.auth().signOut(); } catch (e) {}
+        return setAuthError('loginError', 'Rider login එක link වුණේ නැහැ' + (err && err.code ? ' (' + err.code + ')' : '') + '. ආයෙත් try කරන්න.');
+      }
+      let record = null;
+      try {
+        record = (await db.ref('riders/' + id).once('value')).val();
+      } catch (err) {
+        console.warn('Rider profile load failed', err);
+        try { await firebase.auth().signOut(); } catch (e) {}
+        return setAuthError('loginError', 'Rider profile එක load වුණේ නැහැ' + (err && err.code ? ' (' + err.code + ')' : '') + '. ආයෙත් try කරන්න.');
+      }
+      if (!record) {
+        try { await firebase.auth().signOut(); } catch (e) {}
+        return setAuthError('loginError', 'Account එකක් නැහැ. Admin එකෙන් add කරන්න, නැත්නම් Register කරන්න.');
+      }
+      if (record.role && record.role !== 'rider') {
+        try { await firebase.auth().signOut(); } catch (e) {}
+        return setAuthError('loginError', 'මේ account එක rider account එකක් නෙවෙයි.');
+      }
+      if (record.status === 'approved') await claimApprovedRider();
+      const fresh = record;
+      setRiderSession({ id: id, name: fresh.name, phone: fresh.phone, bikeNumber: fresh.bikeNumber || '', status: fresh.status });
+      watchRiderAccount(id);
+      applyRiderStatus(fresh, { id: id, name: fresh.name, phone: fresh.phone });
+    }
+
+    function riderLogout(showLogin) {
+      stopRiderAccountWatch();
+      stopRiderLiveData();
+      sessionStorage.removeItem(RIDER_SESSION_KEY);
+      sessionStorage.removeItem('rider_online');
+      if (window.firebase && firebase.auth) firebase.auth().signOut().catch(function () {});
+      isInitialLoaded = false;
+      previousIncomingKeys = [];
+      previousDispatchedKeys = [];
+      if (showLogin) {
+        document.getElementById('startupScreen').classList.add('hidden');
+        showAuthGate();
+        showRiderAuthPanel('login');
+      }
+    }
+
+    function ensureRiderName() {
+      const name = getRiderName();
+      if (name) return name;
+      alert('Login වෙලා admin approve උනාම order ගන්න පුළුවන්.');
+      return '';
+    }
+
+    function isLiveRiderJob(order) {
+      if (!order) return false;
+      const st = order.status;
+      if (st === 'PendingPayment' || st === 'Cancelled' || st === 'Rejected' || st === 'Settled') return false;
+      if (st === 'PickedUp') {
+        return getClaimState(order) === 'mine' && window.paymentNeedsStaff(order);
+      }
+      if (st === 'Dispatched' || st === 'Arrived') return true;
+      if (order.riderAssigned) return st === 'Received' || st === 'Preparing' || st === 'Ready';
+      if (window.isDoorstepOrder && window.isDoorstepOrder(order)) {
+        return st === 'Received' || st === 'Preparing' || st === 'Ready';
+      }
+      return false;
+    }
+
+    function colomboDay(ts) {
+      try {
+        return new Intl.DateTimeFormat('en-CA', {
+          timeZone: 'Asia/Colombo',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit'
+        }).format(new Date(ts || Date.now()));
+      } catch (e) {
+        return new Date(ts || Date.now()).toISOString().slice(0, 10);
+      }
+    }
+
+    function refreshRiderAccount() {
+      const session = getRiderSession() || {};
+      const name = getRiderName() || 'Rider';
+      const nameEl = document.getElementById('riderAccountName');
+      const phoneEl = document.getElementById('riderAccountPhone');
+      const bikeEl = document.getElementById('riderAccountBike');
+      if (nameEl) nameEl.innerText = name;
+      if (phoneEl) phoneEl.innerText = session.phone || '';
+      if (bikeEl) bikeEl.innerText = getRiderBike() ? ('Bike · ' + getRiderBike()) : '';
+    }
+
+    function refreshRiderWallet() {
+      const today = colomboDay();
+      let balance = 0;
+      let collectedToday = 0;
+      let given = 0;
+      const trips = [];
+      Object.keys(allOrders || {}).forEach(function (k) {
+        const o = allOrders[k];
+        if (!o || getClaimState(o) !== 'mine') return;
+        const pay = window.normalizePayment(o);
+        const cashJob = pay.method === 'cash' || pay.method === 'shop';
+        if (!cashJob) return;
+        const holds = window.riderHoldsCash(o);
+        const amount = Number(o.total) || 0;
+        if (holds) balance += amount;
+        const collectedAt = o.cashCollectedAt || o.deliveredAt || 0;
+        const deliveredToday = (o.cashCollected || o.status === 'PickedUp' || o.status === 'Settled') && collectedAt && colomboDay(collectedAt) === today;
+        if (deliveredToday) collectedToday += amount;
+        if (deliveredToday && !holds) given += amount;
+        if (deliveredToday || holds) {
+          trips.push({
+            key: k,
+            id: o.orderId || k,
+            name: o.customerName || 'Customer',
+            total: amount,
+            at: collectedAt,
+            holds: holds
+          });
+        }
+      });
+      trips.sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+      riderExpectedCash = balance;
+      const money = function (n) { return 'Rs. ' + Number(n || 0).toLocaleString(); };
+      const setText = function (id, text) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
+      };
+      setText('riderCashBalance', money(balance));
+      setText('riderCashToday', money(collectedToday));
+      setText('riderCashBalanceEarn', money(balance));
+      setText('riderSheetBalance', money(balance));
+      setText('riderSheetToday', money(collectedToday));
+      setText('riderCashGiven', money(given));
+      setText('riderAccountCash', money(balance));
+      setText('riderTripCount', String(trips.length));
+      setText('riderEarningsDate', today);
+      const list = document.getElementById('riderEarningsList');
+      if (list) {
+        if (!trips.length) {
+          list.innerHTML = '<p class="text-xs text-slate-400 font-bold text-center bg-white rounded-2xl p-4">අද collect කළ jobs තාම නැහැ.</p>';
+        } else {
+          list.innerHTML = trips.map(function (t) {
+            const time = t.at ? new Date(t.at).toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' }) : '';
+            return '<div class="bg-white rounded-2xl px-3 py-2.5 flex justify-between gap-2 shadow-sm">' +
+              '<div class="min-w-0"><div class="text-xs font-black text-slate-900">#' + escapeHtml(t.id) + '</div>' +
+              '<div class="text-[10px] font-bold text-slate-500 truncate">' + escapeHtml(t.name) + (time ? ' · ' + time : '') + '</div></div>' +
+              '<div class="text-right flex-shrink-0"><div class="text-sm font-black text-slate-900">Rs. ' + t.total.toLocaleString() + '</div>' +
+              '<div class="text-[9px] font-black uppercase ' + (t.holds ? 'text-amber-700' : 'text-emerald-700') + '">' + (t.holds ? 'In hand' : 'Given to shop') + '</div></div></div>';
+          }).join('');
+        }
+      }
+      riderCalcRefreshMatch();
+    }
+
+    let riderCalcBuffer = '';
+    let riderExpectedCash = 0;
+
+    function setTabButton(id, on) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('on', on);
+    }
+
+    function showRiderTab(tab) {
+      const next = tab === 'earnings' || tab === 'account' ? tab : 'jobs';
+      const jobs = document.getElementById('riderJobsView');
+      const earn = document.getElementById('riderEarningsView');
+      const acc = document.getElementById('riderAccountView');
+      if (jobs) jobs.classList.toggle('hidden', next !== 'jobs');
+      if (earn) earn.classList.toggle('hidden', next !== 'earnings');
+      if (acc) acc.classList.toggle('hidden', next !== 'account');
+      setTabButton('tabJobsBtn', next === 'jobs');
+      setTabButton('tabEarnBtn', next === 'earnings');
+      setTabButton('tabAccBtn', next === 'account');
+      switch (next) {
+        case 'jobs':
+          break;
+        case 'earnings':
+          refreshRiderWallet();
+          break;
+        case 'account':
+          refreshRiderAccount();
+          break;
+        default: {
+          const _exhaustive = next;
+          void _exhaustive;
+        }
+      }
+    }
+
+    function openRiderEarnings() {
+      showRiderTab('earnings');
+    }
+    function closeRiderEarnings() {
+      showRiderTab('jobs');
+    }
+    function riderCalcDigit(d) {
+      if (riderCalcBuffer.length >= 8) return;
+      riderCalcBuffer += String(d);
+      riderCalcRender();
+    }
+    function riderCalcClear() {
+      riderCalcBuffer = '';
+      riderCalcRender();
+    }
+    function riderCalcRender() {
+      const el = document.getElementById('riderCalcDisplay');
+      const n = Number(riderCalcBuffer || 0);
+      if (el) el.innerText = n.toLocaleString();
+      riderCalcRefreshMatch();
+    }
+    function riderCalcRefreshMatch() {
+      const box = document.getElementById('riderCalcMatch');
+      if (!box) return;
+      const counted = Number(riderCalcBuffer || 0);
+      const expected = Number(riderExpectedCash || 0);
+      if (!riderCalcBuffer) {
+        box.className = 'text-[11px] font-black text-center py-2 rounded-xl bg-slate-50 text-slate-500';
+        box.innerText = 'Shop ට ගෙන්න ඕන Rs. ' + expected.toLocaleString();
+        return;
+      }
+      if (counted === expected) {
+        box.className = 'text-[11px] font-black text-center py-2 rounded-xl bg-emerald-50 text-emerald-800';
+        box.innerText = 'OK — cash ගාන හරි Rs. ' + expected.toLocaleString();
+        return;
+      }
+      const diff = counted - expected;
+      box.className = 'text-[11px] font-black text-center py-2 rounded-xl bg-rose-50 text-rose-800';
+      box.innerText = (diff > 0 ? 'වැඩියි Rs. ' : 'අඩුයි Rs. ') + Math.abs(diff).toLocaleString();
+    }
+
+    function isClaimableJob(order) {
+      if (!isLiveRiderJob(order)) return false;
+      if (window.paymentBlocksDispatch && window.paymentBlocksDispatch(order)) return false;
+      return true;
+    }
+
+    function getClaimState(order) {
+      if (!order) return 'unclaimed';
+      const myId = getRiderId();
+      const myName = getRiderName();
+      if (order.assignedRiderId) {
+        if (myId && String(order.assignedRiderId) === String(myId)) return 'mine';
+        return 'taken';
+      }
+      if (order.assignedRiderName) {
+        if (myName && String(order.assignedRiderName) === String(myName)) return 'unclaimed';
+        return 'taken';
+      }
+      return 'unclaimed';
+    }
+
+    const LIVE_LOC_MOVE_M = 20;
+    const LIVE_LOC_SMALL_MOVE_M = 5;
+    const LIVE_LOC_SMALL_MOVE_MS = 10000;
+    const LIVE_LOC_HEARTBEAT_MS = 30000;
+    const LIVE_LOC_MAX_ACC_M = 100;
+    let liveLocKeys = [];
+    let liveLocWatchId = null;
+    let liveLocLastSent = null;
+    let liveLocLastSentAt = 0;
+    let liveLocDenied = false;
+    let liveLocWakeLock = null;
+    let liveLocWakePending = false;
+
+    function computeActiveTrackKeys() {
+      return Object.keys(allOrders).filter(function (k) {
+        const o = allOrders[k];
+        return !!o && getClaimState(o) === 'mine' &&
+          (o.status === 'Dispatched' || o.status === 'Arrived') &&
+          window.isDoorstepOrder(o);
+      });
+    }
+
+    function syncLiveLocationSharing() {
+      const next = computeActiveTrackKeys();
+      const ended = liveLocKeys.filter(function (k) { return next.indexOf(k) === -1; });
+      const added = next.filter(function (k) { return liveLocKeys.indexOf(k) === -1; });
+      liveLocKeys = next;
+      ended.forEach(clearLiveLocation);
+      added.forEach(function (k) {
+        db.ref('rider_locations/' + k).onDisconnect().remove().catch(function () {});
+      });
+      if (!liveLocKeys.length) {
+        stopLiveLocationWatch();
+        liveLocLastSent = null;
+        liveLocLastSentAt = 0;
+        liveLocDenied = false;
+        return;
+      }
+      if (added.length && liveLocLastSent) publishLiveLocation(liveLocLastSent, added);
+      startLiveLocationWatch();
+    }
+
+    function clearLiveLocation(k) {
+      const ref = db.ref('rider_locations/' + k);
+      ref.onDisconnect().cancel().catch(function () {});
+      return ref.remove().catch(function () {});
+    }
+
+    function stopLiveLocationSharing() {
+      liveLocKeys.forEach(clearLiveLocation);
+      liveLocKeys = [];
+      stopLiveLocationWatch();
+      liveLocLastSent = null;
+      liveLocLastSentAt = 0;
+      liveLocDenied = false;
+    }
+
+    function startLiveLocationWatch() {
+      if (liveLocDenied) return;
+      requestLiveLocWakeLock();
+      if (liveLocWatchId !== null) return;
+      if (!navigator.geolocation) {
+        liveLocDenied = true;
+        return;
+      }
+      liveLocWatchId = navigator.geolocation.watchPosition(onLiveLocFix, onLiveLocError, {
+        enableHighAccuracy: true,
+        maximumAge: 5000,
+        timeout: 20000
+      });
+    }
+
+    function stopLiveLocationWatch() {
+      if (liveLocWatchId !== null && navigator.geolocation) navigator.geolocation.clearWatch(liveLocWatchId);
+      liveLocWatchId = null;
+      releaseLiveLocWakeLock();
+    }
+
+    function retryLiveLocation() {
+      liveLocDenied = false;
+      syncLiveLocationSharing();
+      renderActiveJobs(lastActiveJobKeys);
+    }
+
+    function onLiveLocFix(pos) {
+      const c = pos.coords;
+      const fix = { lat: c.latitude, lng: c.longitude, acc: c.accuracy, hdg: c.heading, spd: c.speed };
+      riderGpsCoords = { lat: fix.lat, lng: fix.lng };
+      const sinceLast = liveLocLastSentAt ? Date.now() - liveLocLastSentAt : Infinity;
+      if (fix.acc > LIVE_LOC_MAX_ACC_M && sinceLast < LIVE_LOC_HEARTBEAT_MS) return;
+      const movedM = liveLocLastSent
+        ? window.haversineKm(liveLocLastSent.lat, liveLocLastSent.lng, fix.lat, fix.lng) * 1000
+        : Infinity;
+      const due = movedM >= LIVE_LOC_MOVE_M ||
+        (sinceLast >= LIVE_LOC_SMALL_MOVE_MS && movedM >= LIVE_LOC_SMALL_MOVE_M) ||
+        sinceLast >= LIVE_LOC_HEARTBEAT_MS;
+      if (due) publishLiveLocation(fix, liveLocKeys);
+    }
+
+    function onLiveLocError(err) {
+      if (!err || err.code !== 1) return;
+      liveLocDenied = true;
+      stopLiveLocationWatch();
+      renderActiveJobs(lastActiveJobKeys);
+    }
+
+    function publishLiveLocation(fix, keys) {
+      if (!keys.length) return;
+      const now = Date.now();
+      const loc = {
+        lat: Math.round(fix.lat * 1e6) / 1e6,
+        lng: Math.round(fix.lng * 1e6) / 1e6,
+        at: now,
+        riderId: String(getRiderId())
+      };
+      if (isFinite(fix.acc) && fix.acc >= 0) loc.acc = Math.round(fix.acc);
+      if (fix.hdg != null && isFinite(fix.hdg)) loc.hdg = Math.round(fix.hdg) % 360;
+      if (fix.spd != null && isFinite(fix.spd) && fix.spd >= 0) loc.spd = Math.round(fix.spd * 10) / 10;
+      const patch = {};
+      keys.forEach(function (k) { patch['rider_locations/' + k] = loc; });
+      liveLocLastSent = fix;
+      liveLocLastSentAt = now;
+      db.ref().update(patch).catch(function (err) {
+        console.warn('Live location update failed', err);
+      });
+    }
+
+    async function requestLiveLocWakeLock() {
+      if (liveLocWakeLock || liveLocWakePending || !('wakeLock' in navigator)) return;
+      if (document.visibilityState !== 'visible') return;
+      liveLocWakePending = true;
+      try {
+        const lock = await navigator.wakeLock.request('screen');
+        if (!liveLocKeys.length) {
+          lock.release().catch(function () {});
+        } else {
+          liveLocWakeLock = lock;
+          lock.addEventListener('release', function () {
+            if (liveLocWakeLock === lock) liveLocWakeLock = null;
+          });
+        }
+      } catch (e) {
+        liveLocWakeLock = null;
+      } finally {
+        liveLocWakePending = false;
+      }
+    }
+
+    function releaseLiveLocWakeLock() {
+      if (!liveLocWakeLock) return;
+      const lock = liveLocWakeLock;
+      liveLocWakeLock = null;
+      lock.release().catch(function () {});
+    }
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && liveLocKeys.length && !liveLocDenied) requestLiveLocWakeLock();
+    });
+
+    function liveLocPillHtml(k) {
+      if (liveLocKeys.indexOf(k) === -1) return '';
+      if (liveLocDenied) {
+        return `<div class="flex items-center justify-between gap-2 text-[10px] font-black text-rose-800 bg-rose-50 border border-rose-200 px-3 py-2 rounded-2xl">
+          <span>📍 Location off — Customer ට track කරන්න බෑ. Location allow කරන්න.</span>
+          <button type="button" onclick="retryLiveLocation()" class="shrink-0 underline">Retry</button>
+        </div>`;
+      }
+      return `<div class="flex items-center gap-2 text-[10px] font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-3 py-2 rounded-2xl">
+        <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>
+        <span>Live location sharing — deliver කරනකම් screen එක open තියන්න</span>
+      </div>`;
+    }
+
+    function getShopCoords() {
+      return { lat: SHOP_ORIGIN.lat, lng: SHOP_ORIGIN.lng };
+    }
+
+    function getRouteOriginCoords() {
+      if (routeOriginMode === 'gps' && riderGpsCoords && riderGpsCoords.lat && riderGpsCoords.lng) {
+        return riderGpsCoords;
+      }
+      return getShopCoords();
+    }
+
+    function originQuery() {
+      const origin = getRouteOriginCoords();
+      return origin.lat + ',' + origin.lng;
+    }
+
+    function refreshJobMaps() {
+      renderActiveJobs(lastActiveJobKeys);
+      renderTakenJobs(lastTakenJobKeys);
+      renderUpcomingJobs(lastUpcomingJobKeys);
+    }
+
+    function refreshOriginButtons() {
+      const shopBtn = document.getElementById('originShopBtn');
+      const gpsBtn = document.getElementById('originGpsBtn');
+      const hint = document.getElementById('batchOriginHint');
+      const shopOn = routeOriginMode !== 'gps';
+      if (shopBtn) {
+        shopBtn.className = shopOn
+          ? 'bg-emerald-500 text-slate-950 py-2.5 rounded-xl text-[10px] font-black'
+          : 'bg-slate-100 border border-slate-200 text-slate-800 py-2.5 rounded-xl text-[10px] font-black';
+      }
+      if (gpsBtn) {
+        gpsBtn.className = !shopOn
+          ? 'bg-emerald-500 text-slate-950 py-2.5 rounded-xl text-[10px] font-black'
+          : 'bg-slate-100 border border-slate-200 text-slate-800 py-2.5 rounded-xl text-[10px] font-black';
+      }
+      if (hint) {
+        hint.innerText = shopOn
+          ? '🏪 Shop start · then 5–6 stops'
+          : '📍 GPS start · tap at the shop';
+      }
+    }
+
+    function setRouteOrigin(mode) {
+      switch (mode) {
+        case 'gps':
+          if (!navigator.geolocation) {
+            return alert('මේ phone එකේ GPS නැහැ. Horana shop එකෙන් start වෙනවා.');
+          }
+          navigator.geolocation.getCurrentPosition(function (pos) {
+            riderGpsCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            routeOriginMode = 'gps';
+            refreshOriginButtons();
+            refreshJobMaps();
+          }, function () {
+            routeOriginMode = 'shop';
+            refreshOriginButtons();
+            alert('GPS allow කරන්න. නැත්නම් Horana shop එකෙන් start වෙනවා.');
+          }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 15000 });
+          return;
+        case 'shop':
+          routeOriginMode = 'shop';
+          refreshOriginButtons();
+          refreshJobMaps();
+          return;
+        default: {
+          const _exhaustive = mode;
+          return _exhaustive;
+        }
+      }
+    }
+
+    function initAudioContext() {
+      if (typeof window.unlockStaffAudio === 'function') {
+        window.unlockStaffAudio();
+        return;
+      }
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function toggleRiderSoundPanel() {
+      const panel = document.getElementById('riderSoundPanel');
+      if (!panel) return;
+      panel.classList.toggle('hidden');
+      if (!panel.classList.contains('hidden') && typeof window.mountStaffVolumeControl === 'function') {
+        window.mountStaffVolumeControl(document.getElementById('riderVolumeMount'), 'dark');
+      }
+      initAudioContext();
+    }
+
+    function syncRiderAlert(shouldRing) {
+      if (shouldRing) {
+        if (typeof window.startStaffAlertLoop === 'function') window.startStaffAlertLoop('rider', 2000);
+        else playAlertChime();
+      } else if (typeof window.stopStaffAlertLoop === 'function') {
+        window.stopStaffAlertLoop('rider');
+      }
+    }
+
+    function startRiderApp() {
+      if (!getRiderSession() || getRiderSession().status !== 'approved') {
+        alert('Approved rider account එකකින් login වෙන්න.');
+        showAuthGate();
+        showRiderAuthPanel('login');
+        return;
+      }
+      initAudioContext();
+      if (typeof window.mountStaffVolumeControl === 'function') {
+        window.mountStaffVolumeControl(document.getElementById('riderVolumeMount'), 'dark');
+      }
+      sessionStorage.setItem('rider_online', '1');
+      document.getElementById('startupScreen').classList.add('hidden');
+      refreshRiderHeader();
+      refreshOriginButtons();
+      listenToDeliveryJobs();
+      showRiderTab('jobs');
+      speakVoice("Rider app is online. Ready for orders.");
+    }
+
+    window.addEventListener('load', function () {
+      firebase.auth().onAuthStateChanged(function (user) {
+        if (riderBlockedNotice) return;
+        const session = getRiderSession();
+        if (session && session.id && user && isRiderAuthReady()) {
+          linkRiderUid(session.id).catch(function (err) {
+            console.warn('Rider uid link failed', err);
+          }).then(function () {
+            watchRiderAccount(session.id);
+          });
+          return;
+        }
+        if (session && session.id && !user) {
+          riderLogout(true);
+          return;
+        }
+        if (!session || !session.id || !user) {
+          showAuthGate();
+          showRiderAuthPanel('login');
+        }
+      });
+    });
+
+    function playAlertChime() {
+      if (typeof window.playStaffAlertChime === 'function') {
+        window.playStaffAlertChime();
+        return;
+      }
+      if (!audioCtx) return;
+      try {
+        [659.25, 880, 1046.50].forEach((freq, i) => {
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          const start = audioCtx.currentTime + (i * 0.15);
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(freq, start);
+          gain.gain.setValueAtTime(1.6, start);
+          gain.gain.exponentialRampToValueAtTime(0.01, start + 0.4);
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start(start);
+          osc.stop(start + 0.4);
+        });
+      } catch (e) {}
+    }
+
+    function speakVoice(text) {
+      if ('speechSynthesis' in window) {
+        const msg = new SpeechSynthesisUtterance(text);
+        msg.lang = 'en-US';
+        msg.rate = 0.9;
+        window.speechSynthesis.speak(msg);
+      }
+    }
+
+    function isRiderAuthReady() {
+      const user = firebase.auth && firebase.auth().currentUser;
+      const email = user && user.email ? String(user.email) : '';
+      return /^rider_\d{9}(_[a-z0-9]+)?@peoples-family-restaurant\.web\.app$/i.test(email);
+    }
+
+    function listenToDeliveryJobs() {
+      if (!isRiderAuthReady()) {
+        if (window._riderAuthWait) return;
+        window._riderAuthWait = firebase.auth().onAuthStateChanged(function () {
+          if (!isRiderAuthReady()) return;
+          if (typeof window._riderAuthWait === 'function') {
+            window._riderAuthWait();
+            window._riderAuthWait = null;
+          }
+          listenToDeliveryJobs();
+        });
+        return;
+      }
+      if (ordersListenerOn) return;
+      ordersListenerOn = true;
+      db.ref('orders').on('value', snap => {
+        allOrders = snap.val() || {};
+        
+        const liveKeys = Object.keys(allOrders).filter(function (k) {
+          return isLiveRiderJob(allOrders[k]);
+        });
+        const upcomingJobs = liveKeys.filter(function (k) {
+          const o = allOrders[k];
+          return getClaimState(o) === 'unclaimed' && (o.status === 'Received' || o.status === 'Preparing');
+        }).sort(function (a, b) {
+          const rank = { Preparing: 1, Received: 2 };
+          return (rank[allOrders[a].status] || 9) - (rank[allOrders[b].status] || 9);
+        });
+        const availableJobs = liveKeys.filter(function (k) {
+          return getClaimState(allOrders[k]) === 'unclaimed';
+        });
+        const myJobs = liveKeys.filter(function (k) {
+          return getClaimState(allOrders[k]) === 'mine';
+        });
+        const myActiveJobs = availableJobs.concat(myJobs);
+        const takenJobs = liveKeys.filter(function (k) {
+          return getClaimState(allOrders[k]) === 'taken';
+        });
+        syncRiderAlert(availableJobs.length > 0);
+
+        if (isInitialLoaded) {
+          const newUpcoming = upcomingJobs.filter(k => !previousIncomingKeys.includes(k));
+          if (newUpcoming.length > 0) {
+            speakVoice("New takeaway delivery order placed. Kitchen is preparing.");
+          }
+          const newlyReady = upcomingJobs.filter(function (k) {
+            return allOrders[k].status === 'Ready' && previousUpcomingStatus[k] && previousUpcomingStatus[k] !== 'Ready';
+          });
+          if (newlyReady.length > 0) {
+            speakVoice("Food is ready in the kitchen. If you took this job, come pick up the packet.");
+          }
+          const newlyReadyJobs = liveKeys.filter(function (k) {
+            return allOrders[k].status === 'Ready' && previousJobStatus[k] && previousJobStatus[k] !== 'Ready';
+          });
+          if (newlyReadyJobs.length > 0) {
+            const mineReady = newlyReadyJobs.some(function (k) { return getClaimState(allOrders[k]) === 'mine'; });
+            if (mineReady) playAlertChime();
+            speakVoice(mineReady
+              ? "Food is ready. Come to the shop and pick up the packet."
+              : "Food is ready in the kitchen. You can start delivery.");
+          }
+
+          const newDispatched = myActiveJobs.filter(function (k) {
+            if (previousDispatchedKeys.indexOf(k) >= 0) return false;
+            const st = allOrders[k].status;
+            return st === 'Dispatched' || st === 'Arrived';
+          });
+          if (newDispatched.length > 0) {
+            playAlertChime();
+            const job = allOrders[newDispatched[0]];
+            const total = job.total || 0;
+            const landmark = getDeliveryAddress(job) || "customer address";
+            const mapsUrl = getMapsUrl(job);
+            const banner = document.getElementById('newJobLocationBanner');
+            const bannerLink = document.getElementById('newJobLocationLink');
+            if (mapsUrl && banner && bannerLink) {
+              bannerLink.href = mapsUrl;
+              banner.classList.remove('hidden');
+            }
+            
+            setTimeout(() => {
+              speakVoice(`Order ready and assigned. Location is ${landmark}. Collectable amount is ${total} rupees. Tap to open customer location.`);
+            }, 800);
+          }
+        }
+
+        previousIncomingKeys = upcomingJobs;
+        previousUpcomingStatus = {};
+        upcomingJobs.forEach(function (k) {
+          previousUpcomingStatus[k] = allOrders[k].status;
+        });
+        previousJobStatus = {};
+        liveKeys.forEach(function (k) {
+          previousJobStatus[k] = allOrders[k].status;
+        });
+        previousDispatchedKeys = myActiveJobs;
+        isInitialLoaded = true;
+
+        lastUpcomingJobKeys = upcomingJobs.slice();
+        setRiderJobCounts(availableJobs.length, myJobs.length, upcomingJobs.length);
+        refreshRiderWallet();
+        const hint = document.getElementById('startupJobHint');
+        if (hint) hint.innerText = liveKeys.length ? (liveKeys.length + ' delivery job(s) waiting') : 'Waiting for delivery jobs…';
+        syncLiveLocationSharing();
+        renderActiveJobs(myActiveJobs);
+        renderTakenJobs(takenJobs);
+        renderUpcomingJobs(upcomingJobs);
+        refreshOriginButtons();
+      }, function (err) {
+        ordersListenerOn = false;
+        try { db.ref('orders').off(); } catch (e) {}
+        const hint = document.getElementById('startupJobHint');
+        if (hint) hint.innerText = 'Jobs load වුණේ නැහැ — login ආයෙන් කරන්න';
+        const box = document.getElementById('activeDeliveriesList');
+        if (box) box.innerHTML = riderEmptyState('⚠️', 'Jobs load වුණේ නැහැ', 'Rider login ආයෙන් කරලා Go Online ඔබන්න. Cashier Send කළත් login නැත්නම් list එක හිස්.');
+        console.warn('Rider orders listener failed', err);
+        setTimeout(function () {
+          const s = getRiderSession();
+          if (s && s.status === 'approved' && isRiderAuthReady()) listenToDeliveryJobs();
+        }, 5000);
+      });
+    }
+
+    function getDeliveryAddress(order) {
+      if (window.orderDeliveryAddress) return window.orderDeliveryAddress(order);
+      const meta = order.deliveryMeta || {};
+      if (meta.recipientType === 'Someone Else') return meta.recipientAddress || meta.address || '';
+      return meta.address || meta.landmark || meta.recipientAddress || '';
+    }
+
+    function kmLabel(order) {
+      return (window.orderDistanceLabel && window.orderDistanceLabel(order)) || '';
+    }
+
+    function getMapsUrl(order) {
+      const meta = order.deliveryMeta || {};
+      const origin = originQuery();
+      if (meta.coords && meta.coords.lat && meta.coords.lng) {
+        return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${Number(meta.coords.lat)},${Number(meta.coords.lng)}&travelmode=driving`;
+      }
+      const dest = getDeliveryAddress(order);
+      if (dest) {
+        return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${encodeURIComponent(dest)}&travelmode=driving`;
+      }
+      return '';
+    }
+
+    function getStopQuery(order) {
+      const meta = (order && order.deliveryMeta) || {};
+      if (meta.coords && meta.coords.lat && meta.coords.lng) {
+        return Number(meta.coords.lat) + ',' + Number(meta.coords.lng);
+      }
+      const dest = getDeliveryAddress(order);
+      return dest ? dest : '';
+    }
+
+    function distanceKm(lat1, lng1, lat2, lng2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng/2) * Math.sin(dLng/2);
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function orderStopsFromShop(orders) {
+      const withCoords = [];
+      const withoutCoords = [];
+      orders.forEach(function (order) {
+        const meta = order.deliveryMeta || {};
+        if (meta.coords && meta.coords.lat && meta.coords.lng) withCoords.push(order);
+        else withoutCoords.push(order);
+      });
+      const ordered = [];
+      const origin = getRouteOriginCoords();
+      let current = { lat: origin.lat, lng: origin.lng };
+      const remaining = withCoords.slice();
+      while (remaining.length) {
+        let bestIdx = 0;
+        let bestDist = Infinity;
+        remaining.forEach(function (order, idx) {
+          const c = order.deliveryMeta.coords;
+          const d = distanceKm(current.lat, current.lng, c.lat, c.lng);
+          if (d < bestDist) {
+            bestDist = d;
+            bestIdx = idx;
+          }
+        });
+        const next = remaining.splice(bestIdx, 1)[0];
+        ordered.push(next);
+        current = next.deliveryMeta.coords;
+      }
+      return ordered.concat(withoutCoords);
+    }
+
+    function buildBatchMapsUrl(orders) {
+      const sorted = orderStopsFromShop(orders);
+      const stops = sorted.map(getStopQuery).filter(Boolean);
+      if (!stops.length) return '';
+      const origin = originQuery();
+      if (stops.length === 1) {
+        return 'https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(origin) + '&destination=' + encodeURIComponent(stops[0]) + '&travelmode=driving';
+      }
+      const destination = stops[stops.length - 1];
+      const waypoints = stops.slice(0, -1).map(encodeURIComponent).join('|');
+      return 'https://www.google.com/maps/dir/?api=1&origin=' + encodeURIComponent(origin) + '&destination=' + encodeURIComponent(destination) + '&waypoints=' + waypoints + '&travelmode=driving';
+    }
+
+    function toggleBatchJob(key, checked) {
+      if (checked) selectedBatchKeys[key] = true;
+      else delete selectedBatchKeys[key];
+      updateBatchBar();
+    }
+
+    function selectAllActiveJobs() {
+      lastActiveJobKeys.forEach(function (key) { selectedBatchKeys[key] = true; });
+      document.querySelectorAll('.batch-job-check').forEach(function (el) { el.checked = true; });
+      updateBatchBar();
+    }
+
+    function clearBatchSelection() {
+      selectedBatchKeys = {};
+      document.querySelectorAll('.batch-job-check').forEach(function (el) { el.checked = false; });
+      updateBatchBar();
+    }
+
+    function updateBatchBar() {
+      const bar = document.getElementById('batchRouteBar');
+      const keys = Object.keys(selectedBatchKeys).filter(function (key) { return !!allOrders[key]; });
+      if (!bar) return;
+      if (keys.length === 0) {
+        bar.classList.add('hidden');
+        return;
+      }
+      bar.classList.remove('hidden');
+      const total = keys.reduce(function (sum, key) { return sum + (allOrders[key].total || 0); }, 0);
+      document.getElementById('batchCount').innerText = keys.length + ' order' + (keys.length > 1 ? 's' : '') + ' selected';
+      document.getElementById('batchTotal').innerText = 'Collect Rs. ' + total.toLocaleString();
+    }
+
+    function claimOrderKeys(keys) {
+      const myId = getRiderId();
+      const myName = ensureRiderName();
+      const myBike = getRiderBike();
+      if (!myName) return Promise.resolve([]);
+
+      const unique = [];
+      keys.forEach(function (key) {
+        if (unique.indexOf(key) === -1) unique.push(key);
+      });
+
+      return Promise.all(unique.map(function (key) {
+        return db.ref('orders/' + key).transaction(function (order) {
+          if (!order) return;
+          if (!isClaimableJob(order)) return;
+          const state = getClaimState(order);
+          switch (state) {
+            case 'unclaimed':
+              order.assignedRiderId = myId;
+              order.assignedRiderName = myName;
+              order.assignedRiderBike = myBike || null;
+              order.assignedAt = Date.now();
+              order.riderAssigned = true;
+              if (order.status === 'Ready') {
+                order.status = 'Dispatched';
+              }
+              return order;
+            case 'mine':
+              order.assignedRiderId = myId;
+              order.assignedRiderName = myName;
+              order.assignedRiderBike = myBike || order.assignedRiderBike || null;
+              order.riderAssigned = true;
+              if (order.status === 'Ready') {
+                order.status = 'Dispatched';
+              }
+              return order;
+            case 'taken':
+              return;
+            default: {
+              const _exhaustive = state;
+              void _exhaustive;
+              return;
+            }
+          }
+        }).then(function (result) {
+          const val = result.snapshot ? result.snapshot.val() : null;
+          const ok = result.committed && val && val.assignedRiderId === myId;
+          if (ok && allOrders[key]) {
+            allOrders[key].assignedRiderId = myId;
+            allOrders[key].assignedRiderName = myName;
+            allOrders[key].assignedRiderBike = myBike || null;
+            allOrders[key].assignedAt = val.assignedAt || Date.now();
+          }
+          return ok ? key : null;
+        }).catch(function () {
+          return null;
+        });
+      })).then(function (results) {
+        return results.filter(Boolean);
+      });
+    }
+
+    function takeThisOrder(key) {
+      const order = allOrders[key];
+      if (!order) return alert('Order load වෙලා නැහැ. Ctrl+F5 ගහලා ආයෙන් try කරන්න.');
+      if (window.paymentBlocksDispatch && window.paymentBlocksDispatch(order)) {
+        return alert('Bank / PayHere cashier confirm කරනකම් Take කරන්න බෑ.');
+      }
+      claimOrderKeys([key]).then(function (claimed) {
+        if (!claimed.length) alert('Take වුණේ නැහැ. වෙන rider කෙනෙක් අරන් තියෙන්න පුළුවන්, නැත්නම් payment තාම confirm නැහැ.');
+      }).catch(window.alertDbError);
+    }
+
+    function takeSelectedOrders() {
+      const keys = Object.keys(selectedBatchKeys).filter(function (key) { return !!allOrders[key]; });
+      if (!keys.length) return alert('Orders tick කරන්න.');
+      claimOrderKeys(keys).then(function (claimed) {
+        if (!claimed.length) return alert('වෙන rider කෙනෙක් මේ orders ගත්තා.');
+        const missed = keys.length - claimed.length;
+        if (missed > 0) alert(claimed.length + ' ගත්තා. ' + missed + ' already taken.');
+      }).catch(window.alertDbError);
+    }
+
+    function releaseOrder(key) {
+      const order = allOrders[key];
+      if (!order || getClaimState(order) !== 'mine') {
+        return alert('ඔබ ගත්ත order එකක් විතරයි release කරන්න පුළුවන්.');
+      }
+      if (window.riderHoldsCash(order)) {
+        return alert('Cash collect කළා. Cashier Confirm cash received කරනකම් release කරන්න බෑ.');
+      }
+      if (!confirm('මේ order එක ආයෙත් අනිත් riders ට පේන්නද?')) return;
+      clearLiveLocation(key).then(function () {
+        return db.ref('orders/' + key).update({
+          assignedRiderId: null,
+          assignedRiderName: null,
+          assignedRiderBike: null,
+          assignedAt: null
+        });
+      }).catch(window.alertDbError);
+    }
+
+    function openBatchRouteFromShop() {
+      const keys = Object.keys(selectedBatchKeys).filter(function (key) { return !!allOrders[key]; });
+      if (!keys.length) return alert('Orders tick කරන්න. එක පාරට 5–6ක් shop එකෙන් ගෙන යන්න පුළුවන්.');
+      claimOrderKeys(keys).then(function (claimed) {
+        if (!claimed.length) return alert('වෙන rider කෙනෙක් මේ orders ගත්තා. Route එක open වෙන්නේ නැහැ.');
+        if (claimed.length < keys.length) alert('සමහර orders already taken. ඔබ ගත්ත ඒවා විතරක් route එකේ තියෙනවා.');
+        const orders = claimed.map(function (key) { return allOrders[key]; }).filter(Boolean);
+        const url = buildBatchMapsUrl(orders);
+        if (!url) return alert('Selected orders වල location නැහැ.');
+        window.open(url, '_blank', 'noopener');
+      }).catch(window.alertDbError);
+    }
+
+    function getWhatsAppUrl(phone) {
+      const digits = String(phone || '').replace(/\D/g, '');
+      if (digits.length < 9) return '';
+      const intl = digits.startsWith('0') ? '94' + digits.slice(1) : (digits.startsWith('94') ? digits : '94' + digits);
+      return `https://wa.me/${intl}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function renderActiveJobs(keys) {
+      const container = document.getElementById('activeDeliveriesList');
+      container.innerHTML = '';
+
+      if (keys.length === 0) {
+        container.innerHTML = riderEmptyState('🛵', 'No live delivery jobs', 'Pickup orders cashier එකේ. Doorstep delivery එකක් ආවම මෙතන පේනවා. ගෙදර Delivered කරනකම් hide වෙන්නේ නෑ.');
+        lastActiveJobKeys = [];
+        selectedBatchKeys = {};
+        updateBatchBar();
+        return;
+      }
+
+      lastActiveJobKeys = keys.slice();
+      Object.keys(selectedBatchKeys).forEach(function (key) {
+        if (keys.indexOf(key) === -1) delete selectedBatchKeys[key];
+      });
+
+      keys.forEach(k => {
+        const o = allOrders[k];
+        const isArrived = o.status === 'Arrived';
+        const holdingCash = window.riderHoldsCash(o);
+        const collectable = o.total || 0;
+        const meta = o.deliveryMeta || {};
+        const mapsUrl = getMapsUrl(o);
+        const whatsappUrl = getWhatsAppUrl(o.customerPhone);
+        const addressText = getDeliveryAddress(o) || meta.landmark || 'Address not saved';
+        const kmText = kmLabel(o);
+        const kmHtml = kmText
+          ? `<div class="text-[11px] font-black text-emerald-800 bg-emerald-50 px-3 py-2 rounded-2xl">📏 Shop → home · ${escapeHtml(kmText)}</div>`
+          : '';
+        const itemsHtml = window.orderItemRows(o).map(i => {
+          const note = String(i.note || i.customNote || '').trim();
+          return `${escapeHtml(i.qty)}x ${escapeHtml(i.name)}${note ? ` (${escapeHtml(note)})` : ''}`;
+        }).join(', ') || 'No items listed';
+        const safeName = escapeHtml(o.customerName || 'Customer');
+        const safePhone = escapeHtml(o.customerPhone || '');
+        const safeKey = escapeHtml(String(k).replace(/'/g, "\\'"));
+        const chatDrawerEl = document.getElementById('chatDrawer');
+        const chatOpenHere = currentChatOrderKey === k && !!chatDrawerEl && !chatDrawerEl.classList.contains('hidden');
+        const chatUnread = window.chatWatch(k, o.chats, 'rider', chatOpenHere);
+
+        let addressHtml = '';
+        if (meta.recipientType === 'Someone Else') {
+          addressHtml = `
+            <div class="text-xs font-bold text-slate-700 bg-rose-50 p-3 rounded-2xl space-y-1">
+              <span class="block text-[10px] uppercase text-rose-600 font-black">Deliver to someone else</span>
+              <div>👤 ${escapeHtml(meta.recipientName || '-')} (${escapeHtml(meta.recipientPhone || '-')})</div>
+              <div>🏠 ${escapeHtml(meta.recipientAddress || addressText)}</div>
+              ${kmHtml}
+            </div>`;
+        } else {
+          addressHtml = `
+            <div class="text-xs font-bold text-slate-700 bg-slate-50 p-3 rounded-2xl space-y-1">
+              <span class="block text-[10px] uppercase text-slate-500 font-black">Delivery address</span>
+              <div>🏠 ${escapeHtml(addressText)}</div>
+              ${kmHtml}
+            </div>`;
+        }
+
+        const claimState = getClaimState(o);
+        const pay = window.normalizePayment(o);
+        const payWait = pay.method === 'bank' && pay.status !== 'paid';
+        const payLine = `<div class="text-[10px] font-black ${pay.status === 'paid' ? 'text-emerald-800 bg-emerald-50' : 'text-rose-700 bg-rose-50'} px-3 py-2 rounded-2xl">${window.paymentLabel(o)}${payWait ? ' — cashier confirm කරනකම් deliver කරන්න එපා' : (pay.method === 'bank' ? ' — cash එකතු කරන්න එපා' : '')}</div>`;
+        let claimHtml = '';
+        switch (claimState) {
+          case 'unclaimed':
+            claimHtml = (window.paymentBlocksDispatch && window.paymentBlocksDispatch(o))
+              ? `<div class="text-center text-[10px] font-black text-rose-800 bg-rose-50 border border-rose-200 py-2.5 rounded-xl">Cashier payment confirm කරනකම් Take කරන්න බෑ</div>`
+              : `<button type="button" onclick="takeThisOrder('${safeKey}')" class="w-full bg-gradient-to-r from-rose-600 to-rose-500 hover:from-rose-500 text-white font-black py-3.5 rounded-2xl text-sm shadow-lg shadow-rose-200">✋ Take this order</button>`;
+            break;
+          case 'mine':
+            if (holdingCash) {
+              claimHtml = `<div class="text-center text-[11px] font-black text-amber-900 bg-amber-50 border border-amber-200 py-2.5 rounded-2xl">Cash Rs. ${(o.total || 0).toLocaleString()} ඔබ අතේ. Cashier confirm කරනකම් release වෙන්නේ නැහැ.</div>`;
+            } else {
+              claimHtml = `
+              <div class="flex items-center justify-between gap-2 bg-emerald-50 rounded-2xl px-3 py-2.5">
+                <span class="text-[11px] font-black text-emerald-800">✓ You took this</span>
+                <button type="button" onclick="releaseOrder('${safeKey}')" class="text-[10px] font-black text-slate-500 underline">Release</button>
+              </div>`;
+            }
+            break;
+          case 'taken':
+            claimHtml = `<div class="text-center text-[10px] font-black text-slate-500 bg-slate-50 border py-2 rounded-xl">Already taken by ${escapeHtml(o.assignedRiderName || 'another rider')}</div>`;
+            break;
+          default: {
+            const _exhaustive = claimState;
+            claimHtml = String(_exhaustive);
+          }
+        }
+
+        let statusHtml = '';
+        const kitchenWait = o.status === 'Received' || o.status === 'Preparing';
+        const foodReady = o.status === 'Ready';
+        switch (claimState) {
+          case 'mine':
+            if (kitchenWait) {
+              statusHtml = `<div class="text-center text-[11px] font-black text-amber-900 bg-amber-50 border border-amber-200 py-2.5 rounded-2xl">Kitchen එකේ හදනවා. පිටට ගිහින් තියෙනවා නම්ත් මේ job එක ඔබේ. Ready උනාම shop එකට ඇවිල්ලා packet අරන්.</div>`;
+            } else if (foodReady) {
+              statusHtml = `<button onclick="takeThisOrder('${safeKey}')" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-3.5 rounded-2xl text-sm shadow-md">🛵 Start Delivery</button>`;
+            } else if (holdingCash) {
+              statusHtml = `<div class="text-center text-[11px] font-black text-emerald-900 bg-emerald-50 border border-emerald-200 py-2.5 rounded-2xl">Cash Rs. ${(o.total || 0).toLocaleString()} ඔබ අතේ. Shop එකට ගෙන්න. Cashier Confirm cash received කරනකම් මේක account එකේ.</div>`;
+            } else if (o.status === 'PickedUp' && (pay.method === 'cash' || pay.method === 'shop') && pay.status !== 'paid') {
+              statusHtml = `<button type="button" onclick="markRiderCashCollected('${safeKey}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-3.5 rounded-2xl text-sm shadow-md">💵 Cash collected from customer</button>`;
+            } else if (o.status === 'PickedUp') {
+              statusHtml = `<div class="text-center text-[11px] font-black text-emerald-800 bg-emerald-50 border border-emerald-200 py-2.5 rounded-2xl">Delivered.</div>`;
+            } else {
+              statusHtml = `
+              ${liveLocPillHtml(k)}
+              ${!isArrived ? `<button onclick="updateJobStatus('${safeKey}', 'Arrived')" class="w-full bg-amber-400 hover:bg-amber-300 text-slate-950 font-black py-3 rounded-2xl text-xs shadow-md">📍 ගෙදර ළඟයි — Arrived</button>` : '<div class="text-center text-[10px] font-black text-emerald-700 bg-emerald-50 py-2 rounded-2xl">ගෙදර ළඟයි. Customer ට notify උනා.</div>'}
+              ${payWait
+                ? `<div class="text-center text-[10px] text-rose-800 font-black bg-rose-50 py-2.5 rounded-2xl">Bank payment confirm වෙනකම් Delivered mark කරන්න එපා</div>`
+                : `<button onclick="updateJobStatus('${safeKey}', 'PickedUp')" class="w-full bg-emerald-500 hover:bg-emerald-400 text-white font-black py-3.5 rounded-2xl text-sm shadow-md">✅ Customer ට දුන්නා — Delivered</button>`}
+            `;
+            }
+            break;
+          case 'unclaimed':
+            statusHtml = `<div class="text-center text-[10px] text-slate-400 font-bold">Take this order first. ඊට පස්සේ Delivered mark කරන්න පුළුවන්.</div>`;
+            break;
+          case 'taken':
+            statusHtml = '';
+            break;
+          default: {
+            const _exhaustiveStatus = claimState;
+            statusHtml = String(_exhaustiveStatus);
+          }
+        }
+
+        const card = document.createElement('div');
+        card.className = `bg-white p-4 rounded-[24px] shadow-sm space-y-3 border ${holdingCash ? 'border-amber-300' : (!isArrived ? 'border-amber-200 new-job-pulse' : 'border-emerald-200')}`;
+        
+        card.innerHTML = `
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" class="batch-job-check mt-1.5 w-4 h-4 accent-emerald-600" ${holdingCash ? 'disabled' : ''} ${selectedBatchKeys[k] ? 'checked' : ''} onchange="toggleBatchJob('${safeKey}', this.checked)">
+            <div class="flex-1 flex justify-between items-start gap-2">
+            <div>
+                <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Order no.</span>
+                <div class="text-2xl font-black text-slate-900 leading-none">${escapeHtml(o.orderId || k)}</div>
+                <div class="text-sm font-black text-slate-800 mt-1.5"><i class="fa-solid fa-user text-slate-400 mr-1"></i>${safeName}</div>
+                ${safePhone ? `<div class="text-[11px] text-slate-500 font-bold mt-0.5"><i class="fa-solid fa-phone mr-1"></i>${safePhone}</div>` : ''}
+            </div>
+              <div class="text-right flex-shrink-0">
+                <div class="text-[9px] font-black uppercase tracking-wider text-slate-400">${pay.method === 'bank' ? 'Bank later' : 'Collect'}</div>
+                <div class="text-lg font-black ${pay.method === 'bank' ? 'text-violet-700' : 'text-rose-600'} leading-tight">${pay.method === 'bank' ? 'No cash' : ('Rs. ' + collectable.toLocaleString())}</div>
+                ${isArrived ? '<div class="text-[9px] font-black text-emerald-600 mt-1 uppercase">Arrived</div>' : ''}
+            </div>
+          </div>
+          </label>
+
+          ${riderTrackerHtml(o)}
+
+          ${addressHtml}
+          ${payLine}
+          ${payLine}
+
+          ${mapsUrl ? `<a href="${window.safeUrl(mapsUrl)}" target="_blank" rel="noopener" class="block w-full bg-emerald-600 hover:bg-emerald-500 text-white text-center py-3.5 rounded-2xl text-sm font-black shadow-sm"><i class="fa-solid fa-map-location-dot mr-1"></i> Open Google Maps</a>` : `<div class="text-center text-[11px] text-rose-600 font-black bg-rose-50 py-2.5 rounded-2xl">Location not saved on this order</div>`}
+
+          <div class="text-[11px] text-slate-700 bg-amber-50 p-3 rounded-2xl">
+            <span class="block text-[10px] uppercase text-amber-800 font-black mb-0.5">Items</span>
+            ${itemsHtml}
+          </div>
+
+          ${claimHtml}
+
+          <div class="grid grid-cols-3 gap-2">
+            ${o.customerPhone ? `<a href="tel:${escapeHtml(o.customerPhone)}" class="flex items-center justify-center gap-1 bg-amber-50 text-amber-900 py-2.5 rounded-xl text-[11px] font-black"><i class="fa-solid fa-phone"></i> Call</a>` : '<div></div>'}
+            ${whatsappUrl ? `<a href="${window.safeUrl(whatsappUrl)}" target="_blank" rel="noopener" class="flex items-center justify-center gap-1 bg-emerald-50 text-emerald-800 py-2.5 rounded-xl text-[11px] font-black"><i class="fa-brands fa-whatsapp"></i> WA</a>` : '<div></div>'}
+            <button onclick="openChat('${safeKey}')" class="relative flex items-center justify-center gap-1 bg-violet-50 text-violet-800 py-2.5 rounded-xl text-[11px] font-black"><i class="fa-solid fa-message"></i> Chat${window.chatBadgeHtml(k, chatUnread)}</button>
+          </div>
+
+          <div class="pt-1 space-y-2">
+            ${statusHtml}
+          </div>
+        `;
+        container.appendChild(card);
+      });
+      updateBatchBar();
+    }
+
+    function renderTakenJobs(keys) {
+      const wrap = document.getElementById('takenByOthersWrap');
+      const container = document.getElementById('takenByOthersList');
+      lastTakenJobKeys = keys.slice();
+      if (!wrap || !container) return;
+      if (!keys.length) {
+        wrap.classList.add('hidden');
+        container.innerHTML = '';
+        return;
+      }
+      wrap.classList.remove('hidden');
+      container.innerHTML = '';
+      keys.forEach(function (k) {
+        const o = allOrders[k];
+        const rider = (o && o.assignedRiderName) || 'Another rider';
+        const card = document.createElement('div');
+        card.className = 'bg-white p-3.5 rounded-2xl border border-slate-100 shadow-sm flex justify-between items-center gap-2';
+        card.innerHTML = `
+          <div>
+            <div class="text-[11px] font-black text-slate-700">${escapeHtml((o && o.orderId) || 'Order')} · rider අරන්</div>
+            <div class="text-[10px] font-bold text-slate-500">Taken by ${escapeHtml(rider)}${o && o.assignedRiderBike ? ' · ' + escapeHtml(o.assignedRiderBike) : ''}</div>
+          </div>
+          <span class="text-[10px] font-black text-rose-600 uppercase bg-rose-50 px-2 py-1 rounded-lg">Locked</span>
+        `;
+        container.appendChild(card);
+      });
+      updateBatchBar();
+    }
+
+    function renderUpcomingJobs(keys) {
+      const container = document.getElementById('upcomingOrdersList');
+      container.innerHTML = '';
+
+      if (keys.length === 0) {
+        container.innerHTML = riderEmptyState('🍳', 'Kitchen idle', 'Doorstep orders kitchen / ready වෙනකොට මෙතන පේනවා.');
+        return;
+      }
+
+      keys.forEach(k => {
+        const o = allOrders[k];
+        const prepTime = o.prepTimeMins || 20;
+        const isReady = o.status === 'Ready';
+        const canStart = isClaimableJob(o);
+        const payWait = window.paymentBlocksDispatch && window.paymentBlocksDispatch(o);
+        const safeKey = String(k).replace(/'/g, "\\'");
+        const card = document.createElement('div');
+        const area = getDeliveryAddress(o) || (o.deliveryMeta && o.deliveryMeta.landmark) || 'Address pending';
+        const mapsUrl = getMapsUrl(o);
+        const kmText = kmLabel(o);
+        card.className = isReady
+          ? "bg-emerald-50 p-4 rounded-[24px] border border-emerald-300 shadow-sm space-y-2.5 text-xs"
+          : "bg-white p-4 rounded-[24px] border border-white shadow-sm space-y-2.5 text-xs";
+        card.innerHTML = `
+          <div class="flex justify-between items-start gap-3">
+            <div class="min-w-0">
+              <span class="text-[10px] font-black uppercase tracking-wider text-slate-400">Order no.</span>
+              <div class="text-xl font-black text-slate-900 leading-none">${escapeHtml(o.orderId)}</div>
+              <div class="font-black text-slate-800 mt-1.5"><i class="fa-solid fa-user text-slate-400 mr-1"></i>${escapeHtml(o.customerName)}</div>
+              <div class="text-[10px] text-slate-500 mt-0.5">Status: <span class="${isReady ? 'text-emerald-700' : 'text-amber-600'} font-black">${escapeHtml(o.status)}</span></div>
+              <div class="text-[11px] text-slate-800 font-bold mt-1">🏠 ${escapeHtml(area)}</div>
+              ${kmText ? `<div class="text-[11px] font-black text-emerald-700 mt-0.5">📏 ${escapeHtml(kmText)}</div>` : ''}
+          </div>
+            <span class="flex-shrink-0 ${isReady ? 'bg-emerald-600' : 'bg-violet-600'} text-white px-2.5 py-1.5 rounded-xl text-[10px] font-black">${isReady ? 'READY' : '~' + prepTime + ' min'}</span>
+          </div>
+          ${riderTrackerHtml(o)}
+          ${mapsUrl ? `<a href="${window.safeUrl(mapsUrl)}" target="_blank" rel="noopener" class="block w-full bg-slate-900 text-white text-center py-2.5 rounded-xl text-[11px] font-black">🗺️ Preview location</a>` : ''}
+          ${payWait ? '<div class="text-[10px] font-black text-rose-800 bg-rose-50 border border-rose-200 px-2.5 py-1.5 rounded-xl">Bank confirm වෙනකම් Take කරන්න බෑ</div>' : ''}
+          ${canStart ? `<button onclick="takeThisOrder('${safeKey}')" class="w-full bg-rose-600 hover:bg-rose-500 text-white font-black py-3 rounded-2xl text-sm shadow">${isReady ? '🛵 Start Delivery' : '✋ Take this job'}</button>` : ''}
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function updateJobStatus(key, status) {
+      if (getClaimState(allOrders[key]) !== 'mine') {
+        return alert('Take this order first.');
+      }
+      const order = allOrders[key] || {};
+      if (status === 'PickedUp' && window.paymentBlocksDispatch(order)) {
+        return alert('Bank payment cashier confirm කරලා නැහැ. Deliver කරලා finish කරන්න බෑ.');
+      }
+      if (status === 'PickedUp') {
+        if (!confirm('Customer ට order එක දුන්නද? Delivered කියලා mark වෙනවා.')) return;
+      }
+      const patch = { status: status };
+      if (status === 'PickedUp') patch.deliveredAt = Date.now();
+      db.ref(`orders/${key}`).update(patch).catch(window.alertDbError);
+    }
+
+    function markRiderCashCollected(key) {
+      if (getClaimState(allOrders[key]) !== 'mine') {
+        return alert('Take this order first.');
+      }
+      const order = allOrders[key] || {};
+      if (order.status !== 'PickedUp') {
+        return alert('මුලින් Customer ට දුන්නා — Delivered click කරන්න.');
+      }
+      const pay = window.normalizePayment(order);
+      if (!(pay.method === 'cash' || pay.method === 'shop') || pay.status === 'paid') return;
+      if (window.riderHoldsCash(order)) return;
+      if (!confirm('Customer ගෙන් cash Rs. ' + (order.total || 0).toLocaleString() + ' ගත්තද?')) return;
+      db.ref('orders/' + key).update({
+        cashCollected: true,
+        cashCollectedAt: Date.now(),
+        payment: window.paymentStaffPatch(order, 'collected', 'rider')
+      }).catch(window.alertDbError);
+    }
+
+    function openChat(key) {
+      const order = allOrders[key] || {};
+      currentChatOrderKey = key;
+      document.getElementById('chatTitle').innerText = '💬 Order chat · ' + (order.customerName || 'Customer') + ' · Cashier · Rider';
+      document.getElementById('chatCallBtn').href = `tel:${order.customerPhone || ''}`;
+      document.getElementById('chatDrawer').classList.remove('hidden');
+      window.chatMarkSeen(key, order.chats, 'rider');
+      listenToChatMessages(key);
+    }
+
+    function toggleChatDrawer() {
+      document.getElementById('chatDrawer').classList.add('hidden');
+      currentChatOrderKey = null;
+      stopRiderChatListener();
+    }
+
+    function sendChatMessage() {
+      const input = document.getElementById('chatInputMessage');
+      const text = input.value.trim();
+      if (!text || !currentChatOrderKey) return;
+      
+      db.ref(`orders/${currentChatOrderKey}/chats`).push(window.chatPush('rider', getRiderName() || 'Delivery Rider', text)).then(() => input.value = '').catch(window.alertDbError);
+    }
+
+    let riderChatListenKey = '';
+    function stopRiderChatListener() {
+      if (!riderChatListenKey) return;
+      db.ref('orders/' + riderChatListenKey + '/chats').off('value');
+      riderChatListenKey = '';
+    }
+    function listenToChatMessages(orderKey) {
+      if (!orderKey) return;
+      if (riderChatListenKey === orderKey) return;
+      stopRiderChatListener();
+      riderChatListenKey = orderKey;
+      db.ref(`orders/${orderKey}/chats`).on('value', snap => {
+        const chats = snap.val() || {};
+        window.chatWatch(orderKey, chats, 'rider', true);
+        window.renderChatThread(document.getElementById('chatMessagesContainer'), chats, 'rider');
+      }, function (err) {
+        console.warn('Rider chat listener failed', err);
+        riderChatListenKey = '';
+        const box = document.getElementById('chatMessagesContainer');
+        if (box) box.innerHTML = '<p class="text-center text-[11px] text-rose-600 font-bold py-4">Chat load වුණේ නැහැ. මේ order එක ඔබට assign වෙලාද බලන්න.</p>';
+      });
+    }
+  </script>
+</body>
+</html>

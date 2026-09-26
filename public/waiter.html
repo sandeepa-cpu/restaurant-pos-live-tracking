@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Waiter Station - Peoples Family Restaurant</title>
+  <link rel="icon" type="image/jpeg" href="LOGO NEW.jpg">
+  <script src="js/firebase-config.js?v=58"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="js/auth-guard.js?v=19"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    #posViewContainer.hidden, #ordersViewContainer.hidden { display: none !important; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans text-slate-800 flex flex-col">
+    
+  <!-- TOP NAVIGATION BAR -->
+  <header class="bg-white border-b border-slate-200 px-6 py-3 flex justify-between items-center shadow-sm">
+      <div class="flex items-center gap-3">
+      <img src="LOGO NEW.jpg" alt="Logo" class="w-10 h-10 rounded-full border-2 border-amber-400 object-cover shadow">
+        <div>
+        <h1 class="text-sm font-black text-purple-950 uppercase tracking-wide">Peoples Family Restaurant</h1>
+        <p class="text-[10px] text-slate-500 font-bold">Waiter Station</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-3">
+      <button onclick="switchView('pos')" id="navPosBtn" class="bg-purple-900 text-white px-4 py-2 rounded-2xl text-xs font-black shadow transition">
+        <i class="fa-solid fa-utensils mr-1.5"></i> Table POS Terminal
+        </button>
+      <button onclick="switchView('orders')" id="navOrdersBtn" class="bg-slate-200 text-slate-700 px-4 py-2 rounded-2xl text-xs font-black transition">
+        <i class="fa-solid fa-receipt mr-1.5"></i> Active Tables & QR Approvals
+        </button>
+      <a href="pos.html" class="bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-2xl text-xs font-black">POS Home</a>
+      <button type="button" onclick="logoutStaff()" class="bg-rose-600 text-white px-4 py-2 rounded-2xl text-xs font-black">Logout</button>
+      </div>
+    </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- VIEW 1: POS TERMINAL -->
+    <div id="posViewContainer" class="lg:col-span-12 grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- MENU CATALOG (8 Cols) -->
+      <div class="lg:col-span-7 xl:col-span-8 flex flex-col space-y-4">
+        <div id="categoryTabs" class="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+          <button onclick="filterCategory('All')" class="cat-btn bg-purple-900 text-white px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap shadow transition">Show All</button>
+        </div>
+        <input id="globalSearch" type="search" placeholder="Search dishes..." oninput="renderStewardMenu()" class="w-full border border-slate-200 rounded-2xl px-3 py-2 text-xs font-semibold outline-none bg-white">
+
+        <div id="stewardMenuGrid" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 max-h-[calc(100vh-240px)] overflow-y-auto p-1 custom-scrollbar">
+          <p class="text-slate-400 text-xs col-span-full text-center py-10">Loading menu items...</p>
+        </div>
+      </div>
+
+      <!-- RIGHT: CART & KOT PANEL (5 Cols) -->
+      <div class="lg:col-span-5 xl:col-span-4 bg-white p-4 rounded-3xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4 h-[calc(100vh-140px)]">
+        <div class="space-y-3 flex-1 flex flex-col overflow-hidden">
+          
+          <div class="flex justify-between items-center border-b pb-2">
+            <div class="flex items-center gap-2">
+              <span id="cartHeaderTitle" class="font-black text-xs text-purple-950 uppercase">Table Order Cart</span>
+              <span id="posCartBadge" class="bg-purple-100 text-purple-900 text-[10px] font-black px-2 py-0.5 rounded-full">0 Items</span>
+            </div>
+            <button onclick="clearStewardCart()" class="text-rose-600 font-bold text-[10px] hover:underline">Clear</button>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-[10px] font-black text-slate-500 uppercase">Dining Table No.</label>
+            <input id="stewardTableNo" type="number" placeholder="Enter Table No (e.g. 3)" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs font-bold outline-none bg-slate-50">
+          </div>
+
+          <div id="stewardCartItemsList" class="flex-1 overflow-y-auto space-y-2 custom-scrollbar divide-y pr-1">
+            <p class="text-slate-400 text-xs italic text-center py-10">Cart is empty.</p>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t space-y-2">
+          <div class="space-y-1 text-xs text-slate-600">
+            <div class="flex justify-between font-black text-sm text-purple-950 pt-1 border-t"><span>Total Amount:</span> <span id="stewardGrandTotal">Rs. 0</span></div>
+          </div>
+
+          <button id="cartSubmitBtn" onclick="submitStewardKOT()" class="w-full bg-slate-900 hover:bg-slate-950 text-white font-black py-3 rounded-2xl text-xs shadow transition">
+            <i class="fa-solid fa-print mr-1.5"></i> KOT & Print (Send to Kitchen)
+          </button>
+        </div>
+      </div>
+  </div>
+
+    <!-- VIEW 2: ACTIVE TABLES & QR APPROVALS -->
+    <div id="ordersViewContainer" class="lg:col-span-12 hidden space-y-6">
+      
+      <!-- SECTION A: Customer QR Orders Awaiting Approval -->
+      <div class="space-y-3">
+        <h2 class="text-xs font-black text-amber-800 uppercase tracking-wide bg-amber-50 p-3 rounded-2xl border border-amber-200">📱 Customer QR Orders Awaiting Approval</h2>
+        <div id="pendingApprovalGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <p class="text-slate-400 text-xs col-span-full">No pending QR orders waiting for approval.</p>
+        </div>
+      </div>
+
+      <!-- SECTION B: Active Dining Tables (Add items / Supplementary KOT) -->
+      <div class="space-y-3 pt-4 border-t">
+        <h2 class="text-xs font-black text-slate-700 uppercase tracking-wide">🍽️ Active Dining Tables (Add Items to Bill)</h2>
+        <div id="stewardOrdersGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <p class="text-slate-400 text-xs col-span-full">No active table orders right now.</p>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    const firebaseConfig = window.PEOPLES_FIREBASE_CONFIG;
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    guardStaffPage(['admin', 'steward']);
+
+    let allOrders = {};
+    let allMenuItems = {};
+    let categoriesList = [];
+    let stewardCart = [];
+    let currentCategory = 'All';
+    let appendingOrderKey = null; // If adding items to existing table bill
+    let kotSubmitting = false;
+
+    db.ref('categories').on('value', snap => {
+      const data = snap.val() || {};
+      categoriesList = [];
+      Object.keys(data).forEach((key, index) => {
+        const item = data[key];
+        if (typeof item === 'object' && item !== null) {
+          categoriesList.push({ id: key, name: item.name, order: item.order !== undefined ? item.order : index });
+        } else {
+          categoriesList.push({ id: key, name: item, order: index });
+        }
+      });
+      categoriesList.sort((a, b) => a.order - b.order);
+      renderCategoryTabs();
+    }, window.onDbListenError);
+
+    db.ref('menu_items').on('value', snap => {
+      allMenuItems = snap.val() || {};
+      renderStewardMenu();
+    }, window.onDbListenError);
+
+    db.ref('orders').on('value', snap => {
+      allOrders = snap.val() || {};
+      renderStewardDashboard();
+    }, window.onDbListenError);
+
+    function switchView(view) {
+      const posContainer = document.getElementById('posViewContainer');
+      const ordersContainer = document.getElementById('ordersViewContainer');
+      const posBtn = document.getElementById('navPosBtn');
+      const ordersBtn = document.getElementById('navOrdersBtn');
+
+      if (view === 'pos') {
+        posContainer.classList.remove('hidden');
+        ordersContainer.classList.add('hidden');
+        posBtn.className = "bg-purple-900 text-white px-4 py-2 rounded-2xl text-xs font-black shadow transition";
+        ordersBtn.className = "bg-slate-200 text-slate-700 px-4 py-2 rounded-2xl text-xs font-black transition";
+      } else {
+        posContainer.classList.add('hidden');
+        ordersContainer.classList.remove('hidden');
+        ordersBtn.className = "bg-purple-900 text-white px-4 py-2 rounded-2xl text-xs font-black shadow transition";
+        posBtn.className = "bg-slate-200 text-slate-700 px-4 py-2 rounded-2xl text-xs font-black transition";
+      }
+    }
+
+    const esc = window.escapeText;
+
+    function renderCategoryTabs() {
+      const tabs = document.getElementById('categoryTabs');
+      tabs.innerHTML = `<button onclick="filterCategory('All')" class="cat-btn ${currentCategory === 'All' ? 'bg-purple-900 text-white shadow' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'} px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition">Show All</button>`;
+      
+      categoriesList.forEach(cat => {
+        const isActive = currentCategory === cat.name;
+        tabs.innerHTML += `
+          <button onclick="filterCategory(${window.jsCallArg(cat.name)})" class="cat-btn ${isActive ? 'bg-purple-900 text-white shadow' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'} px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition">${esc(cat.name)}</button>
+        `;
+      });
+    }
+
+    function filterCategory(cat) {
+      currentCategory = cat;
+      renderCategoryTabs();
+      renderStewardMenu();
+    }
+
+    function renderStewardMenu() {
+      const grid = document.getElementById('stewardMenuGrid');
+      const searchEl = document.getElementById('globalSearch');
+      const search = ((searchEl && searchEl.value) || '').toLowerCase();
+      grid.innerHTML = '';
+
+      const keys = Object.keys(allMenuItems);
+      if (keys.length === 0) return grid.innerHTML = '<p class="text-slate-400 text-xs col-span-full text-center py-10">No menu items found.</p>';
+
+      keys.forEach(id => {
+        const dish = allMenuItems[id];
+        if (!dish || !dish.name || dish.available === false) return;
+        if (currentCategory !== 'All' && dish.category !== currentCategory) return;
+        if (search && !String(dish.name).toLowerCase().includes(search)) return;
+
+        const price = window.safeMoney(dish.price || (dish.variants && dish.variants[0] && dish.variants[0].price));
+        grid.innerHTML += `
+          <div onclick="addToStewardCart(${window.jsCallArg(dish.name)}, ${price})" class="bg-white p-3 rounded-2xl border shadow-sm hover:border-purple-600 cursor-pointer flex flex-col justify-between transition group">
+          <div>
+              <div class="h-20 bg-slate-100 rounded-xl mb-2 flex items-center justify-center text-slate-400 font-bold overflow-hidden">
+                ${window.safeUrl(dish.image) !== '#' ? `<img src="${window.safeUrl(dish.image)}" class="w-full h-full object-cover">` : '🍽️'}
+              </div>
+              <h4 class="font-bold text-xs text-slate-900 line-clamp-1">${esc(dish.name)}</h4>
+            </div>
+            <div class="flex justify-between items-center mt-2 pt-2 border-t">
+              <span class="font-black text-xs text-purple-950">Rs. ${price.toLocaleString()}</span>
+              <span class="bg-purple-50 text-purple-900 px-2 py-1 rounded-xl text-[10px] font-black group-hover:bg-purple-900 group-hover:text-white transition">+ Add</span>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function addToStewardCartById(id) {
+      const dish = allMenuItems[id];
+      if (!dish) return;
+      const hasVariants = dish.variants && dish.variants.length > 0;
+      const displayPrice = hasVariants ? dish.variants[0].price : dish.price;
+      const displayName = hasVariants ? (dish.name + ' (' + dish.variants[0].variantName + ')') : dish.name;
+      addToStewardCart(displayName, displayPrice);
+    }
+
+    function addToStewardCart(name, price) {
+      const ext = stewardCart.find(i => i.name === name);
+      if (ext) ext.qty += 1;
+      else stewardCart.push(window.normalizeCartItem(name, price, 1, ''));
+      renderStewardCart();
+    }
+
+    function updateCartQty(index, delta) {
+      stewardCart[index].qty += delta;
+      if (stewardCart[index].qty <= 0) stewardCart.splice(index, 1);
+      renderStewardCart();
+    }
+
+    function clearStewardCart() {
+      stewardCart = [];
+      renderStewardCart();
+    }
+
+    function renderStewardCart() {
+      const list = document.getElementById('stewardCartItemsList');
+      const badge = document.getElementById('posCartBadge');
+      let total = 0;
+      badge.innerText = stewardCart.reduce((s, i) => s + i.qty, 0) + ' Items';
+
+      if (stewardCart.length === 0) {
+        list.innerHTML = '<p class="text-slate-400 text-xs italic text-center py-10">Cart is empty.</p>';
+      } else {
+        list.innerHTML = stewardCart.map((i, idx) => {
+          total += window.lineTotal(i);
+          return `
+            <div class="flex justify-between items-center py-2 text-xs">
+              <div class="flex-1 pr-2">
+                <div class="font-bold text-slate-900">${esc(i.name)}</div>
+                <div class="text-[10px] text-slate-500">Rs. ${window.safeMoney(i.price).toLocaleString()} × ${window.safeMoney(i.qty)}</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="font-black text-purple-950">Rs. ${window.lineTotal(i).toLocaleString()}</span>
+                <div class="flex items-center border rounded-lg overflow-hidden bg-slate-50">
+                  <button onclick="updateCartQty(${idx}, -1)" class="px-2 py-0.5 font-bold">-</button>
+                  <span class="px-2 text-xs font-bold">${i.qty}</span>
+                  <button onclick="updateCartQty(${idx}, 1)" class="px-2 py-0.5 font-bold">+</button>
+                </div>
+              </div>
+          </div>
+          `;
+        }).join('');
+      }
+      document.getElementById('stewardGrandTotal').innerText = 'Rs. ' + total.toLocaleString();
+    }
+
+    function openAppendOrderModal(orderKey) {
+      const o = allOrders[orderKey];
+      if (!o) return;
+      if (o.status === 'Cancelled' || o.status === 'Settled' || o.status === 'PickedUp' || o.status === 'Rejected') {
+        return alert('This table is not active.');
+      }
+      appendingOrderKey = orderKey;
+      stewardCart = [];
+      renderStewardCart();
+      document.getElementById('stewardTableNo').value = o.tableId;
+      document.getElementById('stewardTableNo').disabled = true;
+      document.getElementById('cartHeaderTitle').innerText = `Add Items to Table ${o.tableId} (${o.orderId})`;
+      document.getElementById('cartSubmitBtn').innerText = "🖨️ Print Supplementary KOT";
+      switchView('pos');
+    }
+
+    function finishKotSubmit() {
+      kotSubmitting = false;
+      window.unlockButton(document.getElementById('cartSubmitBtn'));
+    }
+
+    function submitStewardKOT() {
+      if (kotSubmitting) return;
+      if (stewardCart.length === 0) return alert('Cart is empty.');
+      const btn = document.getElementById('cartSubmitBtn');
+      if (!window.lockButton(btn, 'Sending...')) return;
+      kotSubmitting = true;
+
+      if (appendingOrderKey) {
+        const order = allOrders[appendingOrderKey];
+        if (!order) {
+          appendingOrderKey = null;
+          finishKotSubmit();
+          return alert('මේ table order එක දැන් නැහැ. ආයෙන් තෝරන්න.');
+        }
+        const existingItems = window.orderItemRows(order).map(function (i) {
+          return window.normalizeCartItem(i.name, i.price, i.qty || 1, i.note);
+        });
+
+        stewardCart.forEach(function (newItem) {
+          const found = existingItems.find(function (i) { return i.name === newItem.name; });
+          if (found) found.qty += window.safeMoney(newItem.qty) || 1;
+          else existingItems.push(window.normalizeCartItem(newItem.name, newItem.price, newItem.qty, newItem.note));
+        });
+
+        const newTotal = window.cartFoodTotal(existingItems);
+
+        db.ref(`orders/${appendingOrderKey}`).update({
+          items: existingItems,
+          foodTotal: newTotal,
+          total: newTotal
+        }).then(() => {
+          stewardCart = [];
+          appendingOrderKey = null;
+          document.getElementById('stewardTableNo').disabled = false;
+          document.getElementById('stewardTableNo').value = '';
+          document.getElementById('cartHeaderTitle').innerText = "Table Order Cart";
+          document.getElementById('cartSubmitBtn').innerText = "🖨️ KOT & Print (Send to Kitchen)";
+          renderStewardCart();
+          alert('Supplementary KOT updated & sent to kitchen successfully!');
+          window.print();
+          switchView('orders');
+        }).catch(function (err) {
+          alert('KOT save වුණේ නැහැ. ' + ((err && (err.message || err.code)) || 'Try again'));
+        }).then(finishKotSubmit);
+
+      } else {
+        const tableId = document.getElementById('stewardTableNo').value.trim();
+        if (!tableId) {
+          finishKotSubmit();
+          return alert('Please enter Table Number.');
+        }
+
+        const items = stewardCart.map(function (i) {
+          return window.normalizeCartItem(i.name, i.price, i.qty, i.note);
+        });
+        const total = window.cartFoodTotal(items);
+        const orderRef = db.ref('orders').push();
+
+        window.nextDailyOrderId(db, orderRef.key).then(seqId => {
+          const payload = {
+            orderId: String(seqId).replace(/^PB-/, 'DN-'),
+            type: 'DineIn',
+            tableId: tableId,
+            customerName: 'Table ' + tableId,
+            items: items,
+            foodTotal: total,
+            deliveryFee: 0,
+            total: total,
+            status: 'Received',
+            payment: { method: 'shop', status: 'unpaid', timing: 'after' },
+            timestamp: Date.now()
+          };
+          return orderRef.set(payload);
+        }).then(() => {
+          stewardCart = [];
+          renderStewardCart();
+          document.getElementById('stewardTableNo').value = '';
+          alert('KOT printed & sent to kitchen successfully!');
+          window.print();
+          switchView('orders');
+        }).catch(function (err) {
+          alert('KOT save වුණේ නැහැ. ' + ((err && (err.message || err.code)) || 'Try again'));
+        }).then(finishKotSubmit);
+      }
+    }
+
+    function approveCustomerOrder(key) {
+      db.ref(`orders/${key}`).update({ status: 'Preparing' }).then(() => {
+        alert('Order sent to kitchen!');
+      }).catch(function (err) {
+        alert('Approve වුණේ නැහැ. ' + ((err && (err.message || err.code)) || 'Try again'));
+      });
+    }
+
+    function settleStewardBill(key) {
+      const order = allOrders[key];
+      if (!order) return;
+      const total = window.cartFoodTotal(window.orderItemRows(order));
+      if (!confirm('Table ' + (order.tableId || '') + ' bill Rs. ' + total.toLocaleString() + ' settle කරන්නද? Table එක free වෙනවා.')) return;
+      window.settleDineInBill(db, key, order, 'steward').then(function () {
+        alert('Bill settled. Table ' + (order.tableId || '') + ' is free.');
+      }).catch(window.alertDbError);
+    }
+
+    function renderStewardDashboard() {
+      const pendingGrid = document.getElementById('pendingApprovalGrid');
+      const activeGrid = document.getElementById('stewardOrdersGrid');
+      pendingGrid.innerHTML = '';
+      activeGrid.innerHTML = '';
+
+      const keys = Object.keys(allOrders).reverse();
+
+      // 1. Pending Customer QR Orders
+      const pendingKeys = keys.filter(k => {
+        const o = allOrders[k];
+        return o && o.type === 'DineIn' && (o.status === 'Received' || o.status === 'WaiterRequested');
+      });
+      if (pendingKeys.length === 0) {
+        pendingGrid.innerHTML = '<p class="text-slate-400 text-xs col-span-full">No pending QR orders waiting for approval.</p>';
+      } else {
+        pendingKeys.forEach(k => {
+          const o = allOrders[k];
+          let itemsHtml = window.orderItemRows(o).map(i => `<div class="flex justify-between text-xs py-1 border-b"><span>${esc(i.qty)}x ${esc(i.name)}</span><b>Rs. ${window.lineTotal(i).toLocaleString()}</b></div>`).join('');
+          pendingGrid.innerHTML += `
+            <div class="bg-amber-50/70 p-4 rounded-3xl border border-amber-300 shadow-sm flex flex-col justify-between space-y-3">
+            <div>
+                <div class="flex justify-between items-center border-b pb-2">
+                  <span class="font-black text-xs bg-amber-600 text-white px-2.5 py-1 rounded-xl">Table ${esc(o.tableId)} • ${esc(o.orderId)}</span>
+                  <span class="text-[10px] font-bold text-amber-900 bg-amber-200 px-2 py-0.5 rounded">New KOT</span>
+                </div>
+                <div class="my-2 max-h-32 overflow-y-auto custom-scrollbar">${itemsHtml}</div>
+              </div>
+              <div class="pt-2 border-t space-y-2">
+                <div class="flex justify-between font-black text-sm text-purple-950"><span>Total:</span><span>Rs. ${window.safeMoney(o.total).toLocaleString()}</span></div>
+                <button onclick="approveCustomerOrder(${window.jsCallArg(k)})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-2.5 rounded-2xl text-xs shadow">Start preparing</button>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // 2. Active Dining Tables (Can add items or view)
+      const activeKeys = keys.filter(k => {
+        const o = allOrders[k];
+        return o.type === 'DineIn' && o.status !== 'Settled' && o.status !== 'PickedUp' && o.status !== 'Rejected' && o.status !== 'Cancelled';
+      });
+
+      if (activeKeys.length === 0) {
+        activeGrid.innerHTML = '<p class="text-slate-400 text-xs col-span-full">No active table orders right now.</p>';
+      } else {
+        activeKeys.forEach(k => {
+          const o = allOrders[k];
+          let itemsHtml = window.orderItemRows(o).map(item => `
+            <div class="flex justify-between items-center text-xs py-1 border-b">
+              <span>${esc(item.qty)}x ${esc(item.name)}</span>
+              <span class="font-bold">Rs. ${window.lineTotal(item).toLocaleString()}</span>
+            </div>
+          `).join('');
+
+          activeGrid.innerHTML += `
+            <div class="bg-white p-4 rounded-3xl border shadow-sm flex flex-col justify-between space-y-3">
+              <div>
+                <div class="flex justify-between items-center border-b pb-2">
+                  <span class="font-black text-xs bg-purple-900 text-white px-2.5 py-1 rounded-xl">Table ${esc(o.tableId)} • ${esc(o.orderId)}</span>
+                  <span class="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded">${esc(o.status)}</span>
+                </div>
+                <div class="max-h-32 overflow-y-auto space-y-1 my-2 custom-scrollbar">${itemsHtml}</div>
+              </div>
+              <div class="pt-2 border-t space-y-2">
+                <div class="flex justify-between font-black text-sm text-purple-950">
+                  <span>Total:</span>
+                  <span>Rs. ${window.safeMoney(o.total).toLocaleString()}</span>
+                </div>
+                <button onclick="openAppendOrderModal(${window.jsCallArg(k)})" class="w-full bg-purple-900 hover:bg-purple-950 text-white font-black py-2.5 rounded-2xl text-xs shadow">➕ Add Items to Bill (Supplementary KOT)</button>
+                <button onclick="settleStewardBill(${window.jsCallArg(k)})" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-black py-2.5 rounded-2xl text-xs shadow">Settle Bill</button>
+              </div>
+            </div>
+          `;
+        });
+      }
+    }
+  </script>
+</body>
+</html>

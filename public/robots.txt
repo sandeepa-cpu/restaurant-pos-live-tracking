@@ -1,0 +1,30 @@
+User-agent: *
+Allow: /
+Allow: /sitemap.xml
+Allow: /robots.txt
+Allow: /favicon.png
+Allow: /apple-touch-icon.png
+Allow: /LOGO NEW.jpg
+Disallow: /admin
+Disallow: /admin.html
+Disallow: /cashier
+Disallow: /cashier.html
+Disallow: /rider
+Disallow: /rider.html
+Disallow: /steward.html
+Disallow: /waiter.html
+Disallow: /staff-login
+Disallow: /staff-login.html
+Disallow: /pos
+Disallow: /pos.html
+Disallow: /order
+Disallow: /order.html
+Disallow: /table.html
+Disallow: /index.html
+
+User-agent: Googlebot-Image
+Allow: /favicon.png
+Allow: /apple-touch-icon.png
+Allow: /LOGO NEW.jpg
+
+Sitemap: https://peoplesfamilyrestaurant.lk/sitemap.xml

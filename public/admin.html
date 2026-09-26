@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>Peoples Family Restaurant - Admin Panel</title>
+  <link rel="icon" type="image/jpeg" href="LOGO NEW.jpg">
+  <script src="js/firebase-config.js?v=58"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="js/auth-guard.js?v=19"></script>
+  <!-- SheetJS Library for Excel Parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+    [data-admin-panel].hidden, #qrDisplayArea.hidden, #takeawayQrArea.hidden, #qrBatchArea.hidden { display: none !important; }
+    [data-admin-nav] { color: #64748b; background: #fff; border: 1px solid #e2e8f0; }
+    [data-admin-nav].active { color: #fff; background: #581c87; border-color: #581c87; }
+    @media print {
+      body * { visibility: hidden; }
+      #qrBatchArea, #qrBatchArea *, #salesReportPrint, #salesReportPrint * { visibility: visible; }
+      #qrBatchArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        padding: 16px;
+      }
+      #salesReportPrint {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background: #fff;
+        padding: 16px;
+      }
+    }
+  </style>
+</head>
+<body class="bg-slate-100 font-sans p-4 text-slate-800 pb-32">
+  <div class="max-w-4xl mx-auto space-y-6">
+    <div class="bg-purple-950 text-white p-4 rounded-3xl shadow flex justify-between items-center">
+      <h1 class="font-black text-sm">👑 Admin Management & Settings Panel</h1>
+      <div class="flex gap-2">
+        <a href="cashier.html" data-nav-cashier class="bg-emerald-600 text-white text-[10px] font-black px-3 py-1.5 rounded-xl">Cashier Station</a>
+        <a href="pos.html" class="bg-purple-900 text-amber-300 text-[10px] font-black px-3 py-1.5 rounded-xl">POS Home</a>
+        <button onclick="logoutStaff()" class="bg-rose-600 text-white text-[10px] font-black px-3 py-1.5 rounded-xl">Logout</button>
+      </div>
+    </div>
+
+    <nav class="bg-white p-2 rounded-3xl border border-slate-200 shadow-sm flex flex-wrap gap-1.5" aria-label="Admin settings">
+      <button type="button" data-admin-nav="sales" onclick="showAdminPanel('sales')" class="px-3 py-2 rounded-2xl text-[10px] font-black">📊 Sales</button>
+      <button type="button" data-admin-nav="feedback" onclick="showAdminPanel('feedback')" class="px-3 py-2 rounded-2xl text-[10px] font-black">⭐ Feedback</button>
+      <button type="button" data-admin-nav="customers" onclick="showAdminPanel('customers')" class="px-3 py-2 rounded-2xl text-[10px] font-black">👥 Customers</button>
+      <button type="button" data-admin-nav="delivery" onclick="showAdminPanel('delivery')" class="px-3 py-2 rounded-2xl text-[10px] font-black">📦 Delivery</button>
+      <button type="button" data-admin-nav="shop" onclick="showAdminPanel('shop')" class="px-3 py-2 rounded-2xl text-[10px] font-black">🏢 Shop</button>
+      <button type="button" data-admin-nav="staff" onclick="showAdminPanel('staff')" class="px-3 py-2 rounded-2xl text-[10px] font-black">🔐 Staff</button>
+      <button type="button" data-admin-nav="riders" onclick="showAdminPanel('riders')" class="px-3 py-2 rounded-2xl text-[10px] font-black">🛵 Riders</button>
+      <button type="button" data-admin-nav="menu" onclick="showAdminPanel('menu')" class="px-3 py-2 rounded-2xl text-[10px] font-black">📋 Menu & QR</button>
+      <button type="button" data-admin-nav="dishes" onclick="showAdminPanel('dishes')" class="px-3 py-2 rounded-2xl text-[10px] font-black">🍽️ Dishes</button>
+      <button type="button" data-admin-nav="orders" onclick="showAdminPanel('orders')" class="px-3 py-2 rounded-2xl text-[10px] font-black">🛒 Old orders</button>
+    </nav>
+
+    <section data-admin-panel="sales" class="space-y-4"><div id="salesReportPrint" class="bg-white p-6 rounded-3xl shadow space-y-4 border-l-4 border-emerald-500">
+      <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-2">
+        <h2 class="font-black text-xs uppercase text-purple-950">📊 Sales report</h2>
+        <div class="flex flex-wrap items-center gap-1.5">
+          <button type="button" id="salesPeriodDayBtn" onclick="setSalesPeriod('day')" class="px-3 py-1.5 rounded-xl text-[10px] font-black bg-purple-900 text-white">Day</button>
+          <button type="button" id="salesPeriodMonthBtn" onclick="setSalesPeriod('month')" class="px-3 py-1.5 rounded-xl text-[10px] font-black bg-slate-100 text-slate-600">Month</button>
+          <input id="salesReportDate" type="date" onchange="renderSalesReport()" class="border rounded-xl px-2 py-1 text-xs font-bold">
+          <input id="salesReportMonth" type="month" onchange="renderSalesReport()" class="hidden border rounded-xl px-2 py-1 text-xs font-bold">
+          <button type="button" onclick="window.print()" class="bg-slate-900 text-white font-black px-3 py-1.5 rounded-xl text-[10px]">Print</button>
+        </div>
+      </div>
+      <p id="salesPeriodLabel" class="text-[11px] text-slate-500 font-bold">Today</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        <div class="bg-slate-50 rounded-2xl p-3 border">
+          <div class="text-[10px] font-bold text-slate-500 uppercase">Orders</div>
+          <div id="salesOrderCount" class="text-xl font-black text-purple-950">0</div>
+        </div>
+        <div class="bg-emerald-50 rounded-2xl p-3 border border-emerald-100">
+          <div class="text-[10px] font-bold text-emerald-700 uppercase">Completed sales</div>
+          <div id="salesTotal" class="text-xl font-black text-emerald-900">Rs. 0</div>
+        </div>
+        <div class="bg-rose-50 rounded-2xl p-3 border border-rose-100">
+          <div class="text-[10px] font-bold text-rose-700 uppercase">Cancelled</div>
+          <div id="salesCancelledCount" class="text-xl font-black text-rose-800">0</div>
+        </div>
+        <div class="bg-amber-50 rounded-2xl p-3 border border-amber-100">
+          <div class="text-[10px] font-bold text-amber-800 uppercase">Live now</div>
+          <div id="salesLiveCount" class="text-xl font-black text-amber-900">0</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-violet-50 rounded-2xl p-3 border border-violet-100">
+          <div class="text-[10px] font-black uppercase text-violet-700">Pickup vs Delivery</div>
+          <p id="salesBreakdown" class="text-sm font-black text-slate-900 mt-1">Pickup 0 · Delivery 0</p>
+        </div>
+        <div class="bg-sky-50 rounded-2xl p-3 border border-sky-100">
+          <div class="text-[10px] font-black uppercase text-sky-700">Most orders from</div>
+          <p id="salesTopLocation" class="text-sm font-black text-slate-900 mt-1">—</p>
+        </div>
+      </div>
+      <div class="bg-amber-50 rounded-2xl p-3 border border-amber-100">
+        <div class="text-[10px] font-black uppercase text-amber-800">Top selling item</div>
+        <p id="salesTopItem" class="text-sm font-black text-slate-900 mt-1">—</p>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div>
+          <h3 class="text-[10px] font-black uppercase text-slate-500 mb-1">Locations</h3>
+          <div id="salesLocationList" class="divide-y"></div>
+        </div>
+        <div>
+          <h3 class="text-[10px] font-black uppercase text-slate-500 mb-1">Items sold</h3>
+          <div id="salesItemList" class="divide-y"></div>
+        </div>
+      </div>
+    </div>
+
+
+
+
+
+    <div class="bg-emerald-50 p-4 rounded-3xl shadow border border-emerald-200 space-y-2">
+      <h2 class="font-black text-xs uppercase text-emerald-900">🛍️ Orders go to Cashier</h2>
+      <p class="text-[11px] text-slate-600 font-bold">Slip confirm, kitchen start, rider යවනවා — ඒවා <span class="text-emerald-800">Cashier Station</span> එකේ. Admin එක settings විතරයි.</p>
+      <a href="cashier.html" class="inline-block bg-emerald-700 hover:bg-emerald-800 text-white font-black px-4 py-2 rounded-xl text-xs">Open Cashier Station →</a>
+    </div>
+    <div class="flex justify-end gap-2">
+      <button type="button" onclick="showAdminPanel('feedback')" class="bg-purple-900 text-white font-black px-4 py-2 rounded-xl text-xs">Next: Feedback →</button>
+    </div>
+    </section>
+
+    <section data-admin-panel="feedback" class="hidden space-y-4">
+    <div class="bg-white p-6 rounded-3xl shadow space-y-3 border-l-4 border-amber-400">
+      <h2 class="font-black text-xs uppercase text-purple-950 border-b pb-2">⭐ Customer feedback</h2>
+      <div id="adminFeedbackList" class="space-y-2">
+        <p class="text-center text-slate-400 text-xs py-4">No feedback yet.</p>
+      </div>
+    </div>
+    <div class="flex justify-between gap-2">
+      <button type="button" onclick="showAdminPanel('sales')" class="bg-slate-200 text-slate-800 font-black px-4 py-2 rounded-xl text-xs">← Sales</button>
+      <button type="button" onclick="showAdminPanel('customers')" class="bg-purple-900 text-white font-black px-4 py-2 rounded-xl text-xs">Next: Customers →</button>
+    </div>
+    </section>
+
+    <section data-admin-panel="customers" class="hidden space-y-4">
+    <div class="bg-white p-6 rounded-3xl shadow space-y-4 border-l-4 border-sky-500">
+      <h2 class="font-black text-xs uppercase text-purple-950 border-b pb-2">👥 Customer base</h2>
+      <p class="text-[11px] text-slate-600 leading-relaxed">අද ඉඳන් shop එකට අලුතෙන් login වෙන customer විතරයි මෙතන එනවා. එක අංකයක් එක පාරක්.</p>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-sky-50 rounded-2xl p-3 border border-sky-100">
+          <div class="text-[10px] font-bold text-sky-700 uppercase">All customers</div>
+          <div id="custBaseCount" class="text-xl font-black text-sky-950">0</div>
+        </div>
+        <div class="bg-emerald-50 rounded-2xl p-3 border border-emerald-100">
+          <div class="text-[10px] font-bold text-emerald-700 uppercase">New today</div>
+          <div id="custBaseNew" class="text-xl font-black text-emerald-900">0</div>
+        </div>
+      </div>
+      <input id="custBaseSearch" type="search" placeholder="Search name or phone..." oninput="renderCustomerBase()" class="w-full border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+      <div id="adminCustomerList" class="space-y-2 max-h-[520px] overflow-y-auto pr-1 custom-scrollbar">
+        <p class="text-center text-slate-400 text-xs py-6">Loading customers...</p>
+      </div>
+    </div>
+    <div class="flex justify-between gap-2">
+      <button type="button" onclick="showAdminPanel('feedback')" class="bg-slate-200 text-slate-800 font-black px-4 py-2 rounded-xl text-xs">← Feedback</button>
+      <button type="button" onclick="showAdminPanel('delivery')" class="bg-purple-900 text-white font-black px-4 py-2 rounded-xl text-xs">Next: Delivery →</button>
+    </div>
+    </section>
+
+    <section data-admin-panel="delivery" class="hidden space-y-4">
+    <div class="bg-white p-6 rounded-3xl shadow space-y-4 border-l-4 border-purple-900">
+      <h2 class="font-black text-xs uppercase text-purple-950 border-b pb-2">📦 Delivery & Pricing</h2>
+      
+      <div class="space-y-3">
+        <h3 class="font-bold text-xs text-slate-700">Takeaway / Delivery Options Control</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <label class="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border cursor-pointer">
+            <span class="font-bold text-xs">01. Pick up myself</span>
+            <input type="checkbox" id="toggle-self" onchange="updateDeliverySettings()" class="w-4 h-4 accent-purple-900">
+          </label>
+          <label class="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border cursor-pointer">
+            <span class="font-bold text-xs">02. PickMe Driver</span>
+            <input type="checkbox" id="toggle-pickme" onchange="updateDeliverySettings()" class="w-4 h-4 accent-purple-900">
+          </label>
+          <label class="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border cursor-pointer">
+            <span class="font-bold text-xs">03. Deliver doorstep</span>
+            <input type="checkbox" id="toggle-doorstep" onchange="updateDeliverySettings()" class="w-4 h-4 accent-purple-900">
+          </label>
+        </div>
+        <div id="saveStatus" class="text-[10px] text-emerald-600 font-bold text-center">Settings are synced live with database.</div>
+      </div>
+
+      <div class="space-y-3 pt-3 border-t">
+        <h3 class="font-bold text-xs text-slate-700">Delivery Pricing Configuration</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-700">Initial Charge (First 3 KM or Base)</label>
+            <input id="adminInitCharge" type="number" class="w-full border rounded-xl p-2.5 text-xs font-semibold outline-none bg-slate-50" placeholder="e.g. 300">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-700">Charge Per 1 KM (After Base)</label>
+            <input id="adminPerKmCharge" type="number" class="w-full border rounded-xl p-2.5 text-xs font-semibold outline-none bg-slate-50" placeholder="e.g. 80">
+          </div>
+        </div>
+        <button onclick="saveDeliveryPricing()" class="bg-purple-900 text-white font-black px-5 py-2.5 rounded-xl text-xs">Save Delivery Charges</button>
+        <div id="pricingSaveStatus" class="text-[10px] text-emerald-600 font-bold text-center"></div>
+      </div>
+    </div>
+    <div class="flex justify-between gap-2">
+      <button type="button" onclick="showAdminPanel('customers')" class="bg-slate-200 text-slate-800 font-black px-4 py-2 rounded-xl text-xs">← Customers</button>
+      <button type="button" onclick="showAdminPanel('shop')" class="bg-purple-900 text-white font-black px-4 py-2 rounded-xl text-xs">Next: Shop →</button>
+    </div>
+    </section>
+
+    <section data-admin-panel="shop" class="hidden space-y-4">
+    <div class="bg-white p-6 rounded-3xl shadow space-y-4 border-l-4 border-purple-900">
+      <h2 class="font-black text-xs uppercase text-purple-950 border-b pb-2">🏢 Shop, hours & bank</h2>
+      
+      <div class="space-y-3">
+        <h3 class="font-bold text-xs text-slate-700">Outlet Profile, Hotline & Bank Details</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-700">Hotline Phone Number</label>
+            <input id="adminHotline" type="text" placeholder="e.g. 0712345678" class="w-full border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-700">Outlet Pickup Address / Landmark</label>
+            <input id="adminOutletAddress" type="text" placeholder="e.g. Peoples Family Restaurant, Horana" class="w-full border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-700">Bank Name</label>
+            <input id="adminBankName" type="text" placeholder="e.g. Commercial Bank" class="w-full border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-700">Bank Account Number</label>
+            <input id="adminAccNo" type="text" placeholder="e.g. 100xxxxxxx" class="w-full border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+          </div>
+          <div class="space-y-1 sm:col-span-2">
+            <label class="text-[11px] font-bold text-slate-700">Account Name & Branch</label>
+            <input id="adminAccName" type="text" placeholder="e.g. Peoples Family Restaurant (Horana Branch)" class="w-full border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-700">Opens (Sri Lanka time)</label>
+            <input id="adminOpenTime" type="time" class="w-full border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-700">Closes (Sri Lanka time)</label>
+            <input id="adminCloseTime" type="time" class="w-full border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+          </div>
+          <div class="sm:col-span-2 bg-emerald-50 border border-emerald-200 p-3 rounded-2xl space-y-2">
+            <h3 class="font-black text-xs text-emerald-950">Customer SMS OTP (Notify.lk · PB HORANA)</h3>
+            <p class="text-[10px] font-bold text-emerald-900 leading-relaxed">API key මෙතන දාන්න එපා. Google Apps Script Web app <b>/exec URL</b> එක විතරක් paste කරන්න. Key එක Script Properties එකේ තියන්න. URL දැම්මම customer login එකට SMS OTP on වෙනවා.</p>
+            <input id="adminOtpScriptUrl" type="url" placeholder="https://script.google.com/macros/s/..../exec" class="w-full border rounded-xl p-2.5 text-xs bg-white outline-none">
+          </div>
+          <div class="sm:col-span-2 bg-sky-50 border border-sky-200 p-3 rounded-2xl space-y-2">
+            <h3 class="font-black text-xs text-sky-950">PayHere online payments</h3>
+            <p class="text-[10px] font-bold text-sky-900">peoplesfamilyrestaurant.lk domain එක PayHere Integrations එකේ Add Domain කරලා Merchant ID + Merchant Secret දාන්න. Secret එක browser එකට පේන්නේ නෑ.</p>
+            <label class="flex items-center gap-2 text-[11px] font-bold text-slate-800">
+              <input type="checkbox" id="adminPayhereEnabled" class="accent-sky-700"> Enable PayHere on customer checkout
+            </label>
+            <label class="flex items-center gap-2 text-[11px] font-bold text-slate-800">
+              <input type="checkbox" id="adminPayhereSandbox" class="accent-sky-700"> Sandbox (test) — live නම් tick එක අයින් කරන්න
+            </label>
+            <input id="adminPayhereMerchantId" type="text" placeholder="Merchant ID" class="w-full border rounded-xl p-2.5 text-xs bg-white outline-none">
+            <input id="adminPayhereSecret" type="password" placeholder="Merchant Secret (save කරනකොට විතරක්. හිස් = keep current)" class="w-full border rounded-xl p-2.5 text-xs bg-white outline-none">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="flex items-center gap-2 p-3 bg-rose-50 border border-rose-200 rounded-2xl cursor-pointer">
+              <input type="checkbox" id="adminForceClosed" class="w-4 h-4 accent-rose-700">
+              <span class="text-[11px] font-bold text-rose-900">Closed now (holiday / emergency) — takeaway customers cannot order</span>
+            </label>
+            <p class="text-[10px] text-slate-500 font-bold mt-1">Hours empty = always open. Same open &amp; close time = 24 hours. Overnight ok (e.g. 18:00 → 02:00).</p>
+          </div>
+        </div>
+        <button onclick="saveRestaurantProfile()" class="bg-purple-900 text-white font-black px-5 py-2.5 rounded-xl text-xs">Save Outlet Profile & Bank Details</button>
+        <div id="profileSaveStatus" class="text-[10px] text-emerald-600 font-bold text-center"></div>
+      </div>
+    </div>
+    <div class="flex justify-between gap-2">
+      <button type="button" onclick="showAdminPanel('delivery')" class="bg-slate-200 text-slate-800 font-black px-4 py-2 rounded-xl text-xs">← Delivery</button>
+      <button type="button" onclick="showAdminPanel('staff')" class="bg-purple-900 text-white font-black px-4 py-2 rounded-xl text-xs">Next: Staff login →</button>
+    </div>
+    </section>
+
+    <section data-admin-panel="staff" class="hidden space-y-4">
+    <div class="bg-white p-6 rounded-3xl shadow space-y-4 border-l-4 border-purple-900">
+      <h2 class="font-black text-xs uppercase text-purple-950 border-b pb-2">🔐 Staff login</h2>
+      <div class="space-y-3">
+        <p class="text-[11px] text-slate-600 leading-relaxed">Staff login: <a href="staff-login.html" class="underline font-black">staff-login.html</a>. Station එකක් තෝරලා username + password. <b>දැන් තියෙන password මෙතන පෙන්නන්නේ නෑ</b>. වෙනස් කරන්න ඕනේ නම් අලුත් password දෙපාරක් දාලා ඒ station එකේ Save ඔබන්න.</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-black text-xs text-purple-950">👑 Admin</span>
+              <span id="admPassSet" class="text-[9px] font-black uppercase text-slate-400">No password</span>
+          </div>
+            <input id="admUser" type="text" placeholder="Username" autocomplete="username" class="w-full border rounded-xl p-2 text-xs bg-white outline-none">
+            <div class="relative">
+              <input id="admPass" type="password" placeholder="New password (min 6)" autocomplete="new-password" minlength="6" class="w-full border rounded-xl p-2 pr-12 text-xs bg-white outline-none">
+              <button type="button" onclick="togglePasswordField('admPass', this)" class="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-purple-800">Show</button>
+          </div>
+            <input id="admPass2" type="password" placeholder="Confirm password" autocomplete="new-password" minlength="6" class="w-full border rounded-xl p-2 text-xs bg-white outline-none">
+            <button type="button" onclick="saveStationLogin('admin')" class="w-full bg-purple-900 text-white font-black py-2 rounded-xl text-[11px]">Save admin login</button>
+          </div>
+          <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-black text-xs text-purple-950">🛍️ Cashier</span>
+              <span id="casPassSet" class="text-[9px] font-black uppercase text-slate-400">No password</span>
+          </div>
+            <input id="casUser" type="text" placeholder="Username" autocomplete="username" class="w-full border rounded-xl p-2 text-xs bg-white outline-none">
+            <div class="relative">
+              <input id="casPass" type="password" placeholder="New password (min 6)" autocomplete="new-password" minlength="6" class="w-full border rounded-xl p-2 pr-12 text-xs bg-white outline-none">
+              <button type="button" onclick="togglePasswordField('casPass', this)" class="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-purple-800">Show</button>
+        </div>
+            <input id="casPass2" type="password" placeholder="Confirm password" autocomplete="new-password" minlength="6" class="w-full border rounded-xl p-2 text-xs bg-white outline-none">
+            <button type="button" onclick="saveStationLogin('cashier')" class="w-full bg-purple-900 text-white font-black py-2 rounded-xl text-[11px]">Save cashier login</button>
+      </div>
+          <div class="bg-slate-50 p-3.5 rounded-2xl border space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-black text-xs text-purple-950">🍽️ Steward / Waiter</span>
+              <span id="stePassSet" class="text-[9px] font-black uppercase text-slate-400">No password</span>
+    </div>
+            <input id="steUser" type="text" placeholder="Username" autocomplete="username" class="w-full border rounded-xl p-2 text-xs bg-white outline-none">
+            <div class="relative">
+              <input id="stePass" type="password" placeholder="New password (min 6)" autocomplete="new-password" minlength="6" class="w-full border rounded-xl p-2 pr-12 text-xs bg-white outline-none">
+              <button type="button" onclick="togglePasswordField('stePass', this)" class="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-black text-purple-800">Show</button>
+            </div>
+            <input id="stePass2" type="password" placeholder="Confirm password" autocomplete="new-password" minlength="6" class="w-full border rounded-xl p-2 text-xs bg-white outline-none">
+            <button type="button" onclick="saveStationLogin('steward')" class="w-full bg-purple-900 text-white font-black py-2 rounded-xl text-[11px]">Save steward login</button>
+          </div>
+        </div>
+        <p class="text-[10px] text-slate-500 font-bold">🛵 Riders මේ cards වලින් නෙවෙයි. <button type="button" onclick="showAdminPanel('riders')" class="underline text-purple-900">Riders</button> page එකෙන් phone + password.</p>
+        <div id="credSaveStatus" class="text-[10px] text-emerald-700 font-bold text-center min-h-[1rem]"></div>
+
+
+
+
+
+
+        <div class="pt-4 mt-2 border-t space-y-3">
+          <h3 class="font-black text-[11px] text-purple-950">අලුත් Admin / Cashier / Steward</h3>
+          <p class="text-[11px] text-slate-600 leading-relaxed">Rider වගේම පහළින් එකතු කරන්න. එකෙක්ට වෙනම username + password එකක්. Add කළාම approve වෙනවා. පස්සේ Disable / Approve again කරන්න පුළුවන්. මේක <b>උඩ main admin/cashier/steward</b> ටිකට අමතරයි.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input id="newStaffName" type="text" placeholder="Full name" class="border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+            <input id="newStaffUser" type="text" placeholder="Login username" class="border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+            <select id="newStaffRole" class="border rounded-xl p-2.5 text-xs bg-white outline-none font-semibold">
+              <option value="cashier">🛍️ Cashier</option>
+              <option value="steward">🍽️ Steward / Waiter</option>
+              <option value="admin">👑 Admin</option>
+            </select>
+            <input id="newStaffPass" type="password" placeholder="Password (min 6)" class="border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+            <input id="newStaffPass2" type="password" placeholder="Confirm password" class="border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+          </div>
+          <button onclick="adminAddStaff()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-black px-5 py-2.5 rounded-xl text-xs">Add staff & Approve</button>
+          <div id="staffAdminStatus" class="text-[10px] text-emerald-700 font-bold"></div>
+          <div>
+            <h4 class="font-black text-[11px] text-amber-800 mb-2">Pending approval</h4>
+            <div id="pendingStaffList" class="space-y-2"></div>
+          </div>
+          <div>
+            <h4 class="font-black text-[11px] text-emerald-800 mb-2">Approved staff</h4>
+            <div id="approvedStaffList" class="space-y-2"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-between gap-2">
+      <button type="button" onclick="showAdminPanel('shop')" class="bg-slate-200 text-slate-800 font-black px-4 py-2 rounded-xl text-xs">← Shop</button>
+      <button type="button" onclick="showAdminPanel('riders')" class="bg-purple-900 text-white font-black px-4 py-2 rounded-xl text-xs">Next: Riders →</button>
+    </div>
+    </section>
+
+    <section data-admin-panel="riders" class="hidden space-y-4">
+    <div class="bg-white p-6 rounded-3xl shadow space-y-4 border-l-4 border-purple-900">
+      <h2 class="font-black text-xs uppercase text-purple-950 border-b pb-2">🛵 Rider accounts</h2>
+      <div class="space-y-3">
+        <p class="text-[11px] text-slate-600">Rider page එකෙන් register වුණු accounts approve කරන්න. නැත්නම් මෙතනින් name / phone / bike number / password දාලා rider කෙනෙක් add කරන්න.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <input id="newRiderName" type="text" placeholder="Rider name" class="border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+          <input id="newRiderPhone" type="tel" placeholder="Phone" class="border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+          <input id="newRiderBike" type="text" placeholder="Bike number (e.g. WP CAB-1234)" class="border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+          <input id="newRiderPass" type="password" placeholder="Password" class="border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+        </div>
+        <button type="button" onclick="adminAddRider()" class="bg-emerald-700 hover:bg-emerald-800 text-white font-black px-5 py-2.5 rounded-xl text-xs">Add rider & Approve</button>
+        <div id="riderAdminStatus" class="text-[10px] text-emerald-700 font-bold"></div>
+        <div>
+          <h4 class="font-black text-[11px] text-amber-800 mb-2">Pending approval</h4>
+          <div id="pendingRidersList" class="space-y-2"></div>
+        </div>
+        <div>
+          <h4 class="font-black text-[11px] text-emerald-800 mb-2">Approved riders</h4>
+          <div id="approvedRidersList" class="space-y-2"></div>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-between gap-2">
+      <button type="button" onclick="showAdminPanel('staff')" class="bg-slate-200 text-slate-800 font-black px-4 py-2 rounded-xl text-xs">← Staff</button>
+      <button type="button" onclick="showAdminPanel('menu')" class="bg-purple-900 text-white font-black px-4 py-2 rounded-xl text-xs">Next: Menu & QR →</button>
+    </div>
+    </section>
+
+    <section data-admin-panel="menu" class="hidden space-y-4">
+    <div class="bg-white p-6 rounded-3xl shadow space-y-4 border-l-4 border-purple-900">
+      <h2 class="font-black text-xs uppercase text-purple-950 border-b pb-2">📋 Menu & QR</h2>
+      
+      <div class="space-y-3">
+        <h3 class="font-bold text-xs text-slate-700">Table QR Code Generator (Dine-In)</h3>
+        <p class="text-[11px] text-slate-600">Scan කරාම ඒ මේසයේ menu එකට යනවා. Table 1–10 එකපාරටම හදලා print කරන්න.</p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <button onclick="generateTenTableQRs()" class="bg-purple-900 text-white font-black px-5 py-2.5 rounded-2xl text-xs">Generate Tables 1–10</button>
+          <button onclick="printTenTableQRs()" class="bg-emerald-700 text-white font-black px-5 py-2.5 rounded-2xl text-xs">Print Tables 1–10</button>
+        </div>
+        <div class="flex gap-2">
+          <input id="qrTableNum" type="number" placeholder="Or one table number (e.g. 5)" class="flex-grow border rounded-2xl p-2.5 text-xs outline-none bg-slate-50 font-semibold">
+          <button onclick="generateTableQR()" class="bg-slate-800 text-white font-black px-5 py-2.5 rounded-2xl text-xs">Generate One</button>
+        </div>
+        <div id="qrDisplayArea" class="hidden flex flex-col items-center space-y-3 pt-4 border-t">
+          <h3 id="qrTableLabel" class="font-black text-lg text-slate-800"></h3>
+          <div class="p-3 bg-white border-4 border-purple-900 rounded-3xl shadow-lg">
+            <img id="qrImage" src="" alt="Table QR" class="w-48 h-48 object-contain">
+          </div>
+          <p class="text-[10px] text-slate-500 font-bold">පාරිභෝගිකයාට ස්කෑන් කර ඇණවුම් කිරීම සඳහා මෙය Print කරගන්න.</p>
+          <a id="qrDownloadBtn" href="" target="_blank" download="table_qr.png" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-xs font-black transition shadow">
+            ⬇️ Download / Print QR Code
+          </a>
+        </div>
+        <div id="qrBatchArea" class="hidden grid grid-cols-2 md:grid-cols-5 gap-3 pt-4 border-t"></div>
+      </div>
+
+
+
+
+
+
+      <div class="space-y-3 pt-3 border-t">
+        <h3 class="font-bold text-xs text-slate-700">Takeaway QR Code</h3>
+        <p class="text-[11px] text-slate-600">Counter එකේ හෝ පිටතට print කරන්න. Scan කරාම takeaway menu එකට යනවා.</p>
+        <button onclick="generateTakeawayQR()" class="bg-rose-600 text-white font-black px-5 py-2.5 rounded-2xl text-xs">Generate Takeaway QR</button>
+        <div id="takeawayQrArea" class="hidden flex flex-col items-center space-y-3 pt-2">
+          <h3 class="font-black text-lg text-slate-800">Takeaway Menu</h3>
+          <div class="p-3 bg-white border-4 border-rose-600 rounded-3xl shadow-lg">
+            <img id="takeawayQrImage" src="" alt="Takeaway QR" class="w-48 h-48 object-contain">
+          </div>
+          <a id="takeawayQrDownloadBtn" href="" target="_blank" download="takeaway_qr.png" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl text-xs font-black transition shadow">⬇️ Download Takeaway QR</a>
+        </div>
+      </div>
+
+      <div class="space-y-3 pt-3 border-t">
+        <h3 class="font-bold text-xs text-slate-700">Category Management (Edit, Delete, Sort)</h3>
+        <div class="flex gap-2">
+          <input id="newCatInput" type="text" placeholder="New Category Name (e.g. Rice, Kottu)" class="flex-grow border rounded-2xl p-2.5 text-xs outline-none bg-slate-50 font-semibold">
+          <button onclick="addNewCategory()" class="bg-purple-900 text-white font-black px-5 py-2.5 rounded-2xl text-xs">Add Category</button>
+        </div>
+        <div id="categoriesList" class="space-y-2 pt-1 max-h-60 overflow-y-auto pr-1 custom-scrollbar"></div>
+      </div>
+
+      <div class="space-y-3 pt-3 border-t">
+        <h3 class="font-bold text-xs text-slate-700">Menu Items & Excel Bulk Upload</h3>
+        
+        <!-- EXCEL BULK UPLOAD BOX -->
+        <div class="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200 space-y-3">
+          <h4 class="font-black text-xs text-emerald-950">📊 Bulk Upload Menu via Excel (.xlsx)</h4>
+          <p class="text-[10px] text-slate-600">Excel ෂීට් එකේ කොලම් ලෙස <b>Category, Name, Price, Ingredients, Var1_Name, Var1_Price, Var2_Name, Var2_Price</b> භාවිත කරන්න. නව Categories ස්වයංක්‍රීයව නිර්මාණය වනු ඇත.</p>
+          <div class="flex flex-col sm:flex-row gap-2 items-center">
+            <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:bg-emerald-100 file:text-emerald-900 cursor-pointer">
+            <button onclick="uploadMenuExcel()" class="w-full sm:w-auto bg-emerald-700 hover:bg-emerald-800 text-white font-black px-4 py-2 rounded-xl text-xs flex-shrink-0 transition">Upload Excel</button>
+          </div>
+          <button onclick="downloadExcelTemplate()" class="text-[10px] text-emerald-800 font-bold underline block">📥 Download Sample Excel Template Format</button>
+        </div>
+
+        <!-- ADD SINGLE DISH WITH PRINTER ROUTING -->
+        <div class="bg-purple-50/60 p-4 rounded-2xl border border-purple-200 space-y-3">
+          <h4 class="font-black text-xs text-purple-950">Add Single Dish & Printer Routing</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input id="dishName" type="text" placeholder="Dish Name" class="border rounded-xl p-2 text-xs bg-white outline-none font-semibold">
+            <select id="dishCategorySelect" class="border rounded-xl p-2 text-xs bg-white outline-none font-semibold text-slate-700"></select>
+            <input id="dishPrice" type="number" placeholder="Base Price (if no variants)" class="border rounded-xl p-2 text-xs bg-white outline-none font-semibold">
+            
+            <!-- Printer Destination Selection -->
+            <select id="dishPrintDest" class="border rounded-xl p-2 text-xs bg-white outline-none font-semibold text-purple-950">
+              <option value="kitchen">🖨️ Kitchen Printer</option>
+              <option value="cashier">🖨️ Cashier Printer</option>
+              <option value="steward">🖨️ Steward Printer</option>
+              <option value="none">🚫 Do Not Print (No Receipt)</option>
+            </select>
+
+            <input id="dishImage" type="text" placeholder="Image URL (optional)" class="border rounded-xl p-2 text-xs bg-white outline-none font-semibold sm:col-span-2">
+            <input id="dishIngredients" type="text" placeholder="දාන දේවල් (e.g. chicken, coconut milk, spices)" class="border rounded-xl p-2 text-xs bg-white outline-none font-semibold sm:col-span-2">
+            <div id="dishKindNew" class="sm:col-span-2 flex flex-wrap gap-1.5"></div>
+          </div>
+
+          <div class="space-y-2 pt-2 border-t border-purple-200">
+            <div class="flex justify-between items-center">
+              <span class="text-[11px] font-black text-purple-950">Portions / Variations (Optional)</span>
+              <button onclick="addVariantRow()" class="bg-purple-900 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">+ Add Variant</button>
+            </div>
+            <div id="variantsContainer" class="space-y-2"></div>
+          </div>
+
+          <button onclick="saveNewDish()" class="w-full bg-purple-900 hover:bg-purple-950 text-white font-black py-2.5 rounded-xl text-xs mt-2 transition">Save Dish to Menu</button>
+        </div>
+
+        <div class="space-y-2 pt-2">
+          <h4 class="font-black text-xs text-slate-700">Existing Menu List (Change Prices / Availability)</h4>
+          <div id="adminMenuList" class="space-y-2 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
+            <p class="text-center text-slate-400 text-xs py-6">Loading menu items...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-between gap-2">
+      <button type="button" onclick="showAdminPanel('riders')" class="bg-slate-200 text-slate-800 font-black px-4 py-2 rounded-xl text-xs">← Riders</button>
+      <button type="button" onclick="showAdminPanel('dishes')" class="bg-purple-900 text-white font-black px-4 py-2 rounded-xl text-xs">Next: Dishes →</button>
+    </div>
+    </section>
+
+    <section data-admin-panel="dishes" class="hidden space-y-4">
+    <div class="bg-white p-6 rounded-3xl shadow space-y-4 border-l-4 border-amber-500">
+      <h2 class="font-black text-xs uppercase text-purple-950 border-b pb-2">🍽️ Dishes — දාන දේවල්</h2>
+      <p class="text-[11px] text-slate-600 leading-relaxed">Customer menu එකේ order කරන්න <b>කලින්</b> මේ ටික පේනවා. කෑමක් හදනකොට දාන ජාති (Veg / Egg / Chicken…) tick කරලා, දාන දේවල් ලියන්න. Save ඔබන්න.</p>
+      <input id="dishKindsSearch" type="search" placeholder="Search dish..." oninput="renderDishKindsAdmin()" class="w-full border rounded-xl p-2.5 text-xs bg-slate-50 outline-none">
+      <div id="dishKindsList" class="space-y-2 max-h-[520px] overflow-y-auto pr-1 custom-scrollbar">
+        <p class="text-center text-slate-400 text-xs py-6">Loading dishes...</p>
+      </div>
+      <div id="dishKindsStatus" class="text-[10px] text-emerald-700 font-bold min-h-[1rem]"></div>
+    </div>
+    <div class="flex justify-between gap-2">
+      <button type="button" onclick="showAdminPanel('menu')" class="bg-slate-200 text-slate-800 font-black px-4 py-2 rounded-xl text-xs">← Menu & QR</button>
+      <button type="button" onclick="showAdminPanel('orders')" class="bg-purple-900 text-white font-black px-4 py-2 rounded-xl text-xs">Next: Old orders →</button>
+    </div>
+    </section>
+
+    <section data-admin-panel="orders" class="hidden space-y-4">
+    <div class="bg-white p-6 rounded-3xl shadow space-y-4 border-l-4 border-purple-900">
+      <h2 class="font-black text-xs uppercase text-purple-950 border-b pb-2">🛒 Orders</h2>
+      <div class="space-y-2">
+        <p class="text-[11px] text-slate-600 font-bold">Live + old orders. Remove කරාම cashier / rider / customer tracker එකෙනුත් යනවා.</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" onclick="deleteAllOrders()" class="bg-rose-700 hover:bg-rose-800 text-white font-black px-4 py-2 rounded-xl text-xs">Remove all orders</button>
+          <button type="button" onclick="deleteAllCustomerHistory()" class="bg-slate-700 hover:bg-slate-800 text-white font-black px-4 py-2 rounded-xl text-xs">Clear customer order history</button>
+        </div>
+        <div id="adminOrdersList" class="space-y-2 max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
+          <p class="text-center text-slate-400 text-xs py-6">Loading all orders...</p>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-start gap-2">
+      <button type="button" onclick="showAdminPanel('dishes')" class="bg-slate-200 text-slate-800 font-black px-4 py-2 rounded-xl text-xs">← Dishes</button>
+    </div>
+    </section>
+  </div>
+
+  <script>
+    const firebaseConfig = window.PEOPLES_FIREBASE_CONFIG;
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    const db = firebase.database();
+    guardStaffPage(['admin']);
+    let allOrders = {};
+    const ADMIN_PANELS = ['sales', 'feedback', 'customers', 'delivery', 'shop', 'staff', 'riders', 'menu', 'dishes', 'orders'];
+
+    function showAdminPanel(name) {
+      const panel = ADMIN_PANELS.indexOf(name) >= 0 ? name : 'sales';
+      document.querySelectorAll('[data-admin-panel]').forEach(function (el) {
+        el.classList.toggle('hidden', el.getAttribute('data-admin-panel') !== panel);
+      });
+      document.querySelectorAll('[data-admin-nav]').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-admin-nav') === panel);
+      });
+      if ((location.hash || '').replace('#', '') !== panel) {
+        history.replaceState(null, '', '#' + panel);
+      }
+      window.scrollTo(0, 0);
+    }
+
+    window.addEventListener('hashchange', function () {
+      showAdminPanel((location.hash || '').replace('#', '') || 'sales');
+    });
+    showAdminPanel((location.hash || '').replace('#', '') || 'sales');
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function notifyDbError(err) {
+      var msg = (err && (err.message || err.code)) || String(err || 'Save failed');
+      var stat = document.getElementById('riderAdminStatus');
+      if (stat) {
+        stat.className = 'text-[10px] text-rose-700 font-bold';
+        stat.innerText = msg;
+      }
+      alert(msg);
+    }
+
+    let allCustomers = {};
+    let ignoreCustomerPhones = {};
+    let customerBaseStartedAt = Number(window.PFR_CUSTOMER_BASE_START || 0);
+
+    function colomboDay(ts) {
+      if (!ts) return '';
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Colombo' }).format(new Date(ts));
+    }
+
+    function formatColombo(ts) {
+      if (!ts) return '';
+      return new Date(ts).toLocaleString('en-LK', { timeZone: 'Asia/Colombo', dateStyle: 'medium', timeStyle: 'short' });
+    }
+
+    function phoneIsLegacyCustomer(phone) {
+      const key = customerPhoneKey(phone);
+      return !!(key && ignoreCustomerPhones[key]);
+    }
+
+    function uniqueCustomerRows(raw) {
+      const byPhone = {};
+      const fromAt = customerBaseStartedAt || 0;
+      Object.keys(raw || {}).forEach(function (uid) {
+        const c = raw[uid] || {};
+        if (phoneIsLegacyCustomer(c.phone) || phoneIsLegacyCustomer(uid)) return;
+        const joined = Number(c.createdAt || c.updatedAt || 0);
+        if (fromAt && joined && joined < fromAt) return;
+        const key = customerPhoneKey(c.phone) || uid;
+        const next = {
+          uid: uid,
+          name: c.name || '',
+          phone: c.phone || '',
+          lastAddress: c.lastAddress || '',
+          createdAt: joined,
+          updatedAt: Number(c.updatedAt || c.createdAt || 0)
+        };
+        const prev = byPhone[key];
+        if (!prev) {
+          byPhone[key] = next;
+          return;
+        }
+        if (next.updatedAt >= prev.updatedAt) {
+          next.createdAt = prev.createdAt && prev.createdAt < next.createdAt ? prev.createdAt : (next.createdAt || prev.createdAt);
+          byPhone[key] = next;
+          return;
+        }
+        if (next.createdAt && (!prev.createdAt || next.createdAt < prev.createdAt)) prev.createdAt = next.createdAt;
+      });
+      return Object.keys(byPhone).map(function (k) { return byPhone[k]; }).sort(function (a, b) {
+        return Number(b.updatedAt || 0) - Number(a.updatedAt || 0);
+      });
+    }
+
+    function renderCustomerBase() {
+      const box = document.getElementById('adminCustomerList');
+      const countEl = document.getElementById('custBaseCount');
+      const newEl = document.getElementById('custBaseNew');
+      if (!box) return;
+      const q = ((document.getElementById('custBaseSearch') || {}).value || '').trim().toLowerCase();
+      const today = colomboDay(Date.now());
+      const rows = uniqueCustomerRows(allCustomers);
+      if (countEl) countEl.innerText = String(rows.length);
+      if (newEl) newEl.innerText = String(rows.filter(function (c) {
+        return colomboDay(c.createdAt || c.updatedAt) === today;
+      }).length);
+      const shown = rows.filter(function (c) {
+        if (!q) return true;
+        return String(c.name || '').toLowerCase().indexOf(q) >= 0 ||
+          String(c.phone || '').indexOf(q) >= 0 ||
+          String(c.lastAddress || '').toLowerCase().indexOf(q) >= 0;
+      });
+      if (!shown.length) {
+        box.innerHTML = '<p class="text-center text-slate-400 text-xs py-6">' + (rows.length ? 'No match.' : 'අද ඉඳන් අලුත් customer කෙනෙක් login unama මෙතන එනවා.') + '</p>';
+        return;
+      }
+      box.innerHTML = shown.map(function (c) {
+        const isNew = colomboDay(c.createdAt || c.updatedAt) === today;
+        const tel = String(c.phone || '').replace(/\s/g, '');
+        return '<div class="bg-slate-50 border rounded-2xl p-3">' +
+          '<div class="flex items-center gap-2 flex-wrap">' +
+            '<span class="text-sm font-black text-purple-950">' + escapeHtml(c.name || 'No name') + '</span>' +
+            (isNew ? '<span class="text-[9px] font-black uppercase bg-emerald-600 text-white px-1.5 py-0.5 rounded-lg">New</span>' : '') +
+          '</div>' +
+          (tel ? '<a href="tel:' + escapeHtml(tel) + '" class="text-xs font-black text-sky-800">' + escapeHtml(c.phone || '') + '</a>' : '<span class="text-xs text-slate-400">No phone</span>') +
+          (c.lastAddress ? '<p class="text-[10px] text-slate-500 font-bold mt-0.5">' + escapeHtml(c.lastAddress) + '</p>' : '') +
+          '<p class="text-[10px] text-slate-400 font-bold">' + (c.createdAt ? 'Joined ' + formatColombo(c.createdAt) : (c.updatedAt ? 'Seen ' + formatColombo(c.updatedAt) : '')) + '</p>' +
+        '</div>';
+      }).join('');
+    }
+
+    db.ref('customer_ignore').on('value', function (snap) {
+      ignoreCustomerPhones = Object.assign({}, snap.val() || {});
+      renderCustomerBase();
+    }, window.onDbListenError);
+
+    db.ref('settings/customer_base').on('value', function (snap) {
+      const cfg = snap.val() || {};
+      customerBaseStartedAt = Number(cfg.startedAt || window.PFR_CUSTOMER_BASE_START || 0);
+      renderCustomerBase();
+    }, window.onDbListenError);
+
+    db.ref('customers').on('value', function (snap) {
+      allCustomers = snap.val() || {};
+      renderCustomerBase();
+    }, function () {
+      const box = document.getElementById('adminCustomerList');
+      if (box) box.innerHTML = '<p class="text-center text-rose-500 text-xs py-6">Could not load customers.</p>';
+    });
+
+    function jsCallArg(value) {
+      return JSON.stringify(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    }
+
+    function safeOrderKey(key) {
+      return String(key).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    function tableMenuUrl(n) {
+      return 'https://peoplesfamilyrestaurant.lk/table.html?table=' + String(n);
+    }
+
+    function qrImageUrl(n) {
+      return 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=' + encodeURIComponent(tableMenuUrl(n));
+    }
+
+    // 1. DELIVERY TOGGLES
+    db.ref('settings/delivery_options').on('value', snap => {
+      const settings = snap.val() || { self: true, pickme: true, doorstep: true };
+      document.getElementById('toggle-self').checked = settings.self !== false;
+      document.getElementById('toggle-pickme').checked = settings.pickme !== false;
+      document.getElementById('toggle-doorstep').checked = settings.doorstep !== false;
+    }, window.onDbListenError);
+
+    function updateDeliverySettings() {
+      const payload = {
+        self: document.getElementById('toggle-self').checked,
+        pickme: document.getElementById('toggle-pickme').checked,
+        doorstep: document.getElementById('toggle-doorstep').checked
+      };
+      db.ref('settings/delivery_options').set(payload).then(() => {
+        const status = document.getElementById('saveStatus');
+        status.innerText = "✅ Settings updated successfully!";
+        setTimeout(() => status.innerText = "Settings are synced live with database.", 2000);
+      }).catch(function (err) { notifyDbError(err); });
+    }
+
+    // 2. DELIVERY PRICING
+    db.ref('settings/delivery_pricing').on('value', snap => {
+      const cfg = window.mergeDeliveryPricing(snap.val());
+      document.getElementById('adminInitCharge').value = cfg.initCharge;
+      document.getElementById('adminPerKmCharge').value = cfg.perKm;
+    }, window.onDbListenError);
+
+    function saveDeliveryPricing() {
+      const initCharge = parseFloat(document.getElementById('adminInitCharge').value) || 300;
+      const perKm = parseFloat(document.getElementById('adminPerKmCharge').value) || 80;
+      db.ref('settings/delivery_pricing').set({ initCharge, perKm }).then(() => {
+        const stat = document.getElementById('pricingSaveStatus');
+        stat.innerText = "✅ Delivery pricing updated successfully!";
+        setTimeout(() => stat.innerText = "", 2500);
+      }).catch(function (err) { notifyDbError(err); });
+    }
+
+    function riderStatusButtons(id, status) {
+      const safeId = String(id).replace(/'/g, "\\'");
+      const bike = '<button onclick="editRiderBike(\'' + safeId + '\')" class="bg-slate-200 text-slate-800 px-3 py-1.5 rounded-lg text-[10px] font-black">Bike</button>';
+      const pw = '<button onclick="adminSetRiderPassword(\'' + safeId + '\')" class="bg-purple-900 text-white px-3 py-1.5 rounded-lg text-[10px] font-black">Password</button>';
+      const del = '<button onclick="deleteRider(\'' + safeId + '\')" class="bg-rose-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black">Delete</button>';
+      switch (status) {
+        case 'pending':
+          return '<button onclick="setRiderStatus(\'' + safeId + '\', \'approved\')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black">Approve</button>' +
+            '<button onclick="setRiderStatus(\'' + safeId + '\', \'rejected\')" class="bg-amber-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black">Reject</button>' + bike + pw + del;
+        case 'approved':
+          return '<button onclick="setRiderStatus(\'' + safeId + '\', \'disabled\')" class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-[10px] font-black">Disable</button>' + bike + pw + del;
+        case 'rejected':
+        case 'disabled':
+          return '<button onclick="setRiderStatus(\'' + safeId + '\', \'approved\')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black">Approve again</button>' + bike + pw + del;
+        default: {
+          const _exhaustive = status;
+          return bike + pw + del + (_exhaustive ? '' : '');
+        }
+      }
+    }
+
+    async function editRiderBike(id) {
+      const snap = await db.ref('riders/' + id).once('value');
+      const r = snap.val() || {};
+      const next = prompt('Bike number', r.bikeNumber || '');
+      if (next === null) return;
+      const bikeNumber = next.trim();
+      if (!bikeNumber) {
+        alert('Bike number එක දාන්න.');
+        return;
+      }
+      await db.ref('riders/' + id + '/bikeNumber').set(bikeNumber).catch(notifyDbError);
+    }
+
+    function renderRiderAccounts(riders) {
+      const pendingBox = document.getElementById('pendingRidersList');
+      const approvedBox = document.getElementById('approvedRidersList');
+      if (!pendingBox || !approvedBox) return;
+      const keys = Object.keys(riders || {});
+      const pending = keys.filter(function (k) { return riders[k].status === 'pending'; });
+      const approved = keys.filter(function (k) { return riders[k].status === 'approved'; });
+      const others = keys.filter(function (k) { return riders[k].status === 'rejected' || riders[k].status === 'disabled'; });
+
+      pendingBox.innerHTML = pending.length ? '' : '<p class="text-[11px] text-slate-400">Pending riders නැහැ.</p>';
+      pending.forEach(function (k) {
+        const r = riders[k];
+        pendingBox.innerHTML += '<div class="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl"><div><div class="font-black text-xs">' + escapeHtml(r.name) + '</div><div class="text-[10px] text-slate-500">' + escapeHtml(r.phone) + (r.bikeNumber ? ' · 🛵 ' + escapeHtml(r.bikeNumber) : '') + '</div></div><div class="flex gap-1">' + riderStatusButtons(k, r.status) + '</div></div>';
+      });
+
+      approvedBox.innerHTML = (approved.length || others.length) ? '' : '<p class="text-[11px] text-slate-400">Approved riders නැහැ.</p>';
+      approved.concat(others).forEach(function (k) {
+        const r = riders[k];
+        approvedBox.innerHTML += '<div class="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 border rounded-xl"><div><div class="font-black text-xs">' + escapeHtml(r.name) + ' <span class="text-[10px] font-bold text-slate-500">(' + escapeHtml(r.status) + ')</span></div><div class="text-[10px] text-slate-500">' + escapeHtml(r.phone) + (r.bikeNumber ? ' · 🛵 ' + escapeHtml(r.bikeNumber) : '') + '</div></div><div class="flex gap-1">' + riderStatusButtons(k, r.status) + '</div></div>';
+      });
+    }
+
+    const riderLoginsBackfilled = {};
+    function backfillRiderLogins(riders) {
+      Object.keys(riders).forEach(function (id) {
+        const r = riders[id] || {};
+        if (!/^[0-9]{9}$/.test(id)) return;
+        const key = id + '|' + (r.loginId || '') + '|' + (r.role || '');
+        if (riderLoginsBackfilled[id] === key) return;
+        riderLoginsBackfilled[id] = key;
+        if (r.loginId) {
+          db.ref('rider_logins/' + id).set(r.loginId).catch(function (err) {
+            delete riderLoginsBackfilled[id];
+            console.warn('rider_logins backfill failed for ' + id, err);
+          });
+        }
+        if (!r.role) {
+          db.ref('riders/' + id + '/role').set('rider').catch(function (err) {
+            delete riderLoginsBackfilled[id];
+            console.warn('rider role backfill failed for ' + id, err);
+          });
+        }
+      });
+    }
+
+    db.ref('riders').on('value', function (snap) {
+      const riders = snap.val() || {};
+      renderRiderAccounts(riders);
+      backfillRiderLogins(riders);
+    }, window.onDbListenError);
+
+    async function adminAddRider() {
+      const name = (document.getElementById('newRiderName').value || '').trim();
+      const phone = (document.getElementById('newRiderPhone').value || '').trim();
+      const bikeNumber = (document.getElementById('newRiderBike').value || '').trim();
+      const pass = (document.getElementById('newRiderPass').value || '').trim();
+      const id = riderPhoneKey(phone);
+      const stat = document.getElementById('riderAdminStatus');
+      if (!name || !id) {
+        stat.className = 'text-[10px] text-rose-700 font-bold';
+        stat.innerText = 'Name සහ හරි phone එකක් දාන්න.';
+        return;
+      }
+      if (!bikeNumber) {
+        stat.className = 'text-[10px] text-rose-700 font-bold';
+        stat.innerText = 'Bike number එක දාන්න.';
+        return;
+      }
+      if (pass.length < 4) {
+        stat.className = 'text-[10px] text-rose-700 font-bold';
+        stat.innerText = 'Password අකුරු 4ක් වත් ඕනේ.';
+        return;
+      }
+      const existing = await db.ref('riders/' + id).once('value');
+      if (existing.exists()) {
+        stat.className = 'text-[10px] text-rose-700 font-bold';
+        stat.innerText = 'මේ phone එකට rider account එකක් තියෙනවා.';
+        return;
+      }
+      const password = await hashPassword(pass);
+      try {
+        const loginId = await ensureRiderAuthUser(id, pass);
+        const uid = ensureRiderAuthUser.lastUid || '';
+        const riderRow = {
+          name: name,
+          phone: phone,
+          bikeNumber: bikeNumber,
+          password: password,
+          loginId: loginId,
+          role: 'rider',
+          status: 'approved',
+          createdAt: Date.now(),
+          createdBy: 'admin',
+          approvedAt: Date.now()
+        };
+        if (uid) riderRow.authUid = uid;
+        await db.ref('riders/' + id).set(riderRow);
+        await saveRiderLoginId(id, loginId);
+        if (uid) {
+          await db.ref('rider_uids/' + uid).set(id);
+          await db.ref('approved_riders/' + uid).set(true);
+        }
+      } catch (err) {
+        notifyDbError(err);
+        return;
+      }
+      document.getElementById('newRiderName').value = '';
+      document.getElementById('newRiderPhone').value = '';
+      document.getElementById('newRiderBike').value = '';
+      document.getElementById('newRiderPass').value = '';
+      stat.className = 'text-[10px] text-emerald-700 font-bold';
+      stat.innerText = name + ' approve කරලා add උනා. Rider ඒ phone/password එකෙන් login වෙන්න.';
+    }
+
+    async function adminSetRiderPassword(id) {
+      const snap = await db.ref('riders/' + id).once('value');
+      const r = snap.val();
+      if (!r) return alert('Rider හම්බුනේ නැහැ.');
+      const next = prompt('New password for ' + (r.name || id), '');
+      if (next === null) return;
+      const pass = String(next).trim();
+      if (pass.length < 4) {
+        alert('Password අකුරු 4ක් වත් ඕනේ.');
+        return;
+      }
+      try {
+        const loginId = await ensureRiderAuthUser(id, pass, r.loginId);
+        const uid = ensureRiderAuthUser.lastUid || '';
+        const patch = {
+          password: await hashPassword(pass),
+          loginId: loginId,
+          role: 'rider'
+        };
+        if (uid) patch.authUid = uid;
+        await db.ref('riders/' + id).update(patch);
+        await saveRiderLoginId(id, loginId);
+        if (uid) {
+          const links = {};
+          if (r.authUid && r.authUid !== uid) {
+            links['approved_riders/' + r.authUid] = null;
+            links['rider_uids/' + r.authUid] = null;
+          }
+          links['rider_uids/' + uid] = id;
+          if (r.status === 'approved') links['approved_riders/' + uid] = true;
+          await db.ref().update(links);
+        }
+        alert('Password update උනා. Rider ඒ phone + අලුත් password එකෙන් login වෙන්න.');
+      } catch (err) {
+        notifyDbError(err);
+      }
+    }
+
+    function setRiderStatus(id, status) {
+      db.ref('riders/' + id).once('value').then(function (snap) {
+        const r = snap.val() || {};
+        const updates = {};
+        updates['riders/' + id + '/status'] = status;
+        if (status === 'approved') updates['riders/' + id + '/approvedAt'] = Date.now();
+        if (r.authUid) updates['approved_riders/' + r.authUid] = status === 'approved' ? true : null;
+        return db.ref().update(updates);
+      }).catch(notifyDbError);
+    }
+
+
+
+
+
+
+    function deleteRider(id) {
+      if (!confirm('මේ rider account එක delete කරන්නද? ඊට පස්සේ ඒකෙන් login වෙන්න බැහැ.')) return;
+      db.ref('riders/' + id).once('value').then(function (snap) {
+        const r = snap.val() || {};
+        const patch = {};
+        patch['riders/' + id] = null;
+        patch['rider_logins/' + id] = null;
+        if (r.authUid) {
+          patch['approved_riders/' + r.authUid] = null;
+          patch['rider_uids/' + r.authUid] = null;
+        }
+        return db.ref().update(patch);
+      }).catch(notifyDbError);
+    }
+
+    // 3. OUTLET PROFILE & BANK DETAILS
+    db.ref('settings/restaurant_profile').on('value', snap => {
+      const p = snap.val() || {};
+      document.getElementById('adminHotline').value = p.hotline || '';
+      document.getElementById('adminOutletAddress').value = p.address || '';
+      document.getElementById('adminBankName').value = p.bankName || '';
+      document.getElementById('adminAccNo').value = p.accNo || '';
+      document.getElementById('adminAccName').value = p.accName || '';
+      document.getElementById('adminOpenTime').value = p.openTime || '';
+      document.getElementById('adminCloseTime').value = p.closeTime || '';
+      document.getElementById('adminForceClosed').checked = !!p.forceClosed;
+    }, window.onDbListenError);
+    db.ref('settings/email_otp').on('value', snap => {
+      const row = snap.val() || {};
+      const el = document.getElementById('adminOtpScriptUrl');
+      if (el) el.value = row.scriptUrl || '';
+    }, window.onDbListenError);
+    db.ref('settings/payhere').on('value', snap => {
+      const ph = snap.val() || {};
+      const en = document.getElementById('adminPayhereEnabled');
+      const sb = document.getElementById('adminPayhereSandbox');
+      const mid = document.getElementById('adminPayhereMerchantId');
+      if (en) en.checked = ph.enabled !== false && !!ph.merchantId;
+      if (sb) sb.checked = !!ph.sandbox;
+      if (mid) mid.value = ph.merchantId || '';
+    });
+
+    function saveRestaurantProfile() {
+      const profile = {
+        hotline: document.getElementById('adminHotline').value.trim(),
+        address: document.getElementById('adminOutletAddress').value.trim(),
+        bankName: document.getElementById('adminBankName').value.trim(),
+        accNo: document.getElementById('adminAccNo').value.trim(),
+        accName: document.getElementById('adminAccName').value.trim(),
+        openTime: document.getElementById('adminOpenTime').value || '',
+        closeTime: document.getElementById('adminCloseTime').value || '',
+        forceClosed: document.getElementById('adminForceClosed').checked
+      };
+      db.ref('settings/restaurant_profile').update(profile).then(() => {
+        const payhere = {
+          enabled: document.getElementById('adminPayhereEnabled').checked,
+          sandbox: document.getElementById('adminPayhereSandbox').checked,
+          merchantId: document.getElementById('adminPayhereMerchantId').value.trim()
+        };
+        const secret = document.getElementById('adminPayhereSecret').value.trim();
+        const writes = [db.ref('settings/payhere').set(payhere)];
+        if (secret) writes.push(db.ref('settings/payhere_secret').set(secret));
+        writes.push(db.ref('settings/email_otp').update({
+          scriptUrl: document.getElementById('adminOtpScriptUrl').value.trim()
+        }));
+        return Promise.all(writes);
+      }).then(() => {
+        document.getElementById('adminPayhereSecret').value = '';
+        const stat = document.getElementById('profileSaveStatus');
+        stat.innerText = "✅ Outlet profile, bank, and PayHere updated.";
+        setTimeout(() => stat.innerText = "", 2500);
+      }).catch(function (err) { notifyDbError(err); });
+    }
+
+    // 4. CREDENTIALS MANAGEMENT
+    let usersCache = {};
+    function setPassBadge(id, hasPass) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.innerText = hasPass ? 'Password set' : 'No password';
+      el.className = hasPass
+        ? 'text-[9px] font-black uppercase text-emerald-700'
+        : 'text-[9px] font-black uppercase text-slate-400';
+    }
+    db.ref('settings/users').on('value', snap => {
+      usersCache = snap.val() || {};
+      if (usersCache.admin) {
+        document.getElementById('admUser').value = usersCache.admin.username || '';
+      }
+      if (usersCache.cashier) {
+        document.getElementById('casUser').value = usersCache.cashier.username || '';
+      }
+      if (usersCache.steward) {
+        document.getElementById('steUser').value = usersCache.steward.username || '';
+      }
+      setPassBadge('admPassSet', !!(usersCache.admin && usersCache.admin.password));
+      setPassBadge('casPassSet', !!(usersCache.cashier && usersCache.cashier.password));
+      setPassBadge('stePassSet', !!(usersCache.steward && usersCache.steward.password));
+      ['admin', 'cashier', 'steward'].forEach(function (role) {
+        const row = usersCache[role];
+        if (row && row.loginId) saveStationLoginMap(role, row.loginId, row.username).catch(function () {});
+      });
+    }, window.onDbListenError);
+
+    async function saveStationLogin(role) {
+      const fields = {
+        admin: { user: 'admUser', pass: 'admPass', pass2: 'admPass2' },
+        cashier: { user: 'casUser', pass: 'casPass', pass2: 'casPass2' },
+        steward: { user: 'steUser', pass: 'stePass', pass2: 'stePass2' }
+      };
+      const spec = fields[role];
+        const stat = document.getElementById('credSaveStatus');
+      if (!spec) return;
+      const username = document.getElementById(spec.user).value.trim();
+      const typedPass = document.getElementById(spec.pass).value.trim();
+      const typedPass2 = document.getElementById(spec.pass2).value.trim();
+      function showCred(ok, msg) {
+        stat.className = ok
+          ? 'text-[10px] text-emerald-700 font-bold text-center min-h-[1rem]'
+          : 'text-[10px] text-rose-700 font-bold text-center min-h-[1rem]';
+        stat.innerText = msg;
+      }
+      if (typedPass && typedPass.length < 6) {
+        showCred(false, 'Password අකුරු 6ක් වත් දාන්න.');
+        return;
+      }
+      if (typedPass && typedPass !== typedPass2) {
+        showCred(false, 'Password දෙකම එකම වෙන්න ඕනේ.');
+        return;
+      }
+      const existing = usersCache[role] || {};
+      const next = {
+        username: username || existing.username || '',
+        password: typedPass ? await hashPassword(typedPass) : (existing.password || '')
+      };
+      if (existing.loginId) next.loginId = existing.loginId;
+      if (!next.username && !next.password) {
+        showCred(false, 'Username හෝ password දාන්න.');
+        return;
+      }
+      try {
+        if (typedPass) {
+          next.loginId = await ensureStaffAuthUser(role, typedPass, existing.loginId);
+        }
+        await db.ref('settings/users/' + role).set(next);
+        if (next.loginId) await saveStationLoginMap(role, next.loginId, next.username);
+        usersCache[role] = next;
+        document.getElementById(spec.pass).value = '';
+        document.getElementById(spec.pass2).value = '';
+        showCred(true, typedPass
+          ? ('✅ ' + role + ' login save වුණා. staff-login එකෙන් අලුත් password එකෙන් open කරන්න.')
+          : ('✅ ' + role + ' username save වුණා. Password වෙනස් වුණේ නැහැ.'));
+      } catch (err) {
+        const code = (err && err.code) || '';
+        if (code === 'auth/requires-recent-login') {
+          showCred(false, 'Password එකට staff-login එකෙන් ආයෙන් login වෙලා Save කරන්න.');
+          return;
+        }
+        notifyDbError(err);
+      }
+    }
+
+    const STAFF_ROLE_LABEL = { admin: '👑 Admin', cashier: '🛍️ Cashier', steward: '🍽️ Steward' };
+
+    function staffStatusButtons(id, status) {
+      const safeId = String(id).replace(/'/g, "\\'");
+      const passBtn = '<button onclick="editStaffPassword(\'' + safeId + '\')" class="bg-slate-200 text-slate-800 px-3 py-1.5 rounded-lg text-[10px] font-black">Password</button>';
+      const del = '<button onclick="deleteStaff(\'' + safeId + '\')" class="bg-rose-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black">Delete</button>';
+      switch (status) {
+        case 'pending':
+          return '<button onclick="setStaffStatus(\'' + safeId + '\', \'approved\')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black">Approve</button>' +
+            '<button onclick="setStaffStatus(\'' + safeId + '\', \'rejected\')" class="bg-amber-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black">Reject</button>' + passBtn + del;
+        case 'approved':
+          return '<button onclick="setStaffStatus(\'' + safeId + '\', \'disabled\')" class="bg-slate-800 text-white px-3 py-1.5 rounded-lg text-[10px] font-black">Disable</button>' + passBtn + del;
+        case 'rejected':
+        case 'disabled':
+          return '<button onclick="setStaffStatus(\'' + safeId + '\', \'approved\')" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black">Approve again</button>' + passBtn + del;
+        default:
+          return passBtn + del;
+      }
+    }
+
+    function renderStaffAccounts(staff) {
+      const pendingBox = document.getElementById('pendingStaffList');
+      const approvedBox = document.getElementById('approvedStaffList');
+      if (!pendingBox || !approvedBox) return;
+      const keys = Object.keys(staff || {});
+      const pending = keys.filter(function (k) { return staff[k] && staff[k].status === 'pending'; });
+      const approved = keys.filter(function (k) { return staff[k] && staff[k].status === 'approved'; });
+      const others = keys.filter(function (k) { return staff[k] && (staff[k].status === 'rejected' || staff[k].status === 'disabled'); });
+
+      pendingBox.innerHTML = pending.length ? '' : '<p class="text-[11px] text-slate-400">Pending staff නැහැ.</p>';
+      pending.forEach(function (k) {
+        const r = staff[k];
+        pendingBox.innerHTML += '<div class="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-amber-50 border border-amber-200 rounded-xl"><div><div class="font-black text-xs">' + escapeHtml(r.name || r.username) + '</div><div class="text-[10px] text-slate-500">' + escapeHtml(STAFF_ROLE_LABEL[r.role] || r.role) + ' · ' + escapeHtml(r.username) + '</div></div><div class="flex gap-1">' + staffStatusButtons(k, r.status) + '</div></div>';
+      });
+
+      approvedBox.innerHTML = (approved.length || others.length) ? '' : '<p class="text-[11px] text-slate-400">Approved extra staff නැහැ. පහළ form එකෙන් add කරන්න.</p>';
+      approved.concat(others).forEach(function (k) {
+        const r = staff[k];
+        approvedBox.innerHTML += '<div class="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-50 border rounded-xl"><div><div class="font-black text-xs">' + escapeHtml(r.name || r.username) + ' <span class="text-[10px] font-bold text-slate-500">(' + escapeHtml(r.status) + ')</span></div><div class="text-[10px] text-slate-500">' + escapeHtml(STAFF_ROLE_LABEL[r.role] || r.role) + ' · username ' + escapeHtml(r.username) + '</div></div><div class="flex gap-1">' + staffStatusButtons(k, r.status) + '</div></div>';
+      });
+    }
+
+    db.ref('staff').on('value', function (snap) {
+      const staff = snap.val() || {};
+      renderStaffAccounts(staff);
+      Object.keys(staff).forEach(function (id) {
+        const row = staff[id] || {};
+        if (row.loginId) saveStationLoginMap(id, row.loginId, row.username).catch(function () {});
+      });
+    }, window.onDbListenError);
+
+    async function adminAddStaff() {
+      const name = (document.getElementById('newStaffName').value || '').trim();
+      const username = (document.getElementById('newStaffUser').value || '').trim();
+      const role = document.getElementById('newStaffRole').value;
+      const pass = (document.getElementById('newStaffPass').value || '').trim();
+      const pass2 = (document.getElementById('newStaffPass2').value || '').trim();
+      const id = staffIdFromUsername(role, username);
+      const stat = document.getElementById('staffAdminStatus');
+      if (!name || !username || !id) {
+        stat.className = 'text-[10px] text-rose-700 font-bold';
+        stat.innerText = 'Name සහ username දාන්න. Username එකේ English letters/numbers ටිකක් වත් ඕනේ.';
+        return;
+      }
+      if (pass.length < 6) {
+        stat.className = 'text-[10px] text-rose-700 font-bold';
+        stat.innerText = 'Password අකුරු 6ක් වත් ඕනේ.';
+        return;
+      }
+      if (pass !== pass2) {
+        stat.className = 'text-[10px] text-rose-700 font-bold';
+        stat.innerText = 'Password දෙකම එකම වෙන්න ඕනේ.';
+        return;
+      }
+      const existing = await db.ref('staff/' + id).once('value');
+      if (existing.exists()) {
+        stat.className = 'text-[10px] text-rose-700 font-bold';
+        stat.innerText = 'මේ station + username එකට account එකක් තියෙනවා.';
+        return;
+      }
+      const password = await hashPassword(pass);
+      try {
+        const loginId = await ensureStaffAuthUser(role, pass, id);
+        await db.ref('staff/' + id).set({
+          name: name,
+          username: username,
+          role: role,
+          password: password,
+          loginId: loginId,
+          status: 'approved',
+          createdAt: Date.now(),
+          createdBy: 'admin',
+          approvedAt: Date.now()
+        });
+        await saveStationLoginMap(id, loginId, username);
+      } catch (err) {
+        notifyDbError(err);
+        return;
+      }
+      document.getElementById('newStaffName').value = '';
+      document.getElementById('newStaffUser').value = '';
+      document.getElementById('newStaffPass').value = '';
+      document.getElementById('newStaffPass2').value = '';
+      stat.className = 'text-[10px] text-emerald-700 font-bold';
+      stat.innerText = name + ' approve කරලා add උනා. staff-login එකේ Station ' + (STAFF_ROLE_LABEL[role] || role) + ', username ' + username + '.';
+    }
+
+    function setStaffStatus(id, status) {
+      const patch = { status: status };
+      if (status === 'approved') patch.approvedAt = Date.now();
+      db.ref('staff/' + id).update(patch).catch(notifyDbError);
+    }
+
+    function deleteStaff(id) {
+      if (!confirm('මේ staff account එක delete කරන්නද? ඊට පස්සේ ඒකෙන් login වෙන්න බැහැ.')) return;
+      const patch = {};
+      patch['staff/' + id] = null;
+      patch['settings/station_logins/' + id] = null;
+      db.ref().update(patch).catch(notifyDbError);
+    }
+
+    async function editStaffPassword(id) {
+      const next = prompt('New password (min 6)', '');
+      if (next === null) return;
+      const pass = next.trim();
+      if (pass.length < 6) {
+        alert('Password අකුරු 6ක් වත් ඕනේ.');
+        return;
+      }
+      const again = prompt('Confirm password', '');
+      if (again === null) return;
+      if (again.trim() !== pass) {
+        alert('Password දෙකම එකම වෙන්න ඕනේ.');
+        return;
+      }
+      const snap = await db.ref('staff/' + id).once('value');
+      const row = snap.val() || {};
+      const role = row.role;
+      if (!role) return;
+      const hashed = await hashPassword(pass);
+      try {
+        const loginId = await ensureStaffAuthUser(role, pass, row.loginId || id);
+        await db.ref('staff/' + id).update({ password: hashed, loginId: loginId });
+        await saveStationLoginMap(id, loginId, row.username);
+        alert('Password updated. අලුත් password එකෙන් login වෙන්න.');
+      } catch (err) {
+        notifyDbError(err);
+      }
+    }
+
+    function generateTableQR() {
+      const tableNum = document.getElementById('qrTableNum').value.trim();
+      if (!tableNum) return alert('කරුණාකර මේස අංකය ඇතුළත් කරන්න.');
+
+      const qrUrl = qrImageUrl(tableNum);
+      document.getElementById('qrTableLabel').innerText = 'Table ' + tableNum;
+      document.getElementById('qrImage').src = qrUrl;
+      const dlBtn = document.getElementById('qrDownloadBtn');
+      dlBtn.href = qrUrl;
+      document.getElementById('qrDisplayArea').classList.remove('hidden');
+    }
+
+    function generateTenTableQRs() {
+      const area = document.getElementById('qrBatchArea');
+      area.innerHTML = '';
+      for (let n = 1; n <= 10; n++) {
+        area.innerHTML += `
+          <div class="bg-white border-4 border-purple-900 rounded-3xl p-3 text-center space-y-2">
+            <div class="font-black text-purple-950 text-sm">Table ${n}</div>
+            <img src="${qrImageUrl(n)}" alt="Table ${n} QR" class="w-full aspect-square object-contain">
+            <div class="text-[9px] text-slate-500 font-bold">Scan to open menu</div>
+          </div>`;
+      }
+      area.classList.remove('hidden');
+    }
+
+    function printTenTableQRs() {
+      generateTenTableQRs();
+      setTimeout(function () { window.print(); }, 400);
+    }
+
+
+
+
+
+
+    function generateTakeawayQR() {
+      const url = 'https://peoplesfamilyrestaurant.lk/';
+      const qrUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=' + encodeURIComponent(url);
+      document.getElementById('takeawayQrImage').src = qrUrl;
+      document.getElementById('takeawayQrDownloadBtn').href = qrUrl;
+      document.getElementById('takeawayQrArea').classList.remove('hidden');
+    }
+
+    // 6. CATEGORY MANAGEMENT
+    let categoriesListCache = [];
+    db.ref('categories').on('value', snap => {
+      const data = snap.val() || {};
+      categoriesListCache = [];
+      
+      Object.keys(data).forEach((key, index) => {
+        const item = data[key];
+        if (typeof item === 'object' && item !== null) {
+          categoriesListCache.push({ id: key, name: item.name, order: item.order !== undefined ? item.order : index });
+        } else {
+          categoriesListCache.push({ id: key, name: item, order: index });
+        }
+      });
+      
+      categoriesListCache.sort((a, b) => a.order - b.order);
+      
+      const catList = document.getElementById('categoriesList');
+      const catSelect = document.getElementById('dishCategorySelect');
+      
+      catList.innerHTML = '';
+      catSelect.innerHTML = '<option value="">Select Category</option>';
+
+      categoriesListCache.forEach((cat, idx) => {
+        catSelect.innerHTML += `<option value="${escapeHtml(cat.name)}">${escapeHtml(cat.name)}</option>`;
+        catList.innerHTML += `
+          <div class="flex items-center justify-between bg-slate-50 border p-2.5 rounded-2xl">
+            <span class="font-bold text-xs text-purple-950">${escapeHtml(cat.name)}</span>
+            <div class="flex items-center gap-1.5">
+              <button onclick="moveCategory(${jsCallArg(cat.id)}, 'up')" class="bg-slate-200 hover:bg-slate-300 px-2.5 py-1 rounded-xl text-[10px] font-bold" ${idx === 0 ? 'disabled opacity-40' : ''}>⬆️</button>
+              <button onclick="moveCategory(${jsCallArg(cat.id)}, 'down')" class="bg-slate-200 hover:bg-slate-300 px-2.5 py-1 rounded-xl text-[10px] font-bold" ${idx === categoriesListCache.length - 1 ? 'disabled opacity-40' : ''}>⬇️</button>
+              <button onclick="editCategory(${jsCallArg(cat.id)}, ${jsCallArg(cat.name)})" class="bg-amber-100 hover:bg-amber-200 text-amber-900 px-3 py-1 rounded-xl text-[10px] font-black transition">✏️ Edit</button>
+              <button onclick="deleteCategory(${jsCallArg(cat.id)})" class="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1 rounded-xl text-[10px] font-black transition">🗑️ Delete</button>
+            </div>
+          </div>
+        `;
+      });
+    }, window.onDbListenError);
+
+    function addNewCategory() {
+      const catName = document.getElementById('newCatInput').value.trim();
+      if (!catName) return alert('කරුණාකර කාණ්ඩයේ නම ඇතුළත් කරන්න.');
+      const newOrder = categoriesListCache.length > 0 ? categoriesListCache[categoriesListCache.length - 1].order + 1 : 0;
+      db.ref('categories').push({ name: catName, order: newOrder }).then(() => {
+        document.getElementById('newCatInput').value = '';
+        alert('කාණ්ඩය එකතු විය!');
+      }).catch(function (err) { notifyDbError(err); });
+    }
+
+    function editCategory(id, currentName) {
+      const newName = prompt(`Enter new name for category "${currentName}":`, currentName);
+      if (newName !== null && newName.trim() !== '') {
+        db.ref(`categories/${id}`).update({ name: newName.trim() }).then(() => {
+          alert('කාණ්ඩය යාවත්කාලීන විය!');
+        }).catch(notifyDbError);
+      }
+    }
+
+    function deleteCategory(id) {
+      if (confirm('මෙම කාණ්ඩය ඉවත් කිරීමට අවශ්‍යමද?')) {
+        db.ref(`categories/${id}`).remove().then(() => {
+          alert('කාණ්ඩය ඉවත් කරන ලදී!');
+        }).catch(notifyDbError);
+      }
+    }
+
+    function moveCategory(id, direction) {
+      const currentIndex = categoriesListCache.findIndex(c => c.id === id);
+      if (currentIndex === -1) return;
+      const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+      if (targetIndex < 0 || targetIndex >= categoriesListCache.length) return;
+      
+      const currentCat = categoriesListCache[currentIndex];
+      const targetCat = categoriesListCache[targetIndex];
+      
+      const updates = {};
+      updates[`categories/${currentCat.id}/order`] = targetCat.order;
+      updates[`categories/${targetCat.id}/order`] = currentCat.order;
+      
+      db.ref().update(updates).catch(notifyDbError);
+    }
+
+    // 7. EXCEL TEMPLATE & BULK UPLOAD LOGIC
+    function downloadExcelTemplate() {
+      const ws_data = [
+        ["Category", "Name", "Price", "Ingredients", "Var1_Name", "Var1_Price", "Var2_Name", "Var2_Price"],
+        ["Rice", "Chicken Fried Rice", 0, "chicken, egg, vegetables, spices", "Half Portion", 500, "Full Portion", 950],
+        ["Kothu", "Chicken Kottu", 900, "chicken, roti, egg, leeks", "", "", "", ""],
+        ["Beverages", "Iced Coffee", 350, "coffee, milk, ice", "", "", "", ""]
+      ];
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(ws_data);
+      XLSX.utils.book_append_sheet(wb, ws, "MenuTemplate");
+      XLSX.writeFile(wb, "Menu_Upload_Template.xlsx");
+    }
+
+    async function uploadMenuExcel() {
+      const fileInput = document.getElementById('excelFileInput');
+      if (!fileInput.files[0]) return alert('කරුණාකර Excel ගොනුවක් තෝරන්න.');
+
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = async function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonRows = XLSX.utils.sheet_to_json(worksheet);
+
+          if (jsonRows.length === 0) return alert('Excel ගොනුව හිස්ය හෝ දත්ත කියවිය නොහැක.');
+
+          const catSnap = await db.ref('categories').once('value');
+          const existingCatsData = catSnap.val() || {};
+          let existingCatNames = new Set();
+          let maxOrder = 0;
+
+          Object.keys(existingCatsData).forEach((k, idx) => {
+            const item = existingCatsData[k];
+            const cName = typeof item === 'object' ? item.name : item;
+            if (cName) existingCatNames.add(cName.toLowerCase().trim());
+            const ord = typeof item === 'object' && item.order !== undefined ? item.order : idx;
+            if (ord > maxOrder) maxOrder = ord;
+          });
+
+          let updates = {};
+          
+          for (let row of jsonRows) {
+            const category = (row['Category'] || row['category'] || 'General').trim();
+            const name = (row['Name'] || row['name'] || row['Dish Name'] || row['Item'] || '').trim();
+            const basePrice = parseFloat(row['Price'] || row['price'] || 0);
+
+            if (name && category) {
+              if (!existingCatNames.has(category.toLowerCase())) {
+                maxOrder++;
+                const newCatKey = db.ref('categories').push().key;
+                updates[`categories/${newCatKey}`] = { name: category, order: maxOrder };
+                existingCatNames.add(category.toLowerCase());
+              }
+
+              let variants = [];
+              if (row['Var1_Name'] && row['Var1_Price'] !== undefined) {
+                variants.push({
+                  variantName: String(row['Var1_Name']).trim(),
+                  price: parseFloat(row['Var1_Price']) || 0,
+                  portionSize: 'Standard'
+                });
+              }
+              if (row['Var2_Name'] && row['Var2_Price'] !== undefined) {
+                variants.push({
+                  variantName: String(row['Var2_Name']).trim(),
+                  price: parseFloat(row['Var2_Price']) || 0,
+                  portionSize: 'Standard'
+                });
+              }
+
+              const ingredients = String(row['Ingredients'] || row['ingredients'] || '').trim();
+              const newDishKey = db.ref('menu_items').push().key;
+              updates[`menu_items/${newDishKey}`] = {
+                name: name,
+                category: category,
+                price: variants.length > 0 ? 0 : basePrice,
+                available: true,
+                printDestination: 'kitchen',
+                variants: variants.length > 0 ? variants : null,
+                ingredients: ingredients || null
+              };
+            }
+          }
+
+          await db.ref().update(updates);
+          alert('Excel ගොනුවේ ඇති මෙනු අයිතම සහ නව Categories සාර්ථකව අප්ලෝඩ් විය!');
+            fileInput.value = '';
+
+        } catch (err) {
+          alert('Excel ගොනුව සැකසීමේදී දෝෂයක් ඇති විය: ' + err.message);
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    // 8. ADD SINGLE DISH WITH PRINTER ROUTING
+    function addVariantRow() {
+      const container = document.getElementById('variantsContainer');
+      const rowId = Date.now();
+      container.innerHTML += `
+        <div id="v-row-${rowId}" class="flex gap-2 items-center bg-white p-2 rounded-xl border">
+          <input type="text" placeholder="Variant Name (e.g. Large)" class="var-name flex-grow border rounded-lg p-1.5 text-xs bg-slate-50 outline-none">
+          <input type="number" placeholder="Price (Rs.)" class="var-price w-28 border rounded-lg p-1.5 text-xs bg-slate-50 outline-none">
+          <button onclick="document.getElementById('v-row-${rowId}').remove()" class="text-rose-600 font-bold text-xs px-2">✕</button>
+        </div>
+      `;
+    }
+
+    function saveNewDish() {
+      const name = document.getElementById('dishName').value.trim();
+      const category = document.getElementById('dishCategorySelect').value;
+      const price = parseFloat(document.getElementById('dishPrice').value) || 0;
+      const printDestination = document.getElementById('dishPrintDest').value;
+      const image = document.getElementById('dishImage').value.trim();
+      const ingredients = (document.getElementById('dishIngredients').value || '').trim();
+      const kinds = (window.DISH_KIND_TAGS || []).filter(function (tag) {
+        const el = document.getElementById('dishKindNew-' + tag.id);
+        return el && el.checked;
+      }).map(function (tag) { return tag.id; });
+
+      if (!name || !category) return alert('කරුණාකර කෑමේ නම සහ කාණ්ඩය තෝරන්න.');
+
+      let variants = [];
+      document.querySelectorAll('#variantsContainer > div').forEach(row => {
+        const vName = row.querySelector('.var-name').value.trim();
+        const vPrice = parseFloat(row.querySelector('.var-price').value) || 0;
+        if (vName && vPrice > 0) {
+          variants.push({ variantName: vName, price: vPrice, portionSize: 'Standard' });
+        }
+      });
+
+      const newId = db.ref('menu_items').push().key;
+      const payload = {
+        name,
+        category,
+        price: variants.length > 0 ? 0 : price,
+        image: image || null,
+        ingredients: ingredients || null,
+        kinds: kinds.length ? kinds : null,
+        variants: variants.length > 0 ? variants : null,
+        printDestination: printDestination,
+        available: true
+      };
+
+      db.ref(`menu_items/${newId}`).set(payload).then(() => {
+        document.getElementById('dishName').value = '';
+        document.getElementById('dishPrice').value = '';
+        document.getElementById('dishImage').value = '';
+        document.getElementById('dishIngredients').value = '';
+        (window.DISH_KIND_TAGS || []).forEach(function (tag) {
+          const el = document.getElementById('dishKindNew-' + tag.id);
+          if (el) el.checked = false;
+        });
+        document.getElementById('variantsContainer').innerHTML = '';
+        alert('කෑම වර්ගය සහ Printer Routing සාර්ථකව එකතු විය!');
+      }).catch(notifyDbError);
+    }
+
+    // 9. MENU ITEMS LIST & EDIT
+    let adminMenuItems = {};
+
+    function fillNewDishKindBoxes() {
+      const box = document.getElementById('dishKindNew');
+      if (!box || box.getAttribute('data-ready') === '1') return;
+      box.innerHTML = (window.DISH_KIND_TAGS || []).map(function (tag) {
+        return '<label class="flex items-center gap-1 bg-white border rounded-lg px-2 py-1 text-[10px] font-black cursor-pointer"><input type="checkbox" id="dishKindNew-' + tag.id + '" class="accent-purple-900">' + escapeHtml(tag.label) + '</label>';
+      }).join('');
+      box.setAttribute('data-ready', '1');
+    }
+    fillNewDishKindBoxes();
+
+    function renderDishKindsAdmin() {
+      const box = document.getElementById('dishKindsList');
+      if (!box) return;
+      const search = (document.getElementById('dishKindsSearch').value || '').toLowerCase();
+      const keys = Object.keys(adminMenuItems).filter(function (k) {
+        const item = adminMenuItems[k] || {};
+        if (!search) return true;
+        return String(item.name || '').toLowerCase().indexOf(search) >= 0
+          || String(item.category || '').toLowerCase().indexOf(search) >= 0
+          || String(item.ingredients || '').toLowerCase().indexOf(search) >= 0;
+      });
+      if (!keys.length) {
+        box.innerHTML = '<p class="text-center text-slate-400 text-xs py-6">No dishes found.</p>';
+        return;
+      }
+      box.innerHTML = keys.map(function (k) {
+        const item = adminMenuItems[k] || {};
+        const selected = window.dishKindList(item);
+        const checks = (window.DISH_KIND_TAGS || []).map(function (tag) {
+          const checked = selected.indexOf(tag.id) >= 0 ? 'checked' : '';
+          return '<label class="flex items-center gap-1 bg-white border rounded-lg px-2 py-1 text-[10px] font-black cursor-pointer"><input type="checkbox" id="dishKind-' + k + '-' + tag.id + '" ' + checked + ' class="accent-purple-900">' + escapeHtml(tag.label) + '</label>';
+        }).join('');
+        return '<div class="p-3 bg-slate-50 border rounded-2xl space-y-2">'
+          + '<div class="font-black text-xs text-slate-900">' + escapeHtml(item.name || '') + ' <span class="text-[10px] text-slate-500 font-bold bg-slate-200 px-1 rounded">' + escapeHtml(item.category || '') + '</span></div>'
+          + '<div class="flex flex-wrap gap-1.5">' + checks + '</div>'
+          + '<input id="dishIng-' + k + '" type="text" value="' + escapeHtml(item.ingredients || '') + '" placeholder="දාන දේවල්: chicken, coconut milk, spices" class="w-full border rounded-xl p-2 text-xs bg-white outline-none">'
+          + '<button type="button" onclick="saveDishContains(\'' + k + '\')" class="bg-purple-900 text-white font-black px-3 py-1.5 rounded-xl text-[10px]">Save</button>'
+          + '</div>';
+      }).join('');
+    }
+
+    function saveDishContains(key) {
+      const kinds = (window.DISH_KIND_TAGS || []).filter(function (tag) {
+        const el = document.getElementById('dishKind-' + key + '-' + tag.id);
+        return el && el.checked;
+      }).map(function (tag) { return tag.id; });
+      const ingEl = document.getElementById('dishIng-' + key);
+      const ingredients = ingEl ? ingEl.value.trim() : '';
+      const stat = document.getElementById('dishKindsStatus');
+      db.ref('menu_items/' + key).update({
+        kinds: kinds.length ? kinds : null,
+        ingredients: ingredients || null
+      }).then(function () {
+        if (stat) stat.innerText = '✅ Saved — customer menu එකේ දැන් පේනවා.';
+      }).catch(function (err) { notifyDbError(err); });
+    }
+
+    db.ref('menu_items').on('value', snap => {
+      const items = snap.val() || {};
+      adminMenuItems = items;
+      renderDishKindsAdmin();
+      const container = document.getElementById('adminMenuList');
+      container.innerHTML = '';
+
+      const keys = Object.keys(items);
+      if (keys.length === 0) {
+        container.innerHTML = '<p class="text-center text-slate-400 text-xs py-6">No menu items found.</p>';
+        return;
+      }
+
+      keys.forEach(k => {
+        const item = items[k];
+        const isAvail = item.available !== false;
+        let varText = escapeHtml(item.variants ? item.variants.map(v => `${v.variantName}: Rs.${v.price}`).join(' | ') : `Rs. ${item.price}`);
+        let printDestLabel = escapeHtml(item.printDestination ? `🖨️ Printer: ${item.printDestination}` : '🖨️ Printer: kitchen');
+        const safeK = escapeHtml(String(k).replace(/'/g, "\\'"));
+
+        container.innerHTML += `
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 border rounded-2xl gap-2">
+            <div>
+              <span class="font-black text-xs text-slate-900 block">${escapeHtml(item.name)} <span class="text-[10px] text-slate-500 font-bold bg-slate-200 px-1 rounded">${escapeHtml(item.category)}</span></span>
+              <span class="text-[10px] text-purple-950 font-bold block mt-0.5">${varText} • <span class="text-purple-700">${printDestLabel}</span></span>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <button onclick="editItemPrice('${safeK}')" class="bg-amber-100 text-amber-800 hover:bg-amber-200 px-3 py-1.5 rounded-xl text-[10px] font-black transition">✏️ Edit Price</button>
+              
+              <label class="flex items-center gap-1 text-[10px] font-bold cursor-pointer bg-white border px-2 py-1.5 rounded-xl">
+                <input type="checkbox" ${isAvail ? 'checked' : ''} onchange="toggleItemAvailability('${safeK}', this.checked)" class="accent-purple-900"> Available
+              </label>
+              
+              <button onclick="deleteMenuItem('${safeK}')" class="bg-rose-100 text-rose-700 hover:bg-rose-200 px-3 py-1.5 rounded-xl text-[10px] font-black transition">🗑️ Delete</button>
+            </div>
+          </div>
+        `;
+      });
+    }, window.onDbListenError);
+
+    function toggleItemAvailability(key, isAvailable) {
+      db.ref(`menu_items/${key}`).update({ available: isAvailable }).catch(notifyDbError);
+    }
+
+    function deleteMenuItem(key) {
+      if (confirm('මෙම කෑම වර්ගය සම්පූර්ණයෙන්ම මකාලීමට අවශ්‍යමද?')) {
+        db.ref(`menu_items/${key}`).remove().then(() => alert('ඉවත් කරන ලදී!')).catch(notifyDbError);
+      }
+    }
+
+    function editItemPrice(key) {
+      db.ref(`menu_items/${key}`).once('value', snap => {
+        const item = snap.val();
+        if (item.variants && item.variants.length > 0) {
+          alert('මෙම කෑම වර්ගය සඳහා Options/Portions (Variants) ඇත. කරුණාකර වෙනස් කිරීමට පැරණි එක Delete කර අලුතින් Add කරන්න.');
+        } else {
+          const newPrice = prompt(`Enter new base price for "${item.name}":`, item.price);
+          if (newPrice !== null && newPrice.trim() !== '' && !isNaN(newPrice)) {
+            const price = window.safeMoney(newPrice);
+            if (price <= 0) return alert('හරි මිලක් දාන්න.');
+            db.ref(`menu_items/${key}`).update({ price: price }).then(() => {
+              alert('මිල සාර්ථකව වෙනස් කරන ලදී!');
+            }).catch(notifyDbError);
+          }
+        }
+      });
+    }
+
+    function dayBounds(dateStr) {
+      const parts = String(dateStr || '').split('-');
+      const start = parts.length === 3
+        ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+        : new Date();
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+      return { start: start.getTime(), end: end.getTime() };
+    }
+
+    let salesPeriod = 'day';
+
+    function setSalesPeriod(period) {
+      salesPeriod = period === 'month' ? 'month' : 'day';
+      const dayBtn = document.getElementById('salesPeriodDayBtn');
+      const monthBtn = document.getElementById('salesPeriodMonthBtn');
+      const dayInput = document.getElementById('salesReportDate');
+      const monthInput = document.getElementById('salesReportMonth');
+      if (dayBtn) dayBtn.className = 'px-3 py-1.5 rounded-xl text-[10px] font-black ' + (salesPeriod === 'day' ? 'bg-purple-900 text-white' : 'bg-slate-100 text-slate-600');
+      if (monthBtn) monthBtn.className = 'px-3 py-1.5 rounded-xl text-[10px] font-black ' + (salesPeriod === 'month' ? 'bg-purple-900 text-white' : 'bg-slate-100 text-slate-600');
+      if (dayInput) dayInput.classList.toggle('hidden', salesPeriod !== 'day');
+      if (monthInput) monthInput.classList.toggle('hidden', salesPeriod !== 'month');
+      renderSalesReport();
+    }
+
+    function rankedListHtml(rows, empty) {
+      if (!rows || !rows.length) return '<p class="text-[11px] text-slate-400 font-bold py-2">' + empty + '</p>';
+      return rows.map(function (row, i) {
+        return '<div class="flex justify-between gap-2 py-1.5 text-[11px] ' + (i === 0 ? 'font-black text-slate-900' : 'font-bold text-slate-600') + '"><span class="truncate">' + escapeHtml(row.name) + '</span><span class="flex-shrink-0">' + row.count + '</span></div>';
+      }).join('');
+    }
+
+    function renderSalesReport() {
+      const dateInput = document.getElementById('salesReportDate');
+      const monthInput = document.getElementById('salesReportMonth');
+      const nowDay = window.colomboDayKey ? window.colomboDayKey() : '';
+      const nowMonth = window.colomboMonthKey ? window.colomboMonthKey() : nowDay.slice(0, 7);
+      if (dateInput && !dateInput.value) dateInput.value = nowDay;
+      if (monthInput && !monthInput.value) monthInput.value = nowMonth;
+      const period = salesPeriod === 'month'
+        ? { type: 'month', key: (monthInput && monthInput.value) || nowMonth }
+        : { type: 'day', key: (dateInput && dateInput.value) || nowDay };
+      const insight = window.buildSalesInsight ? window.buildSalesInsight(allOrders, period) : {
+        orders: 0, sales: 0, cancelled: 0, live: 0, pickup: 0, delivery: 0, dinein: 0, locations: [], items: [], topLocation: null, topItem: null
+      };
+      const setText = function (id, text) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
+      };
+      setText('salesOrderCount', String(insight.orders));
+      setText('salesTotal', 'Rs. ' + Number(insight.sales || 0).toLocaleString());
+      setText('salesCancelledCount', String(insight.cancelled));
+      setText('salesLiveCount', String(insight.live));
+      setText('salesBreakdown', 'Pickup ' + insight.pickup + ' · Delivery ' + insight.delivery + (insight.dinein ? ' · Dine-in ' + insight.dinein : ''));
+      setText('salesTopLocation', insight.topLocation ? insight.topLocation.name + ' · ' + insight.topLocation.count + ' orders' : '—');
+      setText('salesTopItem', insight.topItem ? insight.topItem.name + ' · ' + insight.topItem.count + ' sold' : '—');
+      setText('salesPeriodLabel', period.type === 'month' ? ('Month ' + period.key) : ('Day ' + period.key));
+      const locBox = document.getElementById('salesLocationList');
+      const itemBox = document.getElementById('salesItemList');
+      if (locBox) locBox.innerHTML = rankedListHtml(insight.locations, 'Locations තාම නැහැ.');
+      if (itemBox) itemBox.innerHTML = rankedListHtml(insight.items, 'Items තාම නැහැ.');
+    }
+
+    function renderAdminArchive() {
+      const archiveBox = document.getElementById('adminOrdersList');
+      if (!archiveBox) return;
+      const keys = Object.keys(allOrders).reverse();
+      if (!keys.length) {
+        archiveBox.innerHTML = '<p class="text-center text-slate-400 text-xs py-6">No orders.</p>';
+        return;
+      }
+      archiveBox.innerHTML = '';
+      keys.forEach(function (k) {
+        const o = allOrders[k];
+        archiveBox.innerHTML +=
+          '<div class="flex items-center justify-between p-2.5 bg-slate-50 border rounded-xl">' +
+            '<div><span class="font-black text-xs text-slate-900">' + escapeHtml(o.orderId) + ' - ' + escapeHtml(o.customerName || ('Table ' + (o.tableId || ''))) + '</span>' +
+            '<span class="text-[9px] block text-slate-500">Status: ' + escapeHtml(o.status) + ' | Total: Rs. ' + (o.total || 0).toLocaleString() + '</span></div>' +
+            '<button onclick="deleteOrder(\'' + safeOrderKey(k) + '\')" class="bg-rose-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black shadow hover:bg-rose-700 transition">Remove</button>' +
+          '</div>';
+      });
+    }
+
+    db.ref('orders').on('value', function (snap) {
+      allOrders = snap.val() || {};
+      renderAdminArchive();
+      renderSalesReport();
+      renderAdminFeedback();
+    }, window.onDbListenError);
+
+    function renderAdminFeedback() {
+      const box = document.getElementById('adminFeedbackList');
+      if (!box) return;
+      const items = Object.keys(allOrders).reverse().filter(function (k) {
+        return allOrders[k] && allOrders[k].feedback && allOrders[k].feedback.stars;
+      }).slice(0, 20);
+      if (!items.length) {
+        box.innerHTML = '<p class="text-center text-slate-400 text-xs py-4">No feedback yet.</p>';
+        return;
+      }
+      box.innerHTML = items.map(function (k) {
+        const o = allOrders[k];
+        const f = o.feedback;
+        const stars = '★'.repeat(f.stars || 0) + '☆'.repeat(5 - (f.stars || 0));
+        return '<div class="bg-slate-50 border rounded-2xl p-3 space-y-1">' +
+          '<div class="flex justify-between text-xs font-black"><span>' + escapeHtml(o.orderId || '') + '</span><span class="text-amber-500">' + stars + '</span></div>' +
+          '<div class="text-[10px] text-slate-500 font-bold">' + escapeHtml(f.name || o.customerName || '') + ' · ' + new Date(f.at || o.timestamp).toLocaleString() + '</div>' +
+          (f.comment ? '<p class="text-[11px] text-slate-800 font-bold">' + escapeHtml(f.comment) + '</p>' : '') +
+          '</div>';
+      }).join('');
+    }
+
+    function cancelOrder(key) {
+      if (!confirm('මෙම ඇණවුම cancel කරන්නද?\nCustomer ට Order cancelled කියලා පේනවා. Rider list එකෙනුත් යනවා.')) return;
+      db.ref('orders/' + key).update({ status: 'Cancelled', cancelledAt: Date.now() }).catch(function (err) { notifyDbError(err); });
+    }
+
+    function deleteOrder(key) {
+      if (confirm('මෙම ඇණවුම පද්ධතියෙන් සම්පූර්ණයෙන්ම ඉවත් කිරීමට අවශ්‍යද?')) {
+        db.ref('orders/' + key).remove().catch(function (err) { notifyDbError(err); });
+      }
+    }
+
+    function confirmTyped(message) {
+      const typed = prompt(message + '\n\nConfirm කරන්න DELETE කියලා type කරන්න.');
+      return String(typed || '').trim().toUpperCase() === 'DELETE';
+    }
+
+    function deleteAllOrders() {
+      if (!confirmTyped('දැන් තියෙන හැම order එකක්ම අයින් කරනවද?\nCashier, rider, customer tracker එකත් හිස් වෙනවා.')) return;
+      db.ref('orders').remove().catch(function (err) { notifyDbError(err); });
+    }
+
+    function deleteAllCustomerHistory() {
+      if (!confirmTyped('Customer ලාගේ order history (customer_orders) හැම එකම අයින් කරනවද?')) return;
+      db.ref('customer_orders').remove().catch(function (err) { notifyDbError(err); });
+    }
+  </script>
+</body>
+</html>

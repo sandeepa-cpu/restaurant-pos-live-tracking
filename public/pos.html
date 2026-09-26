@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <title>POS Home - Peoples Family Restaurant</title>
+  <link rel="icon" type="image/jpeg" href="LOGO NEW.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="js/firebase-config.js?v=58"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <script src="js/auth-guard.js?v=19"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif; }
+    .pos-bg {
+      background:
+        radial-gradient(900px 420px at 8% -10%, rgba(251, 191, 36, 0.22), transparent 50%),
+        radial-gradient(800px 380px at 110% 0%, rgba(124, 58, 237, 0.24), transparent 46%),
+        radial-gradient(700px 300px at 50% 110%, rgba(16, 185, 129, 0.14), transparent 50%),
+        #070b16;
+    }
+    .glass {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.64));
+      backdrop-filter: blur(18px);
+    }
+    .station-card { transition: transform 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease; }
+    .station-card:hover { transform: translateY(-4px); }
+    .station-card:hover .icon-orb { transform: scale(1.08) rotate(-4deg); }
+    .icon-orb {
+      width: 3.6rem;
+      height: 3.6rem;
+      border-radius: 1.15rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.45rem;
+      flex-shrink: 0;
+      transition: transform 0.22s ease;
+    }
+    .icon-orb.sm { width: 2.7rem; height: 2.7rem; font-size: 1.05rem; border-radius: 0.95rem; }
+    .live-dot { animation: pulse 1.8s infinite; }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.5); }
+      50% { opacity: 0.7; box-shadow: 0 0 0 7px rgba(52, 211, 153, 0); }
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 10px;
+      font-weight: 800;
+      color: #94a3b8;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 999px;
+      padding: 0.28rem 0.55rem;
+    }
+  </style>
+</head>
+<body class="pos-bg text-slate-100 min-h-screen p-4 md:p-8">
+  <div class="max-w-5xl mx-auto space-y-6">
+    <header class="glass border border-white/10 rounded-[28px] px-5 py-4 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <img src="LOGO NEW.jpg" alt="Peoples Family Restaurant" class="w-12 h-12 rounded-2xl border-2 border-amber-400 object-cover shadow-lg">
+        <div class="min-w-0 text-left">
+          <p class="text-[10px] font-black uppercase tracking-[0.22em] text-amber-300"><i class="fa-solid fa-store mr-1"></i> Staff POS</p>
+          <h1 class="text-lg md:text-xl font-black text-white truncate">Peoples Family Restaurant</h1>
+          <p class="text-[11px] text-slate-400 font-bold"><i class="fa-solid fa-location-dot text-rose-300 mr-1"></i>Horana · live stations</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-3">
+        <div class="hidden sm:flex items-center gap-2 bg-white/5 border border-white/10 rounded-2xl px-3 py-2">
+          <div class="w-8 h-8 rounded-xl bg-amber-400/15 text-amber-300 flex items-center justify-center"><i class="fa-regular fa-clock"></i></div>
+          <div class="text-right">
+            <div id="posClock" class="text-sm font-black text-white leading-tight">--:--</div>
+            <div id="posDate" class="text-[10px] font-bold text-slate-400">Sri Lanka time</div>
+          </div>
+        </div>
+        <span id="posRoleBadge" class="bg-amber-400/15 border border-amber-300/30 text-amber-200 text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full"><i class="fa-solid fa-id-badge mr-1"></i>Staff</span>
+        <button type="button" onclick="logoutStaff()" class="bg-white/5 hover:bg-rose-500/20 border border-white/10 text-rose-200 font-black text-[11px] px-3 py-2 rounded-xl"><i class="fa-solid fa-right-from-bracket mr-1"></i>Logout</button>
+      </div>
+    </header>
+
+    <section class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="glass border border-white/10 rounded-2xl p-4 text-left">
+        <div class="flex items-center justify-between">
+          <div class="text-[10px] font-black uppercase tracking-wider text-slate-400 flex items-center gap-2">
+            <span class="live-dot w-2 h-2 rounded-full bg-emerald-400"></span> Live orders
+          </div>
+          <div class="icon-orb sm" style="background:rgba(52,211,153,.12);color:#6ee7b7;box-shadow:0 0 18px rgba(16,185,129,.18)"><i class="fa-solid fa-receipt"></i></div>
+        </div>
+        <div id="statLive" class="text-3xl font-black text-white mt-1">0</div>
+      </div>
+      <div class="glass border border-amber-400/15 rounded-2xl p-4 text-left">
+        <div class="flex items-center justify-between">
+          <div class="text-[10px] font-black uppercase tracking-wider text-amber-300">Kitchen</div>
+          <div class="icon-orb sm" style="background:rgba(251,191,36,.14);color:#fcd34d;box-shadow:0 0 18px rgba(251,191,36,.16)"><i class="fa-solid fa-fire-burner"></i></div>
+        </div>
+        <div id="statKitchen" class="text-3xl font-black text-amber-200 mt-1">0</div>
+      </div>
+      <div class="glass border border-emerald-400/15 rounded-2xl p-4 text-left">
+        <div class="flex items-center justify-between">
+          <div class="text-[10px] font-black uppercase tracking-wider text-emerald-300">Ready</div>
+          <div class="icon-orb sm" style="background:rgba(16,185,129,.14);color:#6ee7b7;box-shadow:0 0 18px rgba(16,185,129,.16)"><i class="fa-solid fa-bell"></i></div>
+        </div>
+        <div id="statReady" class="text-3xl font-black text-emerald-300 mt-1">0</div>
+      </div>
+      <div class="glass border border-sky-400/15 rounded-2xl p-4 text-left">
+        <div class="flex items-center justify-between">
+          <div class="text-[10px] font-black uppercase tracking-wider text-sky-300">On the way</div>
+          <div class="icon-orb sm" style="background:rgba(56,189,248,.14);color:#7dd3fc;box-shadow:0 0 18px rgba(56,189,248,.16)"><i class="fa-solid fa-truck"></i></div>
+        </div>
+        <div id="statOut" class="text-3xl font-black text-sky-300 mt-1">0</div>
+      </div>
+    </section>
+
+    <p class="text-[11px] text-slate-400 font-bold px-1"><i class="fa-solid fa-hand-pointer text-amber-300 mr-1"></i>Station එකක් open කරන්න. හැම screen එකකම එකම live orders.</p>
+
+    <section class="glass border border-white/10 rounded-[28px] p-4 space-y-3">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">Staff settings</p>
+          <h2 class="text-base font-black text-white">Incoming order alert</h2>
+        </div>
+        <button type="button" id="posAlarmUnlock" onclick="unlockPosAudio()" class="hidden bg-amber-400 text-slate-950 font-black text-[11px] px-3 py-2 rounded-xl">Enable sound 🔔</button>
+      </div>
+      <div id="posVolumeMount"></div>
+      <p id="posAlarmHint" class="text-[11px] font-bold text-slate-400">New orders ring at this volume until cashier starts them.</p>
+    </section>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
+      <a href="cashier.html" data-roles="admin,cashier" class="station-card xl:col-span-3 glass border border-emerald-400/20 hover:border-emerald-400 hover:shadow-[0_18px_40px_rgba(16,185,129,0.18)] p-6 rounded-[28px] space-y-4 block text-left">
+        <div class="flex items-start justify-between gap-3">
+          <div class="icon-orb" style="background:linear-gradient(180deg,rgba(16,185,129,.28),rgba(16,185,129,.08));color:#6ee7b7;box-shadow:0 10px 24px rgba(16,185,129,.22)"><i class="fa-solid fa-cash-register"></i></div>
+          <span id="badgeCashier" class="hidden bg-emerald-400 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full">0 live</span>
+        </div>
+        <div>
+          <h2 class="font-black text-xl text-white">Cashier Station</h2>
+          <p class="text-[12px] text-slate-400 font-semibold mt-1 leading-relaxed">Takeaway + delivery. Slip confirm, kitchen start, rider යවනවා, chat.</p>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="chip"><i class="fa-solid fa-bag-shopping text-emerald-300"></i> Takeaway</span>
+          <span class="chip"><i class="fa-solid fa-motorcycle text-emerald-300"></i> Delivery</span>
+          <span class="chip"><i class="fa-solid fa-print text-emerald-300"></i> Slips</span>
+        </div>
+        <div class="text-[11px] font-black text-emerald-300">Open counter <i class="fa-solid fa-arrow-right ml-1"></i></div>
+      </a>
+
+      <a href="admin.html" data-roles="admin" class="station-card xl:col-span-3 glass border border-purple-400/20 hover:border-purple-400 hover:shadow-[0_18px_40px_rgba(168,85,247,0.18)] p-6 rounded-[28px] space-y-4 block text-left">
+        <div class="icon-orb" style="background:linear-gradient(180deg,rgba(168,85,247,.3),rgba(168,85,247,.08));color:#d8b4fe;box-shadow:0 10px 24px rgba(168,85,247,.22)"><i class="fa-solid fa-crown"></i></div>
+        <div>
+          <h2 class="font-black text-xl text-white">Admin Panel</h2>
+          <p class="text-[12px] text-slate-400 font-semibold mt-1 leading-relaxed">Menu, prices, hours, staff logins, riders, QR. Orders cashier පැත්තට යනවා.</p>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="chip"><i class="fa-solid fa-utensils text-purple-300"></i> Menu</span>
+          <span class="chip"><i class="fa-solid fa-user-shield text-purple-300"></i> Staff</span>
+          <span class="chip"><i class="fa-solid fa-qrcode text-purple-300"></i> QR</span>
+        </div>
+        <div class="text-[11px] font-black text-purple-300">Open settings <i class="fa-solid fa-arrow-right ml-1"></i></div>
+      </a>
+
+      <a href="steward.html" data-roles="admin,steward" class="station-card xl:col-span-2 glass border border-amber-400/20 hover:border-amber-300 hover:shadow-[0_18px_40px_rgba(251,191,36,0.14)] p-5 rounded-[28px] space-y-3 block text-left">
+        <div class="icon-orb" style="background:linear-gradient(180deg,rgba(251,191,36,.3),rgba(251,191,36,.08));color:#fcd34d;box-shadow:0 10px 24px rgba(251,191,36,.2)"><i class="fa-solid fa-utensils"></i></div>
+        <h2 class="font-black text-base text-white">Steward Console</h2>
+        <p class="text-[11px] text-slate-400 font-semibold">Table orders, waiter calls, item 86.</p>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="chip"><i class="fa-solid fa-chair text-amber-300"></i> Tables</span>
+          <span class="chip"><i class="fa-solid fa-ban text-amber-300"></i> 86</span>
+        </div>
+      </a>
+
+      <a href="waiter.html" data-roles="admin,steward" class="station-card xl:col-span-2 glass border border-sky-400/20 hover:border-sky-300 hover:shadow-[0_18px_40px_rgba(56,189,248,0.14)] p-5 rounded-[28px] space-y-3 block text-left">
+        <div class="icon-orb" style="background:linear-gradient(180deg,rgba(56,189,248,.3),rgba(56,189,248,.08));color:#7dd3fc;box-shadow:0 10px 24px rgba(56,189,248,.2)"><i class="fa-solid fa-bell-concierge"></i></div>
+        <h2 class="font-black text-base text-white">Waiter / Floor</h2>
+        <p class="text-[11px] text-slate-400 font-semibold">Kitchen status, settle bills, floor calls.</p>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="chip"><i class="fa-solid fa-kitchen-set text-sky-300"></i> Kitchen</span>
+          <span class="chip"><i class="fa-solid fa-file-invoice text-sky-300"></i> Bills</span>
+        </div>
+      </a>
+
+      <a href="rider.html" data-roles="admin,cashier" class="station-card xl:col-span-2 glass border border-rose-400/20 hover:border-rose-300 hover:shadow-[0_18px_40px_rgba(244,63,94,0.14)] p-5 rounded-[28px] space-y-3 block text-left">
+        <div class="flex items-start justify-between">
+          <div class="icon-orb" style="background:linear-gradient(180deg,rgba(244,63,94,.3),rgba(244,63,94,.08));color:#fda4af;box-shadow:0 10px 24px rgba(244,63,94,.22)"><i class="fa-solid fa-motorcycle"></i></div>
+          <span id="badgeRider" class="hidden bg-rose-500 text-white text-[10px] font-black px-2 py-1 rounded-full">0</span>
+        </div>
+        <h2 class="font-black text-base text-white">Delivery Rider</h2>
+        <p class="text-[11px] text-slate-400 font-semibold">Jobs, maps, chat. Delivered කරනකම් පේනවා.</p>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="chip"><i class="fa-solid fa-map-location-dot text-rose-300"></i> Map</span>
+          <span class="chip"><i class="fa-solid fa-comments text-rose-300"></i> Chat</span>
+        </div>
+      </a>
+    </section>
+
+    <footer class="flex flex-wrap items-center justify-between gap-3 px-1 pb-4">
+      <p class="text-[10px] text-slate-500 font-bold"><i class="fa-solid fa-lock mr-1"></i>Customers see takeaway first. This POS is for staff.</p>
+      <a href="/" class="text-[11px] text-amber-300 font-black"><i class="fa-solid fa-store mr-1"></i>Preview customer takeaway <i class="fa-solid fa-arrow-right ml-1"></i></a>
+    </footer>
+  </div>
+
+  <script>
+    if (!firebase.apps.length) firebase.initializeApp(window.PEOPLES_FIREBASE_CONFIG);
+    guardStaffPage(['admin', 'cashier', 'steward']);
+    const db = firebase.database();
+
+    function tickClock() {
+      const now = new Date();
+      const time = now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Colombo', hour: '2-digit', minute: '2-digit' });
+      const date = now.toLocaleDateString('en-GB', { timeZone: 'Asia/Colombo', weekday: 'short', day: 'numeric', month: 'short' });
+      const c = document.getElementById('posClock');
+      const d = document.getElementById('posDate');
+      if (c) c.innerText = time;
+      if (d) d.innerText = date + ' · Sri Lanka';
+    }
+    tickClock();
+    setInterval(tickClock, 15000);
+
+    function applyPosRole() {
+      const session = getStaffSession() || {};
+      const role = session.role || '';
+      const names = { admin: 'Admin', cashier: 'Cashier', steward: 'Steward' };
+      const badge = document.getElementById('posRoleBadge');
+      if (badge) badge.innerHTML = '<i class="fa-solid fa-id-badge mr-1"></i>' + (names[role] || 'Staff');
+      document.querySelectorAll('[data-roles]').forEach(function (el) {
+        const allowed = (el.getAttribute('data-roles') || '').split(',');
+        el.classList.toggle('hidden', role && allowed.indexOf(role) < 0);
+      });
+    }
+    applyPosRole();
+
+    const posTitle = document.title;
+
+    function posNeedsAck(o) {
+      if (!o || !isOpenJob(o)) return false;
+      switch (o.status) {
+        case 'Received':
+        case 'WaiterRequested':
+          return true;
+        case 'PendingPayment':
+          return window.normalizePayment(o).status === 'pending_verify';
+        default:
+          return false;
+      }
+    }
+
+    function unlockPosAudio() {
+      if (typeof window.unlockStaffAudio === 'function') {
+        window.unlockStaffAudio(refreshPosSoundUi);
+      }
+    }
+
+    function refreshPosSoundUi() {
+      const btn = document.getElementById('posAlarmUnlock');
+      const ready = typeof window.isStaffAudioReady === 'function' && window.isStaffAudioReady();
+      if (btn) btn.classList.toggle('hidden', ready);
+    }
+
+    function syncPosAlarm(count) {
+      document.title = count ? '(' + count + ') 🔔 New order — ' + posTitle : posTitle;
+      const hint = document.getElementById('posAlarmHint');
+      if (hint) {
+        hint.textContent = count
+          ? count + ' new order(s) ringing until cashier starts them.'
+          : 'New orders ring at this volume until cashier starts them.';
+      }
+      if (count > 0) {
+        if (typeof window.startStaffAlertLoop === 'function') window.startStaffAlertLoop('pos', 2000);
+      } else if (typeof window.stopStaffAlertLoop === 'function') {
+        window.stopStaffAlertLoop('pos');
+      }
+      refreshPosSoundUi();
+    }
+
+    if (typeof window.mountStaffVolumeControl === 'function') {
+      window.mountStaffVolumeControl(document.getElementById('posVolumeMount'), 'dark');
+    }
+    refreshPosSoundUi();
+    ['pointerdown', 'keydown', 'touchstart'].forEach(function (evt) {
+      document.addEventListener(evt, unlockPosAudio, { passive: true });
+    });
+
+    function isOpenJob(order) {
+      const st = (order && order.status) || '';
+      return st !== 'PickedUp' && st !== 'Settled' && st !== 'Cancelled' && st !== 'Rejected';
+    }
+
+    db.ref('orders').on('value', function (snap) {
+      const orders = snap.val() || {};
+      let live = 0, kitchen = 0, ready = 0, out = 0, riderJobs = 0, waiting = 0;
+      Object.keys(orders).forEach(function (k) {
+        const o = orders[k];
+        if (!isOpenJob(o)) return;
+        live += 1;
+        if (posNeedsAck(o)) waiting += 1;
+        if (o.status === 'Preparing') kitchen += 1;
+        if (o.status === 'Ready') ready += 1;
+        if (o.status === 'Dispatched' || o.status === 'Arrived') out += 1;
+        if (window.isDoorstepOrder && window.isDoorstepOrder(o) && (o.status === 'Received' || o.status === 'Preparing' || o.status === 'Ready' || o.status === 'Dispatched' || o.status === 'Arrived')) {
+          riderJobs += 1;
+        }
+      });
+      document.getElementById('statLive').innerText = live;
+      document.getElementById('statKitchen').innerText = kitchen;
+      document.getElementById('statReady').innerText = ready;
+      document.getElementById('statOut').innerText = out;
+      const cash = document.getElementById('badgeCashier');
+      if (cash) {
+        cash.classList.toggle('hidden', live === 0);
+        cash.innerText = live + ' live';
+      }
+      const ride = document.getElementById('badgeRider');
+      if (ride) {
+        ride.classList.toggle('hidden', riderJobs === 0);
+        ride.innerText = riderJobs + ' jobs';
+      }
+      syncPosAlarm(waiting);
+    }, window.onDbListenError);
+  </script>
+</body>
+</html>
