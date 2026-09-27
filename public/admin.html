@@ -18,7 +18,7 @@
   <style>
     .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-    [data-admin-panel].hidden, #qrDisplayArea.hidden, #takeawayQrArea.hidden, #qrBatchArea.hidden { display: none !important; }
+    [data-admin-panel].hidden, #qrDisplayArea.hidden, #takeawayQrArea.hidden, #qrBatchArea.hidden, #menuEditModal.hidden { display: none !important; }
     [data-admin-nav] { color: #64748b; background: #fff; border: 1px solid #e2e8f0; }
     [data-admin-nav].active { color: #fff; background: #581c87; border-color: #581c87; }
     .print-only { display: none; }
@@ -544,10 +544,25 @@
           <button onclick="saveNewDish()" class="w-full bg-purple-900 hover:bg-purple-950 text-white font-black py-2.5 rounded-xl text-xs mt-2 transition">Save Dish to Menu</button>
         </div>
 
-        <div class="space-y-2 pt-2">
-          <h4 class="font-black text-xs text-slate-700">Existing Menu List (Change Prices / Availability)</h4>
-          <div id="adminMenuList" class="space-y-2 max-h-[400px] overflow-y-auto pr-1 custom-scrollbar">
-            <p class="text-center text-slate-400 text-xs py-6">Loading menu items...</p>
+        <div id="adminMenuSection" class="space-y-2 pt-2">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h4 class="font-black text-xs text-slate-700">Existing Menu List (Edit / Availability)</h4>
+            <div class="flex gap-1.5">
+              <button type="button" data-menu-act="expand-all" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-black px-2.5 py-1 rounded-lg text-[10px]">Expand all</button>
+              <button type="button" data-menu-act="collapse-all" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-black px-2.5 py-1 rounded-lg text-[10px]">Collapse all</button>
+            </div>
+          </div>
+          <div class="flex gap-2 items-center">
+            <input id="adminMenuSearch" type="search" placeholder="Search dish, ingredient or category..." oninput="renderAdminMenuList()" class="flex-grow min-w-0 border rounded-xl p-2 text-xs bg-slate-50 outline-none font-semibold">
+            <label class="flex items-center gap-1 text-[10px] font-bold cursor-pointer bg-white border px-2 py-2 rounded-xl flex-shrink-0">
+              <input type="checkbox" id="adminMenuShowHidden" checked onchange="renderAdminMenuList()" class="accent-purple-900"> Show hidden
+            </label>
+          </div>
+          <div id="adminMenuScroll" class="relative max-h-[560px] overflow-y-auto pr-1 custom-scrollbar">
+            <div id="adminMenuChips" class="sticky top-0 z-10 bg-white/95 backdrop-blur py-2 flex gap-1.5 overflow-x-auto custom-scrollbar"></div>
+            <div id="adminMenuList" class="space-y-2 pb-1">
+              <p class="text-center text-slate-400 text-xs py-6">Loading menu items...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -605,6 +620,53 @@
       <button type="button" onclick="showAdminPanel('dishes')" class="bg-slate-200 text-slate-800 font-black px-4 py-2 rounded-xl text-xs">← Dishes</button>
     </div>
     </section>
+  </div>
+
+  <div id="menuEditModal" class="hidden fixed inset-0 z-[80] bg-slate-950/60 flex items-end sm:items-center justify-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="menuEditTitle">
+    <div class="bg-white w-full sm:max-w-lg max-h-[92vh] overflow-y-auto custom-scrollbar rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 space-y-3">
+      <div class="flex justify-between items-center gap-2 border-b pb-2">
+        <h3 id="menuEditTitle" class="font-black text-sm text-purple-950 truncate">Edit menu item</h3>
+        <button type="button" onclick="closeMenuEdit(false)" aria-label="Close" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-black w-8 h-8 rounded-xl flex-shrink-0">✕</button>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        <label class="space-y-1 sm:col-span-2"><span class="text-[10px] font-black uppercase text-slate-500">Name</span>
+          <input id="editDishName" type="text" class="w-full border rounded-xl p-2 text-xs bg-white outline-none font-semibold"></label>
+        <label class="space-y-1"><span class="text-[10px] font-black uppercase text-slate-500">Category</span>
+          <select id="editDishCategory" class="w-full border rounded-xl p-2 text-xs bg-white outline-none font-semibold text-slate-700"></select></label>
+        <label class="space-y-1"><span class="text-[10px] font-black uppercase text-slate-500">Base price (Rs.)</span>
+          <input id="editDishPrice" type="number" min="0" step="any" class="w-full border rounded-xl p-2 text-xs bg-white outline-none font-semibold"></label>
+        <label class="space-y-1"><span class="text-[10px] font-black uppercase text-slate-500">Printer</span>
+          <select id="editDishPrintDest" class="w-full border rounded-xl p-2 text-xs bg-white outline-none font-semibold text-purple-950">
+            <option value="kitchen">🖨️ Kitchen Printer</option>
+            <option value="cashier">🖨️ Cashier Printer</option>
+            <option value="steward">🖨️ Steward Printer</option>
+            <option value="none">🚫 Do Not Print (No Receipt)</option>
+          </select></label>
+        <label class="flex items-center gap-2 self-end text-xs font-black cursor-pointer bg-slate-50 border px-3 py-2 rounded-xl">
+          <input id="editDishAvailable" type="checkbox" class="accent-purple-900"> Available to customers</label>
+        <label class="space-y-1 sm:col-span-2"><span class="text-[10px] font-black uppercase text-slate-500">Image URL (optional)</span>
+          <input id="editDishImage" type="text" class="w-full border rounded-xl p-2 text-xs bg-white outline-none font-semibold"></label>
+        <label class="space-y-1 sm:col-span-2"><span class="text-[10px] font-black uppercase text-slate-500">දාන දේවල් / Ingredients</span>
+          <input id="editDishIngredients" type="text" placeholder="chicken, coconut milk, spices" class="w-full border rounded-xl p-2 text-xs bg-white outline-none font-semibold"></label>
+        <div id="editDishKinds" class="sm:col-span-2 flex flex-wrap gap-1.5"></div>
+      </div>
+      <div class="space-y-2 pt-2 border-t">
+        <div class="flex justify-between items-center">
+          <span class="text-[11px] font-black text-purple-950">Portions / Variations</span>
+          <button type="button" onclick="addEditVariantRow().querySelector('.var-name').focus()" class="bg-purple-900 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">+ Add Variant</button>
+        </div>
+        <div id="editVariantsContainer" class="space-y-2"></div>
+        <p class="text-[10px] text-slate-500 font-bold">Variations තියෙනවා නම් base price එක පාවිච්චි වෙන්නේ නෑ.</p>
+      </div>
+      <p id="menuEditNote" class="text-[11px] font-bold min-h-[1rem]"></p>
+      <div class="flex flex-wrap justify-between gap-2">
+        <button type="button" onclick="duplicateMenuEditAsNew()" class="bg-white border border-slate-300 text-slate-700 font-black px-3 py-2 rounded-xl text-xs">Duplicate as new item</button>
+        <div class="flex gap-2 ml-auto">
+          <button type="button" onclick="closeMenuEdit(false)" class="bg-slate-200 text-slate-800 font-black px-4 py-2 rounded-xl text-xs">Cancel</button>
+          <button type="button" id="menuEditSaveBtn" onclick="saveMenuEdit()" class="bg-purple-900 hover:bg-purple-950 text-white font-black px-5 py-2 rounded-xl text-xs disabled:opacity-40">Save changes</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -1410,6 +1472,7 @@
           </div>
         `;
       });
+      renderAdminMenuList();
     }, window.onDbListenError);
 
     function addNewCategory() {
@@ -1422,20 +1485,77 @@
       }).catch(function (err) { notifyDbError(err); });
     }
 
-    function editCategory(id, currentName) {
-      const newName = prompt(`Enter new name for category "${currentName}":`, currentName);
-      if (newName !== null && newName.trim() !== '') {
-        db.ref(`categories/${id}`).update({ name: newName.trim() }).then(() => {
-          alert('කාණ්ඩය යාවත්කාලීන විය!');
-        }).catch(notifyDbError);
+    function menuKeysInCategory(items, categoryName) {
+      const wanted = String(categoryName || 'General').toLowerCase();
+      return Object.keys(items || {}).filter(function (k) {
+        const item = items[k];
+        return item && typeof item === 'object' && String(item.category || 'General').toLowerCase() === wanted;
+      });
+    }
+
+    function categoryRenamePatch(categoryId, oldName, newName, items) {
+      const patch = {};
+      patch['categories/' + categoryId + '/name'] = newName;
+      menuKeysInCategory(items, oldName).forEach(function (k) { patch['menu_items/' + k + '/category'] = newName; });
+      return patch;
+    }
+
+    function categoryMovePatch(categoryId, oldName, targetName, items) {
+      const patch = {};
+      patch['categories/' + categoryId] = null;
+      menuKeysInCategory(items, oldName).forEach(function (k) { patch['menu_items/' + k + '/category'] = targetName; });
+      return patch;
+    }
+
+    async function editCategory(id, currentName) {
+      const input = prompt(`Enter new name for category "${currentName}":`, currentName);
+      if (input === null) return;
+      const newName = input.trim();
+      if (!newName || newName === currentName) return;
+      const taken = categoriesListCache.some(function (c) {
+        return c.id !== id && String(c.name || '').toLowerCase() === newName.toLowerCase();
+      });
+      if (taken) return alert('"' + newName + '" කියලා category එකක් දැනටමත් තියෙනවා. වෙන නමක් දාන්න.');
+      try {
+        const snap = await db.ref('menu_items').once('value');
+        const patch = categoryRenamePatch(id, currentName, newName, snap.val() || {});
+        await db.ref().update(patch);
+        const moved = Object.keys(patch).length - 1;
+        alert('කාණ්ඩය යාවත්කාලීන විය!' + (moved ? ' (' + moved + ' items updated)' : ''));
+      } catch (err) {
+        notifyDbError(err);
       }
     }
 
-    function deleteCategory(id) {
-      if (confirm('මෙම කාණ්ඩය ඉවත් කිරීමට අවශ්‍යමද?')) {
-        db.ref(`categories/${id}`).remove().then(() => {
-          alert('කාණ්ඩය ඉවත් කරන ලදී!');
-        }).catch(notifyDbError);
+    async function deleteCategory(id) {
+      const cat = categoriesListCache.find(function (c) { return c.id === id; });
+      if (!cat) return;
+      try {
+        const snap = await db.ref('menu_items').once('value');
+        const items = snap.val() || {};
+        const count = menuKeysInCategory(items, cat.name).length;
+        if (!count) {
+          if (!confirm('මෙම කාණ්ඩය ඉවත් කිරීමට අවශ්‍යමද?')) return;
+          await db.ref('categories/' + id).remove();
+          return alert('කාණ්ඩය ඉවත් කරන ලදී!');
+        }
+        const others = categoriesListCache.filter(function (c) {
+          return c.id !== id && String(c.name || '').toLowerCase() !== String(cat.name || '').toLowerCase();
+        });
+        if (!others.length) {
+          return alert('"' + cat.name + '" එකේ items ' + count + 'ක් තියෙනවා. මුලින් වෙන category එකක් හදලා items ඒකට දාන්න.');
+        }
+        const choice = prompt(
+          '"' + cat.name + '" එකේ items ' + count + 'ක් තියෙනවා. ඒවා යවන්න ඕන category එකේ number එක type කරන්න (Cancel = delete කරන්නේ නෑ):\n\n'
+          + others.map(function (c, i) { return (i + 1) + '. ' + c.name; }).join('\n')
+        );
+        if (choice === null) return;
+        const target = others[Number(String(choice).trim()) - 1];
+        if (!target) return alert('Number එක වැරදියි. කිසිම දෙයක් වෙනස් කළේ නෑ.');
+        await db.ref().update(categoryMovePatch(id, cat.name, target.name, items));
+        alert('Items ' + count + 'ක් "' + target.name + '" එකට දාලා "' + cat.name + '" ඉවත් කළා.');
+      } catch (err) {
+        notifyDbError(err);
       }
     }
 
@@ -1557,9 +1677,10 @@
     }
 
     // 8. ADD SINGLE DISH WITH PRINTER ROUTING
+    let variantRowSeq = 0;
     function addVariantRow() {
       const container = document.getElementById('variantsContainer');
-      const rowId = Date.now();
+      const rowId = Date.now() + '-' + (++variantRowSeq);
       container.innerHTML += `
         <div id="v-row-${rowId}" class="flex gap-2 items-center bg-white p-2 rounded-xl border">
           <input type="text" placeholder="Variant Name (e.g. Large)" class="var-name flex-grow border rounded-lg p-1.5 text-xs bg-slate-50 outline-none">
@@ -1679,44 +1800,429 @@
       }).catch(function (err) { notifyDbError(err); });
     }
 
-    db.ref('menu_items').on('value', snap => {
-      const items = snap.val() || {};
-      adminMenuItems = items;
-      renderDishKindsAdmin();
-      const container = document.getElementById('adminMenuList');
-      container.innerHTML = '';
+    let adminMenuLoaded = false;
+    const MENU_GROUP_STATE_KEY = 'pfr_admin_menu_groups';
+    const UNCATEGORIZED_GROUP = '__uncat__';
 
-      const keys = Object.keys(items);
-      if (keys.length === 0) {
-        container.innerHTML = '<p class="text-center text-slate-400 text-xs py-6">No menu items found.</p>';
-        return;
+    function menuCategoryKey(name) {
+      return String(name || 'General').toLowerCase();
+    }
+
+    function menuGroupState() {
+      try { return JSON.parse(sessionStorage.getItem(MENU_GROUP_STATE_KEY) || '{}') || {}; } catch (e) { return {}; }
+    }
+
+    function saveMenuGroupState(state) {
+      try { sessionStorage.setItem(MENU_GROUP_STATE_KEY, JSON.stringify(state)); } catch (e) {}
+    }
+
+    function menuItemPriceText(item) {
+      if (Array.isArray(item.variants) && item.variants.length) {
+        return item.variants.map(function (v) { return (v && v.variantName) + ': Rs.' + Number((v && v.price) || 0).toLocaleString(); }).join(' | ');
       }
+      return 'Rs. ' + Number(item.price || 0).toLocaleString();
+    }
 
-      keys.forEach(k => {
-        const item = items[k];
-        const isAvail = item.available !== false;
-        let varText = escapeHtml(item.variants ? item.variants.map(v => `${v.variantName}: Rs.${v.price}`).join(' | ') : `Rs. ${item.price}`);
-        let printDestLabel = escapeHtml(item.printDestination ? `🖨️ Printer: ${item.printDestination}` : '🖨️ Printer: kitchen');
-        const safeK = escapeHtml(String(k).replace(/'/g, "\\'"));
-
-        container.innerHTML += `
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 border rounded-2xl gap-2">
-            <div>
-              <span class="font-black text-xs text-slate-900 block">${escapeHtml(item.name)} <span class="text-[10px] text-slate-500 font-bold bg-slate-200 px-1 rounded">${escapeHtml(item.category)}</span></span>
-              <span class="text-[10px] text-purple-950 font-bold block mt-0.5">${varText} • <span class="text-purple-700">${printDestLabel}</span></span>
-            </div>
-            <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-              <button onclick="editItemPrice('${safeK}')" class="bg-amber-100 text-amber-800 hover:bg-amber-200 px-3 py-1.5 rounded-xl text-[10px] font-black transition">✏️ Edit Price</button>
-              
-              <label class="flex items-center gap-1 text-[10px] font-bold cursor-pointer bg-white border px-2 py-1.5 rounded-xl">
-                <input type="checkbox" ${isAvail ? 'checked' : ''} onchange="toggleItemAvailability('${safeK}', this.checked)" class="accent-purple-900"> Available
-              </label>
-              
-              <button onclick="deleteMenuItem('${safeK}')" class="bg-rose-100 text-rose-700 hover:bg-rose-200 px-3 py-1.5 rounded-xl text-[10px] font-black transition">🗑️ Delete</button>
-            </div>
-          </div>
-        `;
+    function buildAdminMenuGroups() {
+      const groups = [];
+      const byKey = {};
+      categoriesListCache.forEach(function (cat) {
+        const id = 'c:' + menuCategoryKey(cat.name);
+        if (byKey[id]) return;
+        byKey[id] = { id: id, name: cat.name, keys: [], missing: false };
+        groups.push(byKey[id]);
       });
+      const uncategorized = { id: UNCATEGORIZED_GROUP, name: 'Uncategorized', keys: [], missing: true };
+      Object.keys(adminMenuItems).forEach(function (k) {
+        const item = adminMenuItems[k];
+        if (!item || typeof item !== 'object') return;
+        (byKey['c:' + menuCategoryKey(item.category)] || uncategorized).keys.push(k);
+      });
+      if (uncategorized.keys.length) groups.push(uncategorized);
+      return groups;
+    }
+
+    function adminMenuRowHtml(k, missingCategory) {
+      const item = adminMenuItems[k] || {};
+      const isAvail = item.available !== false;
+      const printer = item.printDestination || 'kitchen';
+      const safeKey = escapeHtml(k);
+      return '<div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-slate-50 border rounded-2xl gap-2' + (isAvail ? '' : ' opacity-60') + '">'
+        + '<div class="min-w-0">'
+        + '<span class="font-black text-xs text-slate-900 block">' + escapeHtml(item.name || '(no name)')
+        + (isAvail ? '' : ' <span class="text-[9px] text-rose-700 font-black bg-rose-100 px-1.5 py-0.5 rounded">Hidden from customers</span>')
+        + (missingCategory ? ' <span class="text-[9px] text-amber-900 font-black bg-amber-100 px-1.5 py-0.5 rounded">Category missing: ' + escapeHtml(item.category || '—') + '</span>' : '')
+        + '</span>'
+        + '<span class="text-[10px] text-purple-950 font-bold block mt-0.5">' + escapeHtml(menuItemPriceText(item)) + ' • <span class="text-purple-700">🖨️ Printer: ' + escapeHtml(printer) + '</span></span>'
+        + '</div>'
+        + '<div class="flex items-center gap-2 flex-wrap sm:flex-nowrap flex-shrink-0">'
+        + '<button type="button" data-menu-act="edit" data-key="' + safeKey + '" class="bg-amber-100 text-amber-800 hover:bg-amber-200 px-3 py-1.5 rounded-xl text-[10px] font-black transition">✏️ Edit</button>'
+        + '<label class="flex items-center gap-1 text-[10px] font-bold cursor-pointer bg-white border px-2 py-1.5 rounded-xl">'
+        + '<input type="checkbox" data-menu-act="avail" data-key="' + safeKey + '" ' + (isAvail ? 'checked' : '') + ' class="accent-purple-900"> Available</label>'
+        + '<button type="button" data-menu-act="delete" data-key="' + safeKey + '" class="bg-rose-100 text-rose-700 hover:bg-rose-200 px-3 py-1.5 rounded-xl text-[10px] font-black transition">🗑️ Delete</button>'
+        + '</div></div>';
+    }
+
+    function renderAdminMenuList() {
+      const list = document.getElementById('adminMenuList');
+      const chips = document.getElementById('adminMenuChips');
+      if (!list || !chips || !adminMenuLoaded) return;
+      const search = String((document.getElementById('adminMenuSearch') || {}).value || '').trim().toLowerCase();
+      const showHiddenEl = document.getElementById('adminMenuShowHidden');
+      const showHidden = !showHiddenEl || showHiddenEl.checked;
+      const groups = buildAdminMenuGroups();
+      const state = menuGroupState();
+      const defaultOpen = groups.length <= 3;
+      const matches = function (item) {
+        if (!search) return true;
+        return String(item.name || '').toLowerCase().indexOf(search) >= 0
+          || String(item.ingredients || '').toLowerCase().indexOf(search) >= 0
+          || String(item.category || '').toLowerCase().indexOf(search) >= 0;
+      };
+      let groupsHtml = '';
+      let chipsHtml = '<button type="button" data-menu-act="all" class="flex-shrink-0 bg-purple-900 text-white font-black px-3 py-1.5 rounded-xl text-[10px]">All ' + Object.keys(adminMenuItems).length + '</button>';
+      groups.forEach(function (g) {
+        const hiddenCount = g.keys.filter(function (k) { return adminMenuItems[k].available === false; }).length;
+        const visible = g.keys.filter(function (k) {
+          const item = adminMenuItems[k];
+          return (showHidden || item.available !== false) && matches(item);
+        });
+        if (search && !visible.length) return;
+        const open = search ? true : (state[g.id] !== undefined ? !!state[g.id] : defaultOpen);
+        const countText = search
+          ? visible.length + ' match' + (visible.length === 1 ? '' : 'es')
+          : g.keys.length + ' item' + (g.keys.length === 1 ? '' : 's') + (hiddenCount ? ' (' + hiddenCount + ' hidden)' : '');
+        const gid = escapeHtml(g.id);
+        chipsHtml += '<button type="button" data-menu-act="jump" data-group="' + gid + '" class="flex-shrink-0 font-bold px-3 py-1.5 rounded-xl text-[10px] ' + (g.missing ? 'bg-amber-100 text-amber-900' : 'bg-slate-100 text-slate-700 hover:bg-purple-100') + '">'
+          + escapeHtml(g.name) + ' <span class="opacity-60">' + (search ? visible.length : g.keys.length) + '</span></button>';
+        groupsHtml += '<section data-menu-group="' + gid + '" class="border rounded-2xl overflow-hidden' + (g.missing ? ' border-amber-300' : '') + '">'
+          + '<button type="button" data-menu-act="toggle" data-group="' + gid + '" data-open="' + (open ? '1' : '0') + '" aria-expanded="' + open + '" class="w-full flex justify-between items-center gap-2 px-3 py-2.5 text-left ' + (g.missing ? 'bg-amber-50' : 'bg-purple-50 hover:bg-purple-100') + '">'
+          + '<span class="font-black text-xs text-purple-950">' + escapeHtml(g.name) + ' <span class="text-[10px] text-slate-500 font-bold">· ' + countText + '</span></span>'
+          + '<span class="text-purple-900 font-black text-xs transition-transform ' + (open ? 'rotate-180' : '') + '">▾</span>'
+          + '</button>'
+          + (open
+            ? '<div class="p-2 space-y-2 bg-white">' + (visible.length
+              ? visible.map(function (k) { return adminMenuRowHtml(k, g.missing); }).join('')
+              : '<p class="text-center text-slate-400 text-[11px] py-3 font-bold">' + (g.keys.length ? 'All items here are hidden.' : 'No items in this category.') + '</p>') + '</div>'
+            : '')
+          + '</section>';
+      });
+      chips.innerHTML = chipsHtml;
+      list.innerHTML = groupsHtml || '<p class="text-center text-slate-400 text-xs py-6">' + (search ? 'No dishes match "' + escapeHtml(search) + '".' : 'No menu items found.') + '</p>';
+    }
+
+    function setAllMenuGroups(open) {
+      const state = {};
+      buildAdminMenuGroups().forEach(function (g) { state[g.id] = open; });
+      saveMenuGroupState(state);
+      renderAdminMenuList();
+    }
+
+    function jumpToMenuGroup(groupId) {
+      const state = menuGroupState();
+      state[groupId] = true;
+      saveMenuGroupState(state);
+      renderAdminMenuList();
+      const scroller = document.getElementById('adminMenuScroll');
+      const chips = document.getElementById('adminMenuChips');
+      const section = scroller && scroller.querySelector('[data-menu-group="' + CSS.escape(groupId) + '"]');
+      if (!section) return;
+      scroller.scrollTo({ top: Math.max(0, section.offsetTop - chips.offsetHeight - 6), behavior: 'smooth' });
+    }
+
+    (function wireAdminMenuList() {
+      const root = document.getElementById('adminMenuSection');
+      if (!root) return;
+      root.addEventListener('click', function (e) {
+        const el = e.target.closest('[data-menu-act]');
+        if (!el || !root.contains(el)) return;
+        const act = el.getAttribute('data-menu-act');
+        const key = el.getAttribute('data-key');
+        const group = el.getAttribute('data-group');
+        if (act === 'toggle') {
+          const state = menuGroupState();
+          state[group] = el.getAttribute('data-open') !== '1';
+          saveMenuGroupState(state);
+          renderAdminMenuList();
+        } else if (act === 'jump') {
+          jumpToMenuGroup(group);
+        } else if (act === 'all') {
+          setAllMenuGroups(true);
+          document.getElementById('adminMenuScroll').scrollTo({ top: 0, behavior: 'smooth' });
+        } else if (act === 'expand-all') {
+          setAllMenuGroups(true);
+        } else if (act === 'collapse-all') {
+          setAllMenuGroups(false);
+        } else if (act === 'edit') {
+          openMenuEdit(key);
+        } else if (act === 'delete') {
+          deleteMenuItem(key);
+        }
+      });
+      root.addEventListener('change', function (e) {
+        const el = e.target;
+        if (el && el.getAttribute && el.getAttribute('data-menu-act') === 'avail') {
+          toggleItemAvailability(el.getAttribute('data-key'), el.checked);
+        }
+      });
+    })();
+
+    // 10. SINGLE ITEM EDIT MODAL
+    let menuEditKey = null;
+    let menuEditOriginal = null;
+    let menuEditInitialForm = '';
+    let menuEditSaving = false;
+
+    function menuEditEl(id) { return document.getElementById(id); }
+
+    function fillMenuEditCategories(current) {
+      const select = menuEditEl('editDishCategory');
+      const known = categoriesListCache.some(function (c) { return menuCategoryKey(c.name) === menuCategoryKey(current); });
+      let html = '<option value="">Select Category</option>';
+      if (current && !known) {
+        html += '<option value="' + escapeHtml(current) + '">(missing) ' + escapeHtml(current) + '</option>';
+      }
+      categoriesListCache.forEach(function (c) {
+        html += '<option value="' + escapeHtml(c.name) + '">' + escapeHtml(c.name) + '</option>';
+      });
+      select.innerHTML = html;
+      const match = categoriesListCache.find(function (c) { return menuCategoryKey(c.name) === menuCategoryKey(current); });
+      select.value = match ? match.name : (current || '');
+    }
+
+    function addEditVariantRow(v) {
+      v = v || {};
+      const row = document.createElement('div');
+      row.className = 'edit-var-row flex gap-1.5 items-center bg-slate-50 p-2 rounded-xl border';
+      row.setAttribute('data-portion', v.portionSize || 'Standard');
+      row.innerHTML = '<input type="text" placeholder="Variant name (e.g. Large)" class="var-name flex-grow min-w-0 border rounded-lg p-1.5 text-xs bg-white outline-none font-semibold">'
+        + '<input type="number" min="0" step="any" placeholder="Rs." class="var-price w-24 border rounded-lg p-1.5 text-xs bg-white outline-none font-semibold">'
+        + '<button type="button" data-var-act="up" aria-label="Move up" class="bg-slate-200 hover:bg-slate-300 px-2 py-1 rounded-lg text-[10px] font-black">↑</button>'
+        + '<button type="button" data-var-act="down" aria-label="Move down" class="bg-slate-200 hover:bg-slate-300 px-2 py-1 rounded-lg text-[10px] font-black">↓</button>'
+        + '<button type="button" data-var-act="remove" aria-label="Remove" class="text-rose-600 font-black text-xs px-2">✕</button>';
+      row.querySelector('.var-name').value = v.variantName || '';
+      row.querySelector('.var-price').value = v.price !== undefined && v.price !== null && v.price !== '' ? v.price : '';
+      menuEditEl('editVariantsContainer').appendChild(row);
+      syncEditPriceState();
+      return row;
+    }
+
+    function syncEditPriceState() {
+      const hasVariants = menuEditEl('editVariantsContainer').children.length > 0;
+      const price = menuEditEl('editDishPrice');
+      price.disabled = hasVariants;
+      price.placeholder = hasVariants ? 'Not used — variations have their own price' : 'Base price (Rs.)';
+      price.classList.toggle('opacity-50', hasVariants);
+    }
+
+    function readMenuEditForm() {
+      const kinds = (window.DISH_KIND_TAGS || []).filter(function (tag) {
+        const el = menuEditEl('editDishKind-' + tag.id);
+        return el && el.checked;
+      }).map(function (tag) { return tag.id; });
+      const variants = [];
+      menuEditEl('editVariantsContainer').querySelectorAll('.edit-var-row').forEach(function (row) {
+        variants.push({
+          variantName: row.querySelector('.var-name').value.trim(),
+          priceRaw: row.querySelector('.var-price').value.trim(),
+          portionSize: row.getAttribute('data-portion') || 'Standard'
+        });
+      });
+      return {
+        name: menuEditEl('editDishName').value.trim(),
+        category: menuEditEl('editDishCategory').value,
+        priceRaw: menuEditEl('editDishPrice').value.trim(),
+        printDestination: menuEditEl('editDishPrintDest').value,
+        image: menuEditEl('editDishImage').value.trim(),
+        ingredients: menuEditEl('editDishIngredients').value.trim(),
+        available: menuEditEl('editDishAvailable').checked,
+        kinds: kinds,
+        variants: variants
+      };
+    }
+
+    function setMenuEditNote(text, tone) {
+      const note = menuEditEl('menuEditNote');
+      note.textContent = text || '';
+      note.className = 'text-[11px] font-bold min-h-[1rem] ' + (tone === 'error' ? 'text-rose-700' : tone === 'ok' ? 'text-emerald-700' : 'text-amber-800');
+    }
+
+    function openMenuEdit(key) {
+      const item = adminMenuItems[key];
+      if (!item) return alert('This item no longer exists.');
+      menuEditKey = key;
+      menuEditOriginal = JSON.stringify(item);
+      menuEditEl('menuEditTitle').textContent = 'Edit: ' + (item.name || 'menu item');
+      menuEditEl('editDishName').value = item.name || '';
+      fillMenuEditCategories(item.category || '');
+      const hasVariants = Array.isArray(item.variants) && item.variants.length > 0;
+      menuEditEl('editDishPrice').value = !hasVariants && item.price ? item.price : '';
+      menuEditEl('editDishPrintDest').value = item.printDestination || 'kitchen';
+      if (!menuEditEl('editDishPrintDest').value) menuEditEl('editDishPrintDest').value = 'kitchen';
+      menuEditEl('editDishImage').value = item.image || '';
+      menuEditEl('editDishIngredients').value = item.ingredients || '';
+      menuEditEl('editDishAvailable').checked = item.available !== false;
+      const selected = window.dishKindList(item);
+      menuEditEl('editDishKinds').innerHTML = (window.DISH_KIND_TAGS || []).map(function (tag) {
+        return '<label class="flex items-center gap-1 bg-white border rounded-lg px-2 py-1 text-[10px] font-black cursor-pointer"><input type="checkbox" id="editDishKind-' + tag.id + '" ' + (selected.indexOf(tag.id) >= 0 ? 'checked' : '') + ' class="accent-purple-900">' + escapeHtml(tag.label) + '</label>';
+      }).join('');
+      menuEditEl('editVariantsContainer').innerHTML = '';
+      (hasVariants ? item.variants : []).forEach(function (v) { if (v) addEditVariantRow(v); });
+      syncEditPriceState();
+      setMenuEditNote('');
+      menuEditEl('menuEditSaveBtn').disabled = false;
+      menuEditInitialForm = JSON.stringify(readMenuEditForm());
+      menuEditEl('menuEditModal').classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+      setTimeout(function () { menuEditEl('editDishName').focus(); }, 30);
+    }
+
+    function closeMenuEdit(force) {
+      if (!menuEditKey) return;
+      if (!force && JSON.stringify(readMenuEditForm()) !== menuEditInitialForm && !confirm('Discard your changes to this item?')) return;
+      menuEditKey = null;
+      menuEditOriginal = null;
+      menuEditEl('menuEditModal').classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    function noteMenuEditRemoteChange() {
+      if (!menuEditKey || menuEditSaving) return;
+      const now = adminMenuItems[menuEditKey];
+      if (!now) {
+        setMenuEditNote('This item was deleted on another device. Saving is not possible.', 'error');
+        menuEditEl('menuEditSaveBtn').disabled = true;
+      } else if (JSON.stringify(now) !== menuEditOriginal) {
+        setMenuEditNote('This item was changed on another device. Saving will overwrite those fields with this form.');
+      }
+    }
+
+    function buildMenuEditChanges(form) {
+      if (!form.name) return { error: 'කරුණාකර කෑමේ නම ඇතුළත් කරන්න. (Name is required.)' };
+      if (!form.category) return { error: 'කරුණාකර කාණ්ඩය තෝරන්න. (Category is required.)' };
+      const variants = [];
+      for (let i = 0; i < form.variants.length; i++) {
+        const v = form.variants[i];
+        if (!v.variantName && !v.priceRaw) continue;
+        const price = window.safeMoney(v.priceRaw);
+        if (!v.variantName || !(price > 0)) return { error: 'Variation ' + (i + 1) + ': name and a price above 0 are both needed.' };
+        variants.push({ variantName: v.variantName, price: price, portionSize: v.portionSize || 'Standard' });
+      }
+      const basePrice = window.safeMoney(form.priceRaw);
+      if (!variants.length && !(basePrice > 0)) return { error: 'හරි මිලක් දාන්න. (Base price must be above 0, or add a variation.)' };
+      return {
+        changes: {
+          name: form.name,
+          category: form.category,
+          price: variants.length ? 0 : basePrice,
+          printDestination: form.printDestination || 'kitchen',
+          image: form.image || null,
+          ingredients: form.ingredients || null,
+          kinds: form.kinds.length ? form.kinds : null,
+          variants: variants.length ? variants : null,
+          available: !!form.available,
+          updatedAt: Date.now()
+        }
+      };
+    }
+
+    async function saveMenuEdit() {
+      const key = menuEditKey;
+      if (!key) return;
+      const built = buildMenuEditChanges(readMenuEditForm());
+      if (built.error) return setMenuEditNote(built.error, 'error');
+      const changes = built.changes;
+      const clash = Object.keys(adminMenuItems).some(function (k) {
+        const other = adminMenuItems[k];
+        return k !== key && other
+          && menuCategoryKey(other.category) === menuCategoryKey(changes.category)
+          && String(other.name || '').trim().toLowerCase() === changes.name.toLowerCase();
+      });
+      if (clash && !confirm('"' + changes.name + '" already exists in ' + changes.category + '. Save anyway?')) return;
+      const saveBtn = menuEditEl('menuEditSaveBtn');
+      saveBtn.disabled = true;
+      setMenuEditNote('Saving…');
+      menuEditSaving = true;
+      try {
+        const saved = await saveMenuItemChanges(db, key, changes);
+        if (!saved) {
+          setMenuEditNote('This item was deleted by someone else. Nothing was saved.', 'error');
+          return;
+        }
+        closeMenuEdit(true);
+      } catch (err) {
+        saveBtn.disabled = false;
+        setMenuEditNote((err && (err.message || err.code)) || 'Save failed', 'error');
+      } finally {
+        menuEditSaving = false;
+      }
+    }
+
+    function saveMenuItemChanges(database, key, changes) {
+      return database.ref('menu_items/' + key).transaction(function (cur) {
+        // Writing null over a missing item is a no-op; if the item does exist the server rejects this guess and re-runs with it.
+        if (cur === null) return null;
+        const next = Object.assign({}, cur, changes);
+        Object.keys(next).forEach(function (f) { if (next[f] === null || next[f] === undefined) delete next[f]; });
+        return next;
+      }).then(function (res) { return !!(res && res.committed && res.snapshot.exists()); });
+    }
+
+    function duplicateMenuEditAsNew() {
+      const form = readMenuEditForm();
+      menuEditEl('dishName').value = form.name;
+      const addCat = menuEditEl('dishCategorySelect');
+      addCat.value = form.category;
+      menuEditEl('dishPrice').value = form.variants.length ? '' : form.priceRaw;
+      menuEditEl('dishPrintDest').value = form.printDestination || 'kitchen';
+      menuEditEl('dishImage').value = form.image;
+      menuEditEl('dishIngredients').value = form.ingredients;
+      (window.DISH_KIND_TAGS || []).forEach(function (tag) {
+        const el = menuEditEl('dishKindNew-' + tag.id);
+        if (el) el.checked = form.kinds.indexOf(tag.id) >= 0;
+      });
+      const container = menuEditEl('variantsContainer');
+      container.innerHTML = '';
+      const copies = form.variants.filter(function (v) { return v.variantName || v.priceRaw; });
+      // addVariantRow() appends via innerHTML, which resets typed values, so create every row before filling any.
+      copies.forEach(function () { addVariantRow(); });
+      copies.forEach(function (v, i) {
+        const row = container.children[i];
+        row.querySelector('.var-name').value = v.variantName;
+        row.querySelector('.var-price').value = v.priceRaw;
+      });
+      closeMenuEdit(true);
+      menuEditEl('dishName').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      menuEditEl('dishName').focus();
+    }
+
+    (function wireMenuEditModal() {
+      const modal = menuEditEl('menuEditModal');
+      if (!modal) return;
+      modal.addEventListener('click', function (e) {
+        if (e.target === modal) closeMenuEdit(false);
+      });
+      menuEditEl('editVariantsContainer').addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-var-act]');
+        if (!btn) return;
+        const row = btn.closest('.edit-var-row');
+        const act = btn.getAttribute('data-var-act');
+        if (act === 'remove') row.remove();
+        else if (act === 'up' && row.previousElementSibling) row.parentNode.insertBefore(row, row.previousElementSibling);
+        else if (act === 'down' && row.nextElementSibling) row.parentNode.insertBefore(row.nextElementSibling, row);
+        syncEditPriceState();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && menuEditKey) closeMenuEdit(false);
+      });
+    })();
+
+    db.ref('menu_items').on('value', snap => {
+      adminMenuItems = snap.val() || {};
+      adminMenuLoaded = true;
+      renderDishKindsAdmin();
+      renderAdminMenuList();
+      noteMenuEditRemoteChange();
     }, window.onDbListenError);
 
     function toggleItemAvailability(key, isAvailable) {
@@ -1727,24 +2233,6 @@
       if (confirm('මෙම කෑම වර්ගය සම්පූර්ණයෙන්ම මකාලීමට අවශ්‍යමද?')) {
         db.ref(`menu_items/${key}`).remove().then(() => alert('ඉවත් කරන ලදී!')).catch(notifyDbError);
       }
-    }
-
-    function editItemPrice(key) {
-      db.ref(`menu_items/${key}`).once('value', snap => {
-        const item = snap.val();
-        if (item.variants && item.variants.length > 0) {
-          alert('මෙම කෑම වර්ගය සඳහා Options/Portions (Variants) ඇත. කරුණාකර වෙනස් කිරීමට පැරණි එක Delete කර අලුතින් Add කරන්න.');
-        } else {
-          const newPrice = prompt(`Enter new base price for "${item.name}":`, item.price);
-          if (newPrice !== null && newPrice.trim() !== '' && !isNaN(newPrice)) {
-            const price = window.safeMoney(newPrice);
-            if (price <= 0) return alert('හරි මිලක් දාන්න.');
-            db.ref(`menu_items/${key}`).update({ price: price }).then(() => {
-              alert('මිල සාර්ථකව වෙනස් කරන ලදී!');
-            }).catch(notifyDbError);
-          }
-        }
-      });
     }
 
     function dayBounds(dateStr) {
