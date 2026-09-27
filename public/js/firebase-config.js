@@ -389,6 +389,86 @@ window.nextDailyOrderId = function (db, fallbackKey) {
   });
 };
 
+window.ORDER_NUMBER_BASE = 1000;
+
+window.nextOrderNumber = function (db, fallbackKey, prefix) {
+  prefix = prefix || 'PB-';
+  function legacy() {
+    return window.nextDailyOrderId(db, fallbackKey).then(function (id) {
+      return { orderId: prefix === 'PB-' ? id : String(id).replace(/^PB-/, prefix), orderNo: null };
+    });
+  }
+  if (!db) return legacy();
+  var ref = db.ref('order_counter');
+  return ref.once('value').then(function (snap) {
+    if (!snap.exists()) return legacy();
+    var seen = Number(snap.val()) || 0;
+    return ref.transaction(function (cur) {
+      // cur is null when the value is not cached locally; the server rejects a stale guess and re-runs.
+      return (cur === null ? seen : (Number(cur) || 0)) + 1;
+    }).then(function (res) {
+      var n = res && res.committed && res.snapshot ? Number(res.snapshot.val()) : 0;
+      if (!n) return legacy();
+      return { orderId: prefix + n, orderNo: n };
+    });
+  }).catch(legacy);
+};
+
+window.orderTimeMs = function (order) {
+  return Number((order && (order.timestamp || order.createdAt)) || 0);
+};
+
+window.orderIdPrefix = function (order) {
+  return /^DN-/i.test(String((order && order.orderId) || '')) ? 'DN-' : 'PB-';
+};
+
+window.formatOrderDateTime = function (ms) {
+  var t = Number(ms || 0);
+  if (!t) return '—';
+  try {
+    var parts = {};
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Colombo',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }).formatToParts(new Date(t)).forEach(function (p) { parts[p.type] = p.value; });
+    return parts.day + '/' + parts.month + '/' + parts.year + ' ' + parts.hour + ':' + parts.minute + ' ' + String(parts.dayPeriod || '').toUpperCase();
+  } catch (e) {
+    return new Date(t).toLocaleString();
+  }
+};
+
+window.planOrderNumberMigration = function (orders, base) {
+  base = Number(base) || window.ORDER_NUMBER_BASE;
+  var keys = Object.keys(orders || {}).filter(function (k) {
+    return orders[k] && typeof orders[k] === 'object';
+  });
+  keys.sort(function (a, b) {
+    var ta = window.orderTimeMs(orders[a]) || Number.MAX_SAFE_INTEGER;
+    var tb = window.orderTimeMs(orders[b]) || Number.MAX_SAFE_INTEGER;
+    if (ta !== tb) return ta - tb;
+    return a < b ? -1 : (a > b ? 1 : 0);
+  });
+  var patch = {};
+  var rows = keys.map(function (k, i) {
+    var o = orders[k];
+    var n = base + i + 1;
+    var newId = window.orderIdPrefix(o) + n;
+    var oldId = String(o.orderId || '');
+    patch['orders/' + k + '/orderId'] = newId;
+    patch['orders/' + k + '/orderNo'] = n;
+    if (!o.legacyOrderId && oldId) patch['orders/' + k + '/legacyOrderId'] = oldId;
+    return { key: k, oldId: o.legacyOrderId || oldId, newId: newId, orderNo: n, ts: window.orderTimeMs(o), total: window.safeMoney(o.total) };
+  });
+  var counter = base + keys.length;
+  patch.order_counter = counter;
+  return { rows: rows, counter: counter, patch: patch };
+};
+
 window.alertDbError = function (err) {
   alert('Update failed. ' + ((err && (err.message || err.code)) || 'Try again'));
 };
@@ -746,6 +826,55 @@ window.buildSalesInsight = function (orders, period) {
     topLocation: locations[0] || null,
     topItem: items[0] || null
   };
+};
+
+window.buildSalesOrderRows = function (orders, period) {
+  var type = period && period.type === 'month' ? 'month' : 'day';
+  var key = String((period && period.key) || (type === 'month' ? window.colomboMonthKey() : window.colomboDayKey()));
+  var rows = [];
+  var completedTotal = 0;
+  var completedCount = 0;
+  var activeTotal = 0;
+  Object.keys(orders || {}).forEach(function (id) {
+    var o = orders[id];
+    if (!o) return;
+    var ts = window.orderTimeMs(o);
+    if (!ts) return;
+    var day = window.colomboDayKey(ts);
+    if (type === 'month') {
+      if (day.slice(0, 7) !== key) return;
+    } else if (day !== key) return;
+    var st = String(o.status || '');
+    var cancelled = st === 'Cancelled' || st === 'Rejected';
+    var completed = st === 'PickedUp' || st === 'Settled';
+    var fee = window.safeMoney(o.deliveryFee);
+    if (!fee && o.deliveryMeta) fee = window.safeMoney(o.deliveryMeta.deliveryFee);
+    var amount = window.safeMoney(o.total);
+    if (!amount) amount = window.safeMoney(o.foodTotal) + fee;
+    var kind = window.isDineInOrder && window.isDineInOrder(o) ? 'Dine-in'
+      : (window.isDoorstepOrder && window.isDoorstepOrder(o) ? 'Delivery' : 'Pickup');
+    if (completed) {
+      completedTotal += amount;
+      completedCount += 1;
+    }
+    if (!cancelled) activeTotal += amount;
+    rows.push({
+      key: id,
+      ts: ts,
+      orderId: String(o.orderId || ''),
+      orderNo: Number(o.orderNo) || 0,
+      legacyOrderId: String(o.legacyOrderId || ''),
+      kind: kind,
+      status: st,
+      amount: amount,
+      cancelled: cancelled,
+      completed: completed
+    });
+  });
+  rows.sort(function (a, b) {
+    return a.ts - b.ts || (a.orderNo - b.orderNo) || (a.key < b.key ? -1 : (a.key > b.key ? 1 : 0));
+  });
+  return { rows: rows, completedTotal: completedTotal, completedCount: completedCount, activeTotal: activeTotal };
 };
 
 window.peoplesNotify = function (title, body, url) {

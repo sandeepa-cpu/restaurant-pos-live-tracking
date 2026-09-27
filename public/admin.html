@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>Peoples Family Restaurant - Admin Panel</title>
   <link rel="icon" type="image/jpeg" href="LOGO NEW.jpg">
-  <script src="js/firebase-config.js?v=58"></script>
+  <script src="js/firebase-config.js?v=59"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -21,10 +21,11 @@
     [data-admin-panel].hidden, #qrDisplayArea.hidden, #takeawayQrArea.hidden, #qrBatchArea.hidden { display: none !important; }
     [data-admin-nav] { color: #64748b; background: #fff; border: 1px solid #e2e8f0; }
     [data-admin-nav].active { color: #fff; background: #581c87; border-color: #581c87; }
+    .print-only { display: none; }
     @media print {
-      body * { visibility: hidden; }
-      #qrBatchArea, #qrBatchArea *, #salesReportPrint, #salesReportPrint * { visibility: visible; }
-      #qrBatchArea {
+      body:not(.printing-sales) * { visibility: hidden; }
+      body:not(.printing-sales) #qrBatchArea, body:not(.printing-sales) #qrBatchArea * { visibility: visible; }
+      body:not(.printing-sales) #qrBatchArea {
         position: absolute;
         left: 0;
         top: 0;
@@ -34,14 +35,21 @@
         gap: 16px;
         padding: 16px;
       }
-      #salesReportPrint {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        background: #fff;
-        padding: 16px;
-      }
+      @page { margin: 12mm; }
+      body.printing-sales { background: #fff !important; padding: 0 !important; }
+      body.printing-sales * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body.printing-sales > *:not(.max-w-4xl) { display: none !important; }
+      body.printing-sales > .max-w-4xl { max-width: none !important; margin: 0 !important; }
+      body.printing-sales > .max-w-4xl > *:not([data-admin-panel="sales"]) { display: none !important; }
+      body.printing-sales [data-admin-panel="sales"] { display: block !important; }
+      body.printing-sales [data-admin-panel="sales"] > *:not(#salesReportPrint) { display: none !important; }
+      body.printing-sales #salesReportPrint { box-shadow: none !important; border: 0 !important; border-radius: 0 !important; padding: 0 !important; }
+      body.printing-sales .no-print { display: none !important; }
+      body.printing-sales .print-only { display: block !important; }
+      body.printing-sales .sales-table-wrap { overflow: visible !important; border: 0 !important; }
+      .sales-table thead { display: table-header-group; }
+      .sales-table tfoot { display: table-row-group; }
+      .sales-table tr { break-inside: avoid; page-break-inside: avoid; }
     }
   </style>
 </head>
@@ -70,14 +78,19 @@
     </nav>
 
     <section data-admin-panel="sales" class="space-y-4"><div id="salesReportPrint" class="bg-white p-6 rounded-3xl shadow space-y-4 border-l-4 border-emerald-500">
-      <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-2">
+      <div class="print-only border-b pb-2">
+        <div class="font-black text-base text-slate-900">Peoples Family Restaurant — Sales Report</div>
+        <div id="salesPrintPeriod" class="text-xs font-black text-slate-700"></div>
+        <div id="salesPrintedOn" class="text-[10px] font-bold text-slate-500"></div>
+      </div>
+      <div class="no-print flex flex-wrap justify-between items-center gap-2 border-b pb-2">
         <h2 class="font-black text-xs uppercase text-purple-950">📊 Sales report</h2>
         <div class="flex flex-wrap items-center gap-1.5">
           <button type="button" id="salesPeriodDayBtn" onclick="setSalesPeriod('day')" class="px-3 py-1.5 rounded-xl text-[10px] font-black bg-purple-900 text-white">Day</button>
           <button type="button" id="salesPeriodMonthBtn" onclick="setSalesPeriod('month')" class="px-3 py-1.5 rounded-xl text-[10px] font-black bg-slate-100 text-slate-600">Month</button>
           <input id="salesReportDate" type="date" onchange="renderSalesReport()" class="border rounded-xl px-2 py-1 text-xs font-bold">
           <input id="salesReportMonth" type="month" onchange="renderSalesReport()" class="hidden border rounded-xl px-2 py-1 text-xs font-bold">
-          <button type="button" onclick="window.print()" class="bg-slate-900 text-white font-black px-3 py-1.5 rounded-xl text-[10px]">Print</button>
+          <button type="button" onclick="printSalesReport()" class="bg-slate-900 text-white font-black px-3 py-1.5 rounded-xl text-[10px]">Print</button>
         </div>
       </div>
       <p id="salesPeriodLabel" class="text-[11px] text-slate-500 font-bold">Today</p>
@@ -122,6 +135,28 @@
           <h3 class="text-[10px] font-black uppercase text-slate-500 mb-1">Items sold</h3>
           <div id="salesItemList" class="divide-y"></div>
         </div>
+      </div>
+      <div>
+        <div class="flex justify-between items-end mb-1">
+          <h3 class="text-[10px] font-black uppercase text-slate-500">Orders in this period</h3>
+          <span id="salesOrdersCountLabel" class="text-[10px] font-bold text-slate-400"></span>
+        </div>
+        <div class="sales-table-wrap overflow-x-auto border rounded-2xl">
+          <table class="sales-table w-full text-[11px]">
+            <thead class="bg-slate-50 text-slate-500 uppercase text-[10px]">
+              <tr>
+                <th class="text-left px-3 py-2 whitespace-nowrap">Date &amp; time</th>
+                <th class="text-left px-3 py-2">Order no.</th>
+                <th class="text-left px-3 py-2">Type</th>
+                <th class="text-left px-3 py-2">Status</th>
+                <th class="text-right px-3 py-2 whitespace-nowrap">Amount (Rs.)</th>
+              </tr>
+            </thead>
+            <tbody id="salesOrdersBody" class="divide-y"></tbody>
+            <tfoot id="salesOrdersFoot" class="border-t-2 border-slate-300"></tfoot>
+          </table>
+        </div>
+        <p class="text-[10px] text-slate-400 font-bold mt-1">Cancelled / rejected orders are crossed out and not counted in the total.</p>
       </div>
     </div>
 
@@ -552,6 +587,19 @@
           <p class="text-center text-slate-400 text-xs py-6">Loading all orders...</p>
         </div>
       </div>
+    </div>
+    <div class="bg-white p-6 rounded-3xl shadow space-y-3 border-l-4 border-amber-500">
+      <h2 class="font-black text-xs uppercase text-purple-950 border-b pb-2">🔢 Order numbers — global sequence</h2>
+      <p class="text-[11px] text-slate-600 font-bold">Daily reset (PB-001) වෙනුවට PB-1001, PB-1002… කවදාවත් reset නොවෙන number. පරණ orders created time අනුව අලුත් number ගන්නවා; පරණ number එක <b>legacy</b> විදියට save වෙනවා. Shop එක close වෙලා තියෙද්දී run කරන්න.</p>
+      <p id="orderNumStatus" class="text-[11px] font-black text-slate-800 bg-slate-50 border rounded-2xl px-3 py-2">Checking…</p>
+      <div class="flex flex-wrap gap-2">
+        <button type="button" id="orderNumBackupBtn" onclick="downloadOrdersBackup()" class="bg-slate-900 hover:bg-slate-800 text-white font-black px-4 py-2 rounded-xl text-xs">1. Download backup</button>
+        <button type="button" id="orderNumPreviewBtn" onclick="previewOrderNumberMigration()" class="bg-purple-900 hover:bg-purple-800 text-white font-black px-4 py-2 rounded-xl text-xs">2. Preview (dry run)</button>
+        <button type="button" id="orderNumApplyBtn" onclick="applyOrderNumberMigration()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black px-4 py-2 rounded-xl text-xs disabled:opacity-40 disabled:cursor-not-allowed" disabled>3. Apply migration</button>
+        <button type="button" id="orderNumCatchupBtn" onclick="catchUpOrderNumbers(false)" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-4 py-2 rounded-xl text-xs disabled:opacity-40 disabled:cursor-not-allowed" disabled>Number missing orders</button>
+        <button type="button" id="orderNumRestoreBtn" onclick="restoreLegacyOrderNumbers()" class="bg-white border border-rose-300 text-rose-700 font-black px-4 py-2 rounded-xl text-xs disabled:opacity-40 disabled:cursor-not-allowed" disabled>Restore old numbers</button>
+      </div>
+      <div id="orderNumPreview" class="hidden max-h-[360px] overflow-auto border rounded-2xl custom-scrollbar"></div>
     </div>
     <div class="flex justify-start gap-2">
       <button type="button" onclick="showAdminPanel('dishes')" class="bg-slate-200 text-slate-800 font-black px-4 py-2 rounded-xl text-xs">← Dishes</button>
@@ -1760,7 +1808,69 @@
       const itemBox = document.getElementById('salesItemList');
       if (locBox) locBox.innerHTML = rankedListHtml(insight.locations, 'Locations තාම නැහැ.');
       if (itemBox) itemBox.innerHTML = rankedListHtml(insight.items, 'Items තාම නැහැ.');
+      setText('salesPrintPeriod', salesPeriodPrintLabel(period));
+      renderSalesOrdersTable(period);
     }
+
+    function salesPeriodPrintLabel(period) {
+      const p = String(period.key || '').split('-');
+      return period.type === 'month' ? ('Month: ' + p[1] + '/' + p[0]) : ('Date: ' + p[2] + '/' + p[1] + '/' + p[0]);
+    }
+
+    function renderSalesOrdersTable(period) {
+      const body = document.getElementById('salesOrdersBody');
+      const foot = document.getElementById('salesOrdersFoot');
+      if (!body || !foot || !window.buildSalesOrderRows) return;
+      const data = window.buildSalesOrderRows(allOrders, period);
+      const money = function (n) { return Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+      const countLabel = document.getElementById('salesOrdersCountLabel');
+      if (countLabel) countLabel.innerText = data.rows.length + ' order' + (data.rows.length === 1 ? '' : 's');
+      if (!data.rows.length) {
+        body.innerHTML = '<tr><td colspan="5" class="text-center text-slate-400 font-bold py-6">No orders in this period.</td></tr>';
+        foot.innerHTML = '';
+        return;
+      }
+      body.innerHTML = data.rows.map(function (r) {
+        const strike = r.cancelled ? ' line-through text-slate-400' : '';
+        const statusCls = r.cancelled ? 'text-rose-600' : (r.completed ? 'text-emerald-700' : 'text-amber-700');
+        return '<tr>' +
+          '<td class="px-3 py-1.5 whitespace-nowrap' + strike + '">' + escapeHtml(window.formatOrderDateTime(r.ts)) + '</td>' +
+          '<td class="px-3 py-1.5 whitespace-nowrap"><span class="font-black text-slate-900' + strike + '">' + escapeHtml(r.orderId || '—') + '</span>' +
+            (r.legacyOrderId ? ' <span class="text-[9px] font-bold text-slate-400">(old ' + escapeHtml(r.legacyOrderId) + ')</span>' : '') + '</td>' +
+          '<td class="px-3 py-1.5' + strike + '">' + escapeHtml(r.kind) + '</td>' +
+          '<td class="px-3 py-1.5 font-bold ' + statusCls + '">' + escapeHtml(r.status || '—') + '</td>' +
+          '<td class="px-3 py-1.5 text-right font-bold whitespace-nowrap' + strike + '">' + money(r.amount) + '</td>' +
+          '</tr>';
+      }).join('');
+      const openTotal = data.activeTotal - data.completedTotal;
+      foot.innerHTML =
+        '<tr class="bg-emerald-50"><td colspan="4" class="px-3 py-2 font-black text-emerald-900 uppercase text-[10px]">Completed sales (' + data.completedCount + ' order' + (data.completedCount === 1 ? '' : 's') + ')</td>' +
+        '<td class="px-3 py-2 text-right font-black text-emerald-900 whitespace-nowrap">' + money(data.completedTotal) + '</td></tr>' +
+        (openTotal > 0
+          ? '<tr><td colspan="4" class="px-3 py-1.5 font-bold text-amber-800 text-[10px]">Still open (not yet completed)</td>' +
+            '<td class="px-3 py-1.5 text-right font-bold text-amber-800 whitespace-nowrap">' + money(openTotal) + '</td></tr>'
+          : '');
+    }
+
+    function printSalesReport() {
+      renderSalesReport();
+      const printedOn = document.getElementById('salesPrintedOn');
+      if (printedOn) printedOn.innerText = 'Printed on ' + window.formatOrderDateTime(Date.now());
+      document.body.classList.add('printing-sales');
+      window.print();
+    }
+
+    window.addEventListener('beforeprint', function () {
+      if (document.body.classList.contains('printing-sales')) return;
+      if (((location.hash || '').replace('#', '') || 'sales') !== 'sales') return;
+      const printedOn = document.getElementById('salesPrintedOn');
+      if (printedOn) printedOn.innerText = 'Printed on ' + window.formatOrderDateTime(Date.now());
+      document.body.classList.add('printing-sales');
+    });
+
+    window.addEventListener('afterprint', function () {
+      document.body.classList.remove('printing-sales');
+    });
 
     function renderAdminArchive() {
       const archiveBox = document.getElementById('adminOrdersList');
@@ -1775,15 +1885,241 @@
         const o = allOrders[k];
         archiveBox.innerHTML +=
           '<div class="flex items-center justify-between p-2.5 bg-slate-50 border rounded-xl">' +
-            '<div><span class="font-black text-xs text-slate-900">' + escapeHtml(o.orderId) + ' - ' + escapeHtml(o.customerName || ('Table ' + (o.tableId || ''))) + '</span>' +
+            '<div><span class="font-black text-xs text-slate-900">' + escapeHtml(o.orderId) + (o.legacyOrderId ? ' <span class="text-[9px] font-bold text-slate-400">(old ' + escapeHtml(o.legacyOrderId) + ')</span>' : '') + ' - ' + escapeHtml(o.customerName || ('Table ' + (o.tableId || ''))) + '</span>' +
             '<span class="text-[9px] block text-slate-500">Status: ' + escapeHtml(o.status) + ' | Total: Rs. ' + (o.total || 0).toLocaleString() + '</span></div>' +
             '<button onclick="deleteOrder(\'' + safeOrderKey(k) + '\')" class="bg-rose-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black shadow hover:bg-rose-700 transition">Remove</button>' +
           '</div>';
       });
     }
 
+    let orderCounterValue = null;
+    let orderCounterLoaded = false;
+    let orderNumBackupDone = false;
+    let orderNumPreviewPlan = null;
+    let orderNumBusy = false;
+
+    function orderNumMissingKeys(orders) {
+      return Object.keys(orders || {}).filter(function (k) {
+        const o = orders[k];
+        return o && typeof o === 'object' && !(Number(o.orderNo) > 0);
+      }).sort(function (a, b) {
+        const ta = window.orderTimeMs(orders[a]) || Number.MAX_SAFE_INTEGER;
+        const tb = window.orderTimeMs(orders[b]) || Number.MAX_SAFE_INTEGER;
+        if (ta !== tb) return ta - tb;
+        return a < b ? -1 : (a > b ? 1 : 0);
+      });
+    }
+
+    function renderOrderNumberStatus() {
+      const status = document.getElementById('orderNumStatus');
+      if (!status) return;
+      const total = Object.keys(allOrders || {}).length;
+      const missing = orderNumMissingKeys(allOrders).length;
+      const hasLegacy = Object.keys(allOrders || {}).some(function (k) { return allOrders[k] && allOrders[k].legacyOrderId; });
+      if (!orderCounterLoaded) {
+        status.textContent = 'Checking…';
+      } else if (orderCounterValue === null) {
+        status.textContent = 'Not migrated yet — new orders still use daily numbers (PB-001). ' + total + ' order(s) will be numbered PB-' + (window.ORDER_NUMBER_BASE + 1) + (total > 1 ? ' … ' + (window.ORDER_NUMBER_BASE + total) : '') + '.';
+      } else {
+        status.textContent = 'Global numbering ON · last number ' + orderCounterValue + ' · next PB-' + (orderCounterValue + 1) +
+          (missing ? ' · ⚠️ ' + missing + ' order(s) without a global number — click "Number missing orders"' : ' · all ' + total + ' orders numbered');
+      }
+      const applyBtn = document.getElementById('orderNumApplyBtn');
+      const catchBtn = document.getElementById('orderNumCatchupBtn');
+      const restoreBtn = document.getElementById('orderNumRestoreBtn');
+      if (applyBtn) applyBtn.disabled = orderNumBusy || !orderCounterLoaded || orderCounterValue !== null || !orderNumBackupDone || !orderNumPreviewPlan;
+      if (catchBtn) catchBtn.disabled = orderNumBusy || orderCounterValue === null || !missing;
+      if (restoreBtn) restoreBtn.disabled = orderNumBusy || (orderCounterValue === null && !hasLegacy);
+    }
+
+    function setOrderNumBusy(busy) {
+      orderNumBusy = !!busy;
+      ['orderNumBackupBtn', 'orderNumPreviewBtn'].forEach(function (id) {
+        const b = document.getElementById(id);
+        if (b) b.disabled = orderNumBusy;
+      });
+      renderOrderNumberStatus();
+    }
+
+    async function downloadOrdersBackup() {
+      setOrderNumBusy(true);
+      try {
+        const snaps = await Promise.all([
+          db.ref('orders').once('value'),
+          db.ref('order_seq').once('value'),
+          db.ref('order_counter').once('value')
+        ]);
+        const data = {
+          exportedAt: new Date().toISOString(),
+          orders: snaps[0].val() || {},
+          order_seq: snaps[1].val() || {},
+          order_counter: snaps[2].exists() ? snaps[2].val() : null
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'orders-backup-' + window.colomboDayKey() + '.json';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+        orderNumBackupDone = true;
+        alert('Backup downloaded (' + Object.keys(data.orders).length + ' orders). File එක safe තැනක තියාගන්න.');
+      } catch (err) {
+        notifyDbError(err);
+      } finally {
+        setOrderNumBusy(false);
+      }
+    }
+
+    async function previewOrderNumberMigration() {
+      setOrderNumBusy(true);
+      try {
+        const snap = await db.ref('orders').once('value');
+        orderNumPreviewPlan = window.planOrderNumberMigration(snap.val() || {});
+        const rows = orderNumPreviewPlan.rows;
+        const box = document.getElementById('orderNumPreview');
+        box.classList.remove('hidden');
+        if (!rows.length) {
+          box.innerHTML = '<p class="text-center text-slate-400 text-xs py-6 font-bold">No orders to number.</p>';
+          return;
+        }
+        box.innerHTML =
+          '<div class="sticky top-0 bg-amber-50 border-b px-3 py-2 text-[11px] font-black text-amber-900">Dry run — nothing saved. ' + rows.length + ' orders → ' + escapeHtml(rows[0].newId) + ' … ' + escapeHtml(rows[rows.length - 1].newId) + ' · next new order: ' + (orderNumPreviewPlan.counter + 1) + '</div>' +
+          '<table class="w-full text-[11px]"><thead class="bg-slate-50 text-slate-500 uppercase text-[10px]"><tr>' +
+          '<th class="text-left px-3 py-1.5">Date &amp; time</th><th class="text-left px-3 py-1.5">Old no.</th><th class="text-left px-3 py-1.5">New no.</th><th class="text-right px-3 py-1.5">Amount</th>' +
+          '</tr></thead><tbody class="divide-y">' +
+          rows.map(function (r) {
+            return '<tr><td class="px-3 py-1.5 whitespace-nowrap">' + escapeHtml(window.formatOrderDateTime(r.ts)) + '</td>' +
+              '<td class="px-3 py-1.5 text-slate-500">' + escapeHtml(r.oldId || '—') + '</td>' +
+              '<td class="px-3 py-1.5 font-black text-purple-950">' + escapeHtml(r.newId) + '</td>' +
+              '<td class="px-3 py-1.5 text-right">Rs. ' + Number(r.total || 0).toLocaleString() + '</td></tr>';
+          }).join('') +
+          '</tbody></table>';
+      } catch (err) {
+        notifyDbError(err);
+      } finally {
+        setOrderNumBusy(false);
+      }
+    }
+
+    async function verifyOrderNumbers(expectedCount) {
+      const snap = await db.ref('orders').once('value');
+      const orders = snap.val() || {};
+      const seen = {};
+      let dupes = 0;
+      Object.keys(orders).forEach(function (k) {
+        const n = Number(orders[k] && orders[k].orderNo);
+        if (!(n > 0)) return;
+        if (seen[n]) dupes += 1;
+        seen[n] = true;
+      });
+      return { count: Object.keys(orders).length, dupes: dupes, missing: orderNumMissingKeys(orders).length, expectedCount: expectedCount };
+    }
+
+    async function applyOrderNumberMigration() {
+      if (orderCounterValue !== null) return alert('Already migrated. අලුත් orders number කරන්න "Number missing orders" ඔබන්න.');
+      if (!orderNumBackupDone) return alert('මුලින් "Download backup" ඔබන්න.');
+      if (!orderNumPreviewPlan) return alert('මුලින් "Preview" ඔබලා check කරන්න.');
+      if (!confirm('Order numbers ' + orderNumPreviewPlan.rows.length + 'ක් PB-' + (window.ORDER_NUMBER_BASE + 1) + ' සිට අලුත් number වලට මාරු කරනවා. පරණ number legacy විදියට save වෙනවා. Continue?')) return;
+      setOrderNumBusy(true);
+      try {
+        const counterSnap = await db.ref('order_counter').once('value');
+        if (counterSnap.exists()) throw new Error('Already migrated (order_counter exists).');
+        const fresh = await db.ref('orders').once('value');
+        const plan = window.planOrderNumberMigration(fresh.val() || {});
+        await db.ref().update(plan.patch);
+        const caught = await catchUpOrderNumbers(true);
+        const check = await verifyOrderNumbers(plan.rows.length);
+        orderNumPreviewPlan = null;
+        document.getElementById('orderNumPreview').classList.add('hidden');
+        alert('Done ✅\n' + plan.rows.length + ' orders renumbered (' + (plan.rows[0] ? plan.rows[0].newId : '') + ' … ' + (plan.rows.length ? plan.rows[plan.rows.length - 1].newId : '') + ').' +
+          (caught ? '\n' + caught + ' order(s) placed during the migration were numbered too.' : '') +
+          '\nOrders in database: ' + check.count + ' · duplicates: ' + check.dupes + ' · without number: ' + check.missing);
+      } catch (err) {
+        notifyDbError(err);
+      } finally {
+        setOrderNumBusy(false);
+      }
+    }
+
+    async function catchUpOrderNumbers(silent) {
+      const counterSnap = await db.ref('order_counter').once('value');
+      if (!counterSnap.exists()) {
+        if (!silent) alert('මුලින් migration එක apply කරන්න.');
+        return 0;
+      }
+      if (!silent) setOrderNumBusy(true);
+      let done = 0;
+      try {
+        const snap = await db.ref('orders').once('value');
+        const orders = snap.val() || {};
+        const keys = orderNumMissingKeys(orders);
+        let guess = Number(counterSnap.val()) || 0;
+        for (const k of keys) {
+          const res = await db.ref('order_counter').transaction(function (cur) {
+            return (cur === null ? guess : (Number(cur) || 0)) + 1;
+          });
+          if (!res.committed) continue;
+          const n = Number(res.snapshot.val());
+          guess = n;
+          const upd = await db.ref('orders/' + k).transaction(function (o) {
+            if (!o) return;
+            if (Number(o.orderNo) > 0) return;
+            if (!o.legacyOrderId && o.orderId) o.legacyOrderId = o.orderId;
+            o.orderId = window.orderIdPrefix(o) + n;
+            o.orderNo = n;
+            return o;
+          });
+          if (upd.committed) done += 1;
+        }
+        if (!silent) alert(done ? done + ' order(s) numbered.' : 'Nothing to number.');
+      } catch (err) {
+        if (!silent) notifyDbError(err);
+        else throw err;
+      } finally {
+        if (!silent) setOrderNumBusy(false);
+      }
+      return done;
+    }
+
+    async function restoreLegacyOrderNumbers() {
+      const typed = prompt('පරණ daily numbers (PB-001…) ආපහු දාන්න "RESTORE" type කරන්න. Migration එකෙන් පස්සේ ආපු orders වල PB-10xx number එක එහෙමම තියෙනවා.');
+      if (typed !== 'RESTORE') return;
+      setOrderNumBusy(true);
+      try {
+        const snap = await db.ref('orders').once('value');
+        const orders = snap.val() || {};
+        const patch = {};
+        let restored = 0;
+        Object.keys(orders).forEach(function (k) {
+          const o = orders[k];
+          if (!o || typeof o !== 'object') return;
+          if (o.legacyOrderId) {
+            patch['orders/' + k + '/orderId'] = o.legacyOrderId;
+            patch['orders/' + k + '/legacyOrderId'] = null;
+            restored += 1;
+          }
+          if (o.orderNo != null) patch['orders/' + k + '/orderNo'] = null;
+        });
+        patch.order_counter = null;
+        await db.ref().update(patch);
+        alert('Restored ' + restored + ' order number(s). New orders use daily numbers again.');
+      } catch (err) {
+        notifyDbError(err);
+      } finally {
+        setOrderNumBusy(false);
+      }
+    }
+
+    db.ref('order_counter').on('value', function (snap) {
+      orderCounterValue = snap.exists() ? Number(snap.val()) : null;
+      orderCounterLoaded = true;
+      renderOrderNumberStatus();
+    }, window.onDbListenError);
+
     db.ref('orders').on('value', function (snap) {
       allOrders = snap.val() || {};
+      renderOrderNumberStatus();
       renderAdminArchive();
       renderSalesReport();
       renderAdminFeedback();
