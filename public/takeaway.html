@@ -274,12 +274,385 @@
       border-color: #a7f3d0;
     }
     @media (max-width: 380px) {
-      #headerCallBtn { display: none !important; }
       .hdr-btn { padding: 5px 7px; font-size: 9px; }
     }
   </style>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
+  <style>
+    body.pfr-takeaway .shop-shell {
+      --pfr-purple: #3b0764;
+      --pfr-purple-2: #5b21b6;
+      --pfr-purple-soft: #f5f3ff;
+      --pfr-amber: #fbbf24;
+      --pfr-ink: #0f172a;
+      --pfr-muted: #64748b;
+      --pfr-line: #e8e5f0;
+      --pfr-radius: 22px;
+      --pfr-sticky-offset: 94px;
+      --pfr-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px -14px rgba(59, 7, 100, .28);
+      background: #f8fafc;
+      font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+
+    /* Header */
+    body.pfr-takeaway .pfr-header {
+      background: linear-gradient(180deg, rgba(46, 16, 101, .97) 0%, rgba(59, 7, 100, .96) 100%);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 10px 24px -18px rgba(15, 23, 42, .8);
+    }
+    body.pfr-takeaway .pfr-header-inner { padding: 8px 14px; display: flex; flex-direction: column; gap: 6px; }
+    body.pfr-takeaway .pfr-header-top { display: flex; align-items: center; gap: 10px; min-width: 0; height: 44px; }
+    body.pfr-takeaway .pfr-header-logo { width: 40px; height: 40px; border-radius: 9999px; border: 2px solid var(--pfr-amber); object-fit: cover; flex-shrink: 0; box-shadow: 0 4px 12px -4px rgba(251, 191, 36, .6); }
+    body.pfr-takeaway .pfr-header-title { font-size: 13px; font-weight: 800; letter-spacing: -.01em; line-height: 1.15; }
+    body.pfr-takeaway #displayCustName { font-size: 11px; font-weight: 700; color: #fcd34d; }
+    body.pfr-takeaway .pfr-header-chips { display: flex; align-items: center; justify-content: flex-end; gap: 6px; overflow-x: auto; scrollbar-width: none; height: 28px; }
+    body.pfr-takeaway .pfr-header-chips::-webkit-scrollbar { display: none; }
+    body.pfr-takeaway .hdr-btn { height: 28px; display: inline-flex; align-items: center; padding: 0 11px; border-radius: 9999px; font-size: 11px; font-weight: 700; border: 1px solid rgba(255, 255, 255, .14); }
+    body.pfr-takeaway .hdr-btn.hidden { display: none; }
+
+    /* Hero */
+    body.pfr-takeaway .pfr-hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--pfr-radius);
+      padding: 18px 16px 16px;
+      color: #fff;
+      background:
+        radial-gradient(120% 90% at 100% 0%, rgba(251, 191, 36, .28) 0%, rgba(251, 191, 36, 0) 55%),
+        linear-gradient(145deg, #2e1065 0%, #4c1d95 55%, #6d28d9 100%);
+      box-shadow: 0 18px 36px -22px rgba(59, 7, 100, .9);
+    }
+    body.pfr-takeaway .pfr-hero::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url('shop-front-v24.jpg') center / cover no-repeat;
+      opacity: .12;
+      mix-blend-mode: luminosity;
+      pointer-events: none;
+    }
+    body.pfr-takeaway .pfr-hero > * { position: relative; z-index: 1; }
+    body.pfr-takeaway .pfr-hero-kicker { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: #fcd34d; }
+    body.pfr-takeaway .pfr-hero-title { font-size: 19px; font-weight: 800; letter-spacing: -.02em; line-height: 1.2; margin-top: 4px; }
+    body.pfr-takeaway .pfr-hero-body { font-size: 12px; font-weight: 500; color: #ede9fe; line-height: 1.5; margin-top: 6px; }
+    body.pfr-takeaway .pfr-hero-meta { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    body.pfr-takeaway .pfr-status-wrap { align-self: flex-start; }
+    body.pfr-takeaway .pfr-status-wrap:empty,
+    body.pfr-takeaway .pfr-status-wrap #shopHoursLine:empty { display: none; }
+    body.pfr-takeaway #shopHoursLine {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, .12);
+      border: 1px solid rgba(255, 255, 255, .2);
+      font-size: 11px;
+      font-weight: 800;
+    }
+    body.pfr-takeaway #shopAddressLine { font-size: 12px; font-weight: 600; color: #e9d5ff; line-height: 1.4; }
+    body.pfr-takeaway .pfr-hero-actions { display: flex; gap: 8px; margin-top: 14px; }
+    body.pfr-takeaway .pfr-hero-actions a { flex: 1 1 0; display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 42px; border-radius: 9999px; font-size: 13px; font-weight: 800; transition: transform .15s ease; }
+    body.pfr-takeaway .pfr-hero-actions a:active { transform: scale(.97); }
+    body.pfr-takeaway .pfr-hero-actions a.hidden { display: none; }
+    body.pfr-takeaway #heroCallBtn { background: #10b981; color: #fff; box-shadow: 0 8px 18px -10px rgba(16, 185, 129, .9); }
+    body.pfr-takeaway #heroWhatsAppBtn { background: #fff; color: #065f46; box-shadow: 0 8px 18px -12px rgba(0, 0, 0, .5); }
+    body.pfr-takeaway #heroWhatsAppBtn::before { content: '\f232'; font-family: 'Font Awesome 6 Brands'; font-weight: 400; color: #25d366; font-size: 16px; }
+
+    /* Hero lock overlay */
+    body.pfr-takeaway #heroStatusOverlay {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      display: flex;
+      align-items: flex-end;
+      padding: 12px 12px 68px;
+      background: linear-gradient(180deg, rgba(15, 23, 42, .15) 0%, rgba(15, 23, 42, .62) 100%);
+      animation: pfrFadeIn .25s ease;
+    }
+    body.pfr-takeaway #heroStatusOverlay.hidden { display: none; }
+    body.pfr-takeaway .pfr-hero > .pfr-hero-actions { z-index: 4; }
+    body.pfr-takeaway .pfr-lock-card {
+      width: 100%;
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px 14px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, .94);
+      color: var(--pfr-ink);
+      box-shadow: 0 12px 28px -14px rgba(0, 0, 0, .6);
+    }
+    body.pfr-takeaway .pfr-lock-icon { width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #fff; background: #e11d48; }
+    body.pfr-takeaway #heroStatusOverlay.is-paused .pfr-lock-icon { background: #d97706; }
+    body.pfr-takeaway .pfr-lock-title { font-size: 14px; font-weight: 800; }
+    body.pfr-takeaway .pfr-lock-reason { font-size: 12px; font-weight: 600; color: #475569; line-height: 1.4; margin-top: 2px; }
+    body.pfr-takeaway .pfr-lock-hint { font-size: 11px; font-weight: 700; color: #7c3aed; margin-top: 4px; }
+    @keyframes pfrFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    /* Sticky search strip */
+    body.pfr-takeaway .pfr-sticky { top: var(--pfr-sticky-offset); background: rgba(248, 250, 252, .92); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-bottom: 1px solid var(--pfr-line); }
+    body.pfr-takeaway #shopClosedBanner { border-radius: 16px; background: linear-gradient(135deg, #e11d48, #be123c); box-shadow: 0 10px 20px -14px rgba(190, 18, 60, .9); }
+    body.pfr-takeaway .pfr-search { position: relative; }
+    body.pfr-takeaway .pfr-search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 13px; pointer-events: none; }
+    body.pfr-takeaway #searchInput {
+      height: 42px;
+      padding: 0 14px 0 38px;
+      border-radius: 9999px;
+      border: 1px solid var(--pfr-line);
+      background: #fff;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--pfr-ink);
+      box-shadow: 0 1px 2px rgba(15, 23, 42, .04);
+      transition: border-color .15s, box-shadow .15s;
+    }
+    body.pfr-takeaway #searchInput:focus { border-color: #a78bfa; box-shadow: 0 0 0 4px rgba(139, 92, 246, .15); }
+    body.pfr-takeaway .pfr-filter-row { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; }
+    body.pfr-takeaway .pfr-filter-row::-webkit-scrollbar { display: none; }
+    body.pfr-takeaway .pfr-filter-chip {
+      flex-shrink: 0;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 9999px;
+      border: 1px solid var(--pfr-line);
+      background: #fff;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 700;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+    body.pfr-takeaway .pfr-filter-chip .pfr-dot { width: 8px; height: 8px; border-radius: 9999px; background: #94a3b8; }
+    body.pfr-takeaway .pfr-filter-chip[data-kind="veg"] .pfr-dot { background: #16a34a; }
+    body.pfr-takeaway .pfr-filter-chip[data-kind="spicy"] .pfr-dot { background: #dc2626; }
+    body.pfr-takeaway .pfr-filter-chip.is-active { background: var(--pfr-ink); color: #fff; border-color: var(--pfr-ink); }
+    body.pfr-takeaway .pfr-filter-chip.is-active .pfr-dot { box-shadow: 0 0 0 2px #fff; }
+
+    /* Category chips */
+    body.pfr-takeaway #categorySlider { scroll-snap-type: x proximity; gap: 8px; padding: 2px 2px 4px; }
+    body.pfr-takeaway .cat-btn {
+      scroll-snap-align: start;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 9999px;
+      font-size: 12.5px;
+      border: 1px solid var(--pfr-line);
+      transition: background .18s, color .18s, box-shadow .18s, transform .18s;
+    }
+    body.pfr-takeaway .cat-btn:not(.is-active) { background: #fff; color: #334155; font-weight: 700; }
+    body.pfr-takeaway .cat-btn:not(.is-active):hover { background: var(--pfr-purple-soft); }
+    body.pfr-takeaway .cat-btn.is-active { background: linear-gradient(135deg, #4c1d95, #6d28d9); color: #fff; border-color: transparent; font-weight: 800; box-shadow: 0 8px 16px -10px rgba(76, 29, 149, .9); }
+    body.pfr-takeaway .cat-btn i { font-size: 12px; opacity: .85; }
+    body.pfr-takeaway .pfr-cat-count { min-width: 20px; height: 18px; padding: 0 6px; border-radius: 9999px; font-size: 10px; font-weight: 800; display: inline-flex; align-items: center; justify-content: center; background: #f1f5f9; color: #64748b; }
+    body.pfr-takeaway .cat-btn.is-active .pfr-cat-count { background: rgba(255, 255, 255, .22); color: #fff; }
+    body.pfr-takeaway .pfr-cat-skel { flex-shrink: 0; width: 84px; height: 36px; border-radius: 9999px; }
+    body.pfr-takeaway .pfr-cat-fade.is-left { background: linear-gradient(to left, rgba(248, 250, 252, 0), #f8fafc 80%); }
+    body.pfr-takeaway .pfr-cat-fade.is-right { background: linear-gradient(to right, rgba(248, 250, 252, 0), #f8fafc 80%); }
+    body.pfr-takeaway .pfr-cat-arrow { width: 30px; height: 30px; margin-top: -17px; border-color: var(--pfr-line); color: var(--pfr-purple); box-shadow: 0 6px 14px -8px rgba(15, 23, 42, .45); }
+
+    /* Menu list */
+    body.pfr-takeaway #menuList { display: flex; flex-direction: column; gap: 10px; }
+    body.pfr-takeaway #menuList > * + * { margin-top: 0; }
+    body.pfr-takeaway .pfr-cat-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 10px 2px 2px; }
+    body.pfr-takeaway .pfr-cat-head h2 { font-size: 16px; font-weight: 800; letter-spacing: -.01em; color: var(--pfr-ink); }
+    body.pfr-takeaway .pfr-cat-head span { font-size: 11px; font-weight: 700; color: var(--pfr-muted); }
+
+    /* Dish card */
+    body.pfr-takeaway .dish-card {
+      display: flex;
+      align-items: stretch;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 20px;
+      border: 1px solid var(--pfr-line);
+      background: #fff;
+      box-shadow: var(--pfr-shadow);
+    }
+    body.pfr-takeaway .dish-card:active { transform: scale(.995); }
+    body.pfr-takeaway .dish-card.is-selected { border-color: #a78bfa; background: #fff; box-shadow: 0 0 0 3px rgba(139, 92, 246, .16), var(--pfr-shadow); }
+    body.pfr-takeaway .dish-thumb { width: 84px; height: 84px; border-radius: 16px; object-fit: cover; flex-shrink: 0; background: #f1f5f9; }
+    body.pfr-takeaway .dish-thumb.is-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      background: radial-gradient(circle at 30% 25%, #fef3c7 0%, #ede9fe 60%, #ddd6fe 100%);
+      color: #6d28d9;
+    }
+    body.pfr-takeaway .dish-body { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; }
+    body.pfr-takeaway .dish-name { font-size: 14px; font-weight: 800; line-height: 1.3; color: var(--pfr-ink); letter-spacing: -.01em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    body.pfr-takeaway .dish-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
+    body.pfr-takeaway .dish-tag { display: inline-flex; align-items: center; gap: 4px; height: 20px; padding: 0 7px; border-radius: 9999px; font-size: 10px; font-weight: 800; background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    body.pfr-takeaway .dish-tag::before { content: ''; width: 6px; height: 6px; border-radius: 9999px; background: currentColor; }
+    body.pfr-takeaway .dish-tag[data-kind="veg"] { background: #f0fdf4; color: #15803d; border-color: #bbf7d0; }
+    body.pfr-takeaway .dish-tag[data-kind="spicy"] { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    body.pfr-takeaway .dish-desc { font-size: 12px; font-weight: 500; color: var(--pfr-muted); line-height: 1.45; margin-top: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    body.pfr-takeaway .dish-foot { margin-top: auto; padding-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    body.pfr-takeaway .dish-price { font-size: 15px; font-weight: 800; color: var(--pfr-purple); white-space: nowrap; }
+    body.pfr-takeaway .dish-options { font-size: 10px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: #6d28d9; background: var(--pfr-purple-soft); border: 1px solid #ddd6fe; border-radius: 9999px; padding: 3px 9px; }
+    body.pfr-takeaway .pfr-add-btn {
+      flex-shrink: 0;
+      height: 36px;
+      min-width: 76px;
+      padding: 0 14px;
+      border-radius: 9999px;
+      background: var(--pfr-purple);
+      color: #fff;
+      font-size: 12.5px;
+      font-weight: 800;
+      box-shadow: 0 8px 16px -10px rgba(59, 7, 100, .9);
+      transition: transform .15s ease, background .15s ease;
+    }
+    body.pfr-takeaway .pfr-add-btn:active { transform: scale(.94); }
+    body.pfr-takeaway button.pfr-add-btn.pfr-add-done { background: #059669 !important; animation: pfrAddBounce .5s ease; }
+    @keyframes pfrAddBounce { 0% { transform: scale(1); } 35% { transform: scale(1.14); } 65% { transform: scale(.96); } 100% { transform: scale(1); } }
+    @keyframes pfrCardGlow { 0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, .45), var(--pfr-shadow); } 100% { box-shadow: 0 0 0 12px rgba(139, 92, 246, 0), var(--pfr-shadow); } }
+    body.pfr-takeaway .pfr-menu-card.dish-card.is-added { animation: pfrCardGlow .6s ease-out; }
+    body.pfr-takeaway .pfr-next-cat { border-radius: 20px; background: linear-gradient(135deg, #2e1065, #6d28d9); }
+
+    /* Skeleton */
+    body.pfr-takeaway .pfr-skel {
+      background: linear-gradient(90deg, #eef2f7 0%, #f8fafc 40%, #eef2f7 80%);
+      background-size: 200% 100%;
+      animation: pfrShimmer 1.3s ease-in-out infinite;
+    }
+    body.pfr-takeaway .pfr-skel-card { display: flex; gap: 12px; padding: 12px; border-radius: 20px; background: #fff; border: 1px solid var(--pfr-line); }
+    body.pfr-takeaway .pfr-skel-thumb { width: 84px; height: 84px; border-radius: 16px; flex-shrink: 0; }
+    body.pfr-takeaway .pfr-skel-lines { flex: 1; display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+    body.pfr-takeaway .pfr-skel-line { height: 12px; border-radius: 9999px; }
+    body.pfr-takeaway .pfr-skel-foot { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
+    body.pfr-takeaway .pfr-skel-pill { width: 76px; height: 32px; border-radius: 9999px; }
+    @keyframes pfrShimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+    /* Empty state */
+    body.pfr-takeaway .pfr-empty { text-align: center; padding: 34px 20px 30px; border-radius: var(--pfr-radius); background: #fff; border: 1px dashed #d8d2e6; }
+    body.pfr-takeaway .pfr-empty-art { width: 92px; height: 92px; margin: 0 auto 12px; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-size: 36px; color: #7c3aed; background: radial-gradient(circle at 30% 30%, #fef3c7, #ede9fe 70%); }
+    body.pfr-takeaway .pfr-empty h3 { font-size: 15px; font-weight: 800; color: var(--pfr-ink); }
+    body.pfr-takeaway .pfr-empty p { font-size: 12px; font-weight: 500; color: var(--pfr-muted); margin-top: 4px; line-height: 1.5; word-break: break-word; }
+    body.pfr-takeaway .pfr-empty-actions { display: flex; gap: 8px; justify-content: center; margin-top: 14px; flex-wrap: wrap; }
+    body.pfr-takeaway .pfr-empty-actions button { height: 36px; padding: 0 16px; border-radius: 9999px; font-size: 12px; font-weight: 800; }
+    body.pfr-takeaway .pfr-empty-actions .is-primary { background: var(--pfr-purple); color: #fff; }
+    body.pfr-takeaway .pfr-empty-actions .is-ghost { background: #f1f5f9; color: #334155; }
+
+    /* Cart bar */
+    body.pfr-takeaway .pfr-checkout-bar {
+      left: 10px;
+      right: 10px;
+      bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+      max-width: calc(28rem - 20px);
+      padding: 10px 10px 10px 14px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, rgba(46, 16, 101, .96) 0%, rgba(91, 33, 182, .96) 100%);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, .12);
+      box-shadow: 0 18px 38px -16px rgba(46, 16, 101, .85);
+    }
+    @media (min-width: 28rem) {
+      body.pfr-takeaway .pfr-checkout-bar { left: 0; right: 0; }
+    }
+    body.pfr-takeaway .pfr-checkout-summary { align-items: center; gap: 10px; }
+    body.pfr-takeaway .pfr-checkout-summary::before {
+      content: '\f290';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      color: var(--pfr-purple);
+      background: #fde68a;
+    }
+    body.pfr-takeaway .pfr-checkout-item { font-size: 12px; font-weight: 700; color: #e9d5ff; }
+    body.pfr-takeaway .pfr-checkout-price { font-size: 16px; font-weight: 800; }
+    body.pfr-takeaway .pfr-checkout-cta { height: 44px; padding: 0 16px; border-radius: 16px; font-size: 13px; font-weight: 800; }
+    body.pfr-takeaway .pfr-checkout-cta:not(.is-closed):active { transform: scale(.96); }
+    body.pfr-takeaway #cartLockNote {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: -2px 0 8px;
+      padding: 7px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #78350f;
+      background: #fef3c7;
+    }
+    body.pfr-takeaway #cartLockNote.hidden { display: none; }
+    body.pfr-takeaway #cartBottomBar.is-closed-shop #cartLockNote { color: #881337; background: #ffe4e6; }
+
+    /* Toast */
+    body.pfr-takeaway .pfr-toast {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: max-content;
+      max-width: min(88vw, 360px);
+      padding: 9px 16px 9px 10px;
+      border-radius: 9999px;
+      background: #fff;
+      color: var(--pfr-ink, #0f172a);
+      font-size: 12.5px;
+      font-weight: 700;
+      text-align: left;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 14px 30px -14px rgba(15, 23, 42, .45);
+      transform: translate(-50%, 14px);
+      transition: opacity .2s ease, transform .25s cubic-bezier(.2, .8, .2, 1);
+    }
+    body.pfr-takeaway .pfr-toast::before {
+      content: '\2713';
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #10b981;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 900;
+    }
+    body.pfr-takeaway .pfr-toast.is-on { transform: translate(-50%, 0); }
+    body.pfr-takeaway.has-cart-bar .pfr-toast { bottom: calc(128px + env(safe-area-inset-bottom, 0px)); }
+    body.pfr-takeaway.has-cart-expanded .pfr-toast { bottom: calc(13.5rem + env(safe-area-inset-bottom, 0px)); }
+
+    @media (max-width: 360px) {
+      body.pfr-takeaway .dish-thumb,
+      body.pfr-takeaway .pfr-skel-thumb { width: 72px; height: 72px; }
+      body.pfr-takeaway .pfr-add-btn { min-width: 64px; padding: 0 11px; }
+      body.pfr-takeaway .pfr-hero-title { font-size: 17px; }
+      body.pfr-takeaway .pfr-hero-actions a { font-size: 12px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      body.pfr-takeaway .pfr-skel,
+      body.pfr-takeaway #heroStatusOverlay,
+      body.pfr-takeaway button.pfr-add-btn.pfr-add-done,
+      body.pfr-takeaway .pfr-menu-card.dish-card.is-added { animation: none; }
+      body.pfr-takeaway .pfr-toast { transition: opacity .15s ease; transform: translate(-50%, 0); }
+      body.pfr-takeaway .cat-btn,
+      body.pfr-takeaway .pfr-add-btn { transition: none; }
+    }
+  </style>
 </head>
-<body class="font-sans pb-40 text-slate-800 antialiased selection:bg-purple-200" onclick="initAudioContext()">
+<body class="pfr-takeaway font-sans pb-40 text-slate-800 antialiased selection:bg-purple-200" onclick="initAudioContext()">
 <div class="shop-shell">
 
   <div id="welcomeSplash" class="welcome-splash">
@@ -337,16 +710,16 @@
     </div>
   </div>
 
-  <header class="bg-purple-950 text-white sticky top-0 z-30 shadow-lg">
-    <div class="px-3 py-2 space-y-1.5">
-      <div class="flex items-center gap-2 min-w-0">
-        <img src="LOGO NEW.jpg" alt="Peoples Family Restaurant" class="w-11 h-11 rounded-full border-2 border-amber-400 object-cover shrink-0">
+  <header class="pfr-header text-white sticky top-0 z-30">
+    <div class="pfr-header-inner">
+      <div class="pfr-header-top">
+        <img src="LOGO NEW.jpg" alt="Peoples Family Restaurant" class="pfr-header-logo">
         <div class="min-w-0 flex-1">
-          <h1 class="text-[12px] font-black leading-tight">Peoples Family Restaurant</h1>
-          <span id="displayCustName" class="block text-[10px] font-bold text-amber-300 truncate leading-tight mt-0.5">Guest</span>
+          <h1 class="pfr-header-title truncate">Peoples Family Restaurant</h1>
+          <span id="displayCustName" class="block truncate leading-tight mt-0.5">Guest</span>
         </div>
       </div>
-      <div class="flex items-center justify-end gap-1">
+      <div class="pfr-header-chips">
         <select id="langSelect" onchange="changeLanguage(this.value)" class="hdr-btn bg-purple-900 text-white border border-purple-700 outline-none" aria-label="Language">
           <option value="en">EN</option>
           <option value="si">සිං</option>
@@ -360,27 +733,47 @@
   </header>
 
   <div class="px-3.5 pt-3">
-    <div class="bg-purple-950 text-white rounded-3xl p-3.5 shadow-lg space-y-1.5">
-      <p class="text-[10px] font-black uppercase tracking-wider text-amber-300" data-i18n="heroKicker">Peoples Family Restaurant</p>
-      <h2 class="text-[15px] font-black leading-tight" data-i18n="heroTitle">Horana shop එකෙන් order දාන්න</h2>
-      <p class="text-[11px] text-purple-100 font-bold leading-snug" data-i18n="heroBody">Menu එක බලලා cart එකට දාන්න. Delivery නම් ගෙදර pin කරන්න. Pickup නම් shop එකට එන්න.</p>
-      <p id="shopAddressLine" class="text-[11px] text-amber-200 font-bold leading-snug">Horana, Kalutara, Sri Lanka</p>
-      <p id="shopHoursLine" class="text-[11px] font-black text-emerald-300"></p>
-      <div class="flex gap-2 pt-1">
-        <a id="heroCallBtn" href="tel:" class="hidden flex-1 bg-emerald-500 text-center text-white font-black py-2 rounded-xl text-[11px]" data-i18n="callShop">📞 Call shop</a>
-        <a id="heroWhatsAppBtn" href="#" target="_blank" rel="noopener" class="hidden flex-1 bg-white text-center text-purple-950 font-black py-2 rounded-xl text-[11px]">WhatsApp</a>
+    <section class="pfr-hero" aria-label="Shop">
+      <p class="pfr-hero-kicker" data-i18n="heroKicker">Peoples Family Restaurant</p>
+      <h2 class="pfr-hero-title" data-i18n="heroTitle">Horana shop එකෙන් order දාන්න</h2>
+      <p class="pfr-hero-body" data-i18n="heroBody">Menu එක බලලා cart එකට දාන්න. Delivery නම් ගෙදර pin කරන්න. Pickup නම් shop එකට එන්න.</p>
+      <div class="pfr-hero-meta">
+        <div class="pfr-status-wrap"><p id="shopHoursLine" class="text-[11px] font-black text-emerald-300"></p></div>
+        <p id="shopAddressLine" class="text-[11px] text-amber-200 font-bold leading-snug">Horana, Kalutara, Sri Lanka</p>
       </div>
-    </div>
+      <div class="pfr-hero-actions">
+        <a id="heroCallBtn" href="tel:" class="hidden" data-i18n="callShop">📞 Call shop</a>
+        <a id="heroWhatsAppBtn" href="#" target="_blank" rel="noopener" class="hidden">WhatsApp</a>
+      </div>
+      <div id="heroStatusOverlay" class="hidden" role="status" aria-live="polite">
+        <div class="pfr-lock-card">
+          <span class="pfr-lock-icon"><i id="heroStatusIcon" class="fa-solid fa-store-slash"></i></span>
+          <div class="min-w-0">
+            <p id="heroStatusTitle" class="pfr-lock-title">Closed now</p>
+            <p id="heroStatusReason" class="pfr-lock-reason"></p>
+            <p id="heroStatusHint" class="pfr-lock-hint">You can still browse the menu</p>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <!-- Search & Category Header Section -->
-  <div class="bg-white/95 backdrop-blur-md border-b sticky top-[88px] z-20 shadow-sm">
-    <div class="px-3.5 py-2 space-y-2">
+  <div class="pfr-sticky sticky z-20">
+    <div class="px-3.5 py-2.5 space-y-2.5">
       <div id="shopClosedBanner" class="hidden bg-rose-600 text-white rounded-2xl p-3 shadow space-y-0.5" aria-live="polite">
         <p class="text-[11px] font-black uppercase tracking-wider" data-i18n="closedTitle"></p>
         <p id="shopClosedBody" class="text-[11px] font-bold text-rose-50"></p>
       </div>
-      <input id="searchInput" oninput="renderTakeawayMenu()" type="text" placeholder="Search takeaway dishes..." data-i18n-placeholder="searchPh" class="w-full px-3 py-1.5 bg-slate-100 rounded-2xl text-xs outline-none focus:ring-2 focus:ring-purple-700 font-medium">
+      <div class="pfr-search">
+        <i class="fa-solid fa-magnifying-glass pfr-search-icon" aria-hidden="true"></i>
+        <input id="searchInput" oninput="renderTakeawayMenu()" type="search" enterkeyhint="search" autocomplete="off" placeholder="Search takeaway dishes..." data-i18n-placeholder="searchPh" class="w-full outline-none">
+      </div>
+      <div class="pfr-filter-row" role="group" aria-label="Filters">
+        <button type="button" class="pfr-filter-chip is-active" data-kind="" onclick="setMenuKindFilter('')" data-i18n="filterAll">All</button>
+        <button type="button" class="pfr-filter-chip" data-kind="veg" onclick="setMenuKindFilter('veg')"><span class="pfr-dot"></span><span data-i18n="filterVeg">Veg</span></button>
+        <button type="button" class="pfr-filter-chip" data-kind="spicy" onclick="setMenuKindFilter('spicy')"><span class="pfr-dot"></span><span data-i18n="filterSpicy">Spicy</span></button>
+      </div>
       <div class="relative">
         <div id="categorySlider" onscroll="updateCategoryArrows()" class="relative flex gap-2 overflow-x-auto whitespace-nowrap pb-1"></div>
         <div id="catFadeLeft" class="pfr-cat-fade is-left"></div>
@@ -393,8 +786,11 @@
 
   <!-- Scrollable Menu Container -->
   <main class="p-3.5">
-    <div id="menuList" class="space-y-2.5 pr-1 custom-scrollbar">
-      <p class="text-center text-slate-400 py-12 text-xs">Menu</p>
+    <div id="menuList" class="pr-1 custom-scrollbar" aria-busy="true">
+      <div class="pfr-skel-card" aria-hidden="true"><div class="pfr-skel pfr-skel-thumb"></div><div class="pfr-skel-lines"><div class="pfr-skel pfr-skel-line" style="width:72%"></div><div class="pfr-skel pfr-skel-line" style="width:48%"></div><div class="pfr-skel-foot"><div class="pfr-skel pfr-skel-line" style="width:64px"></div><div class="pfr-skel pfr-skel-pill"></div></div></div></div>
+      <div class="pfr-skel-card" aria-hidden="true"><div class="pfr-skel pfr-skel-thumb"></div><div class="pfr-skel-lines"><div class="pfr-skel pfr-skel-line" style="width:60%"></div><div class="pfr-skel pfr-skel-line" style="width:82%"></div><div class="pfr-skel-foot"><div class="pfr-skel pfr-skel-line" style="width:56px"></div><div class="pfr-skel pfr-skel-pill"></div></div></div></div>
+      <div class="pfr-skel-card" aria-hidden="true"><div class="pfr-skel pfr-skel-thumb"></div><div class="pfr-skel-lines"><div class="pfr-skel pfr-skel-line" style="width:78%"></div><div class="pfr-skel pfr-skel-line" style="width:40%"></div><div class="pfr-skel-foot"><div class="pfr-skel pfr-skel-line" style="width:70px"></div><div class="pfr-skel pfr-skel-pill"></div></div></div></div>
+      <div class="pfr-skel-card" aria-hidden="true"><div class="pfr-skel pfr-skel-thumb"></div><div class="pfr-skel-lines"><div class="pfr-skel pfr-skel-line" style="width:55%"></div><div class="pfr-skel pfr-skel-line" style="width:70%"></div><div class="pfr-skel-foot"><div class="pfr-skel pfr-skel-line" style="width:60px"></div><div class="pfr-skel pfr-skel-pill"></div></div></div></div>
     </div>
   </main>
   <footer class="px-3.5 pb-6 text-center">
@@ -582,6 +978,7 @@
 
   <div id="cartBottomBar" class="pfr-checkout-bar" aria-hidden="true">
     <div id="cartItems" class="hidden text-xs text-white/90 max-h-52 overflow-y-auto space-y-2 divide-y divide-white/10 pr-1 custom-scrollbar mb-2"></div>
+    <div id="cartLockNote" class="hidden" role="status" aria-live="polite"><i class="fa-solid fa-clock" aria-hidden="true"></i><span id="cartLockNoteText"></span></div>
     <div class="pfr-checkout-row">
       <div class="pfr-checkout-summary">
         <span id="cartCountLabel" class="pfr-checkout-item">0 items</span>
@@ -648,6 +1045,8 @@
     let deliveryMap = null;
     let deliveryMarker = null;
     let restaurantProfile = {};
+    let menuKindFilter = '';
+    let menuItemsLoaded = false;
     let currentLang = localStorage.getItem('peoples_lang') || 'en';
     if (verifiedUser && verifiedUser.lastCoords && verifiedUser.lastCoords.lat) {
       lastDeliveryCoords = {
@@ -685,8 +1084,21 @@
         cartItemsMany: '{n} items',
         cartPreviewOne: '{name} ({n})',
         cartPreviewMore: '{name} ({n}) + {more} more',
-        addedToast: '{name} added to cart',
+        addedToast: 'Added {n}x {name}',
         addedBtn: 'Added ✓',
+        filterAll: 'All',
+        filterVeg: 'Veg',
+        filterSpicy: 'Spicy',
+        statusClosedTitle: 'Closed now',
+        statusPausedTitle: 'Ordering paused',
+        statusBrowseHint: 'You can still browse the menu',
+        emptySearchTitle: 'No dishes found',
+        emptySearchBody: 'No dishes match "{q}". Try another word.',
+        emptyFilterBody: 'No dishes match this filter right now.',
+        emptyNoItemsTitle: 'Menu coming soon',
+        emptyNoItemsBody: 'No takeaway items available right now. Please check back soon.',
+        clearSearch: 'Clear search',
+        showAll: 'Show all',
         checkoutBtn: 'Checkout ❯',
         checkoutTitle: 'Checkout',
         cancel: 'Cancel',
@@ -740,8 +1152,21 @@
         cartItemsMany: 'අයිතම {n}යි',
         cartPreviewOne: '{name} ({n})',
         cartPreviewMore: '{name} ({n}) + තව {more}',
-        addedToast: '{name} cart එකට එකතු වුණා',
+        addedToast: '{name} {n}x එකතු වුණා',
         addedBtn: 'එකතු වුණා ✓',
+        filterAll: 'සියල්ල',
+        filterVeg: 'Veg',
+        filterSpicy: 'සැර',
+        statusClosedTitle: 'දැන් වහලා',
+        statusPausedTitle: 'Order ගන්නේ නෑ',
+        statusBrowseHint: 'Menu එක බලන්න පුළුවන්',
+        emptySearchTitle: 'Dishes හම්බ වුණේ නෑ',
+        emptySearchBody: '"{q}" ට ගැලපෙන dish නෑ. වෙන වචනයක් try කරන්න.',
+        emptyFilterBody: 'මේ filter එකට ගැලපෙන dish දැනට නෑ.',
+        emptyNoItemsTitle: 'Menu එක ඉක්මනින්',
+        emptyNoItemsBody: 'දැනට takeaway items නෑ. ටිකකින් ආයෙත් බලන්න.',
+        clearSearch: 'Search clear කරන්න',
+        showAll: 'සියල්ල පෙන්වන්න',
         checkoutBtn: 'Checkout ❯',
         checkoutTitle: 'Checkout',
         cancel: 'අවලංගු',
@@ -872,6 +1297,44 @@
         checkoutBtn.innerText = open ? t('checkoutBtn') : t('closedNow');
       }
       refreshCheckoutProceedState();
+      paintOrderingStatusVisuals();
+    }
+
+    function paintOrderingStatusVisuals() {
+      const overlay = document.getElementById('heroStatusOverlay');
+      const bar = document.getElementById('cartBottomBar');
+      const note = document.getElementById('cartLockNote');
+      const noteText = document.getElementById('cartLockNoteText');
+      const shopOpen = isShopOpen();
+      const modeOpen = typeof window.firstAvailableOrderMode === 'function'
+        ? !!window.firstAvailableOrderMode(orderTimings, adminDeliverySettings)
+        : true;
+      const state = !shopOpen ? 'closed' : (!modeOpen ? 'paused' : '');
+      const reason = state === 'closed'
+        ? shopClosedReasonText()
+        : (state === 'paused' && typeof window.orderModesClosedMessage === 'function'
+          ? window.orderModesClosedMessage(orderTimings, adminDeliverySettings)
+          : '');
+      if (overlay) {
+        overlay.classList.toggle('hidden', !state);
+        overlay.classList.toggle('is-paused', state === 'paused');
+        if (state) {
+          const icon = document.getElementById('heroStatusIcon');
+          const title = document.getElementById('heroStatusTitle');
+          const reasonEl = document.getElementById('heroStatusReason');
+          const hint = document.getElementById('heroStatusHint');
+          if (icon) icon.className = 'fa-solid ' + (state === 'closed' ? 'fa-store-slash' : 'fa-clock');
+          if (title) title.textContent = t(state === 'closed' ? 'statusClosedTitle' : 'statusPausedTitle');
+          if (reasonEl) reasonEl.textContent = reason || '';
+          if (hint) hint.textContent = t('statusBrowseHint');
+        }
+      }
+      if (bar) {
+        bar.classList.toggle('is-locked', !!state);
+        bar.classList.toggle('is-closed-shop', state === 'closed');
+      }
+      if (note) note.classList.toggle('hidden', !state);
+      if (noteText) noteText.textContent = state ? (reason || t(state === 'closed' ? 'statusClosedTitle' : 'statusPausedTitle')) : '';
     }
 
     function assertShopOpenForOrder() {
@@ -1369,11 +1832,13 @@
       db.ref('settings/delivery_options').on('value', snap => {
         if (snap.exists()) adminDeliverySettings = snap.val();
         refreshOpenCheckoutModes();
+        paintOrderingStatusVisuals();
       }, function (err) { window.onDbListenError(err, { optional: true }); });
 
       db.ref('settings/order_timings').on('value', snap => {
         orderTimings = snap.exists() ? snap.val() : null;
         refreshOpenCheckoutModes();
+        paintOrderingStatusVisuals();
       }, function (err) { window.onDbListenError(err, { optional: true }); });
 
       db.ref('settings/delivery_pricing').on('value', snap => {
@@ -1427,7 +1892,9 @@
 
       db.ref('menu_items').on('value', snap => {
         if (typeof window.clearDbListenError === 'function') window.clearDbListenError();
+        menuItemsLoaded = true;
         allMenuItems = snap.val() || {};
+        renderCategorySlider();
         renderTakeawayMenu();
       }, window.onDbListenError);
 
@@ -1484,20 +1951,115 @@
       }
     }
 
+    const CATEGORY_ICON_RULES = [
+      [/rice|biriyani|biryani/, 'fa-bowl-rice'],
+      [/kottu|koththu/, 'fa-fire-burner'],
+      [/noodle|pasta|soup/, 'fa-bowl-food'],
+      [/burger|sandwich|sub/, 'fa-burger'],
+      [/pizza/, 'fa-pizza-slice'],
+      [/chicken|devil|grill|bbq/, 'fa-drumstick-bite'],
+      [/fish|sea|prawn|cuttle/, 'fa-fish'],
+      [/bread|bake|bun|pastr|short/, 'fa-bread-slice'],
+      [/cake|dessert|sweet|ice/, 'fa-ice-cream'],
+      [/tea|coffee/, 'fa-mug-hot'],
+      [/drink|juice|shake|beverage|soft/, 'fa-glass-water']
+    ];
+
+    function categoryIconClass(cat) {
+      const name = String(cat || '').toLowerCase();
+      for (let i = 0; i < CATEGORY_ICON_RULES.length; i++) {
+        if (CATEGORY_ICON_RULES[i][0].test(name)) return CATEGORY_ICON_RULES[i][1];
+      }
+      return 'fa-utensils';
+    }
+
+    function categoryDishCount(cat) {
+      const name = String(cat || '').toLowerCase();
+      return Object.keys(allMenuItems).filter(id => {
+        const d = allMenuItems[id];
+        return d && d.available !== false && (d.category || 'General').toLowerCase() === name;
+      }).length;
+    }
+
     function renderCategorySlider(smooth) {
       const slider = document.getElementById('categorySlider');
+      if (!allCategories.length) {
+        slider.innerHTML = '<span class="pfr-skel pfr-cat-skel"></span><span class="pfr-skel pfr-cat-skel"></span><span class="pfr-skel pfr-cat-skel"></span><span class="pfr-skel pfr-cat-skel"></span>';
+        return;
+      }
       slider.innerHTML = '';
       const cats = allCategories.slice();
       cats.forEach(cat => {
         const isSelected = activeCategory === cat;
         const label = cat;
+        const count = menuItemsLoaded ? categoryDishCount(cat) : 0;
         slider.innerHTML += `
-          <button onclick="setCategory(${jsCallArg(cat)})" class="cat-btn ${isSelected ? 'is-active bg-purple-900 text-white font-black' : 'bg-slate-100 text-slate-700 font-bold'} text-xs px-3.5 py-1.5 rounded-xl transition flex-shrink-0 hover:bg-purple-200">
-            ${escapeCartHtml(label)}
+          <button onclick="setCategory(${jsCallArg(cat)})" class="cat-btn ${isSelected ? 'is-active' : ''} flex-shrink-0">
+            <i class="fa-solid ${categoryIconClass(cat)}" aria-hidden="true"></i><span>${escapeCartHtml(label)}</span>${count ? `<span class="pfr-cat-count">${count}</span>` : ''}
           </button>
         `;
       });
       requestAnimationFrame(function () { window.centerActiveCategory(!!smooth); });
+    }
+
+    function setMenuKindFilter(kind) {
+      menuKindFilter = kind === 'veg' || kind === 'spicy' ? kind : '';
+      document.querySelectorAll('.pfr-filter-chip').forEach(function (chip) {
+        chip.classList.toggle('is-active', (chip.getAttribute('data-kind') || '') === menuKindFilter);
+      });
+      renderTakeawayMenu();
+    }
+
+    function clearMenuSearch() {
+      const input = document.getElementById('searchInput');
+      if (input) input.value = '';
+      setMenuKindFilter('');
+    }
+
+    function showAllMenu() {
+      const input = document.getElementById('searchInput');
+      if (input) input.value = '';
+      if (allCategories.length) activeCategory = allCategories[0];
+      renderCategorySlider(true);
+      setMenuKindFilter('');
+    }
+
+    function menuSkeletonHtml() {
+      const widths = [[72, 48, 64], [60, 82, 56], [78, 40, 70], [55, 70, 60]];
+      return widths.map(function (w) {
+        return '<div class="pfr-skel-card" aria-hidden="true"><div class="pfr-skel pfr-skel-thumb"></div><div class="pfr-skel-lines">' +
+          '<div class="pfr-skel pfr-skel-line" style="width:' + w[0] + '%"></div>' +
+          '<div class="pfr-skel pfr-skel-line" style="width:' + w[1] + '%"></div>' +
+          '<div class="pfr-skel-foot"><div class="pfr-skel pfr-skel-line" style="width:' + w[2] + 'px"></div><div class="pfr-skel pfr-skel-pill"></div></div>' +
+          '</div></div>';
+      }).join('');
+    }
+
+    function menuEmptyHtml(kind, query) {
+      const icon = kind === 'none' ? 'fa-bowl-food' : 'fa-magnifying-glass';
+      const title = kind === 'none' ? t('emptyNoItemsTitle') : t('emptySearchTitle');
+      const body = kind === 'none'
+        ? t('emptyNoItemsBody')
+        : (query ? t('emptySearchBody').replace('{q}', escapeCartHtml(query)) : t('emptyFilterBody'));
+      const actions = kind === 'none' ? '' :
+        '<div class="pfr-empty-actions">' +
+          '<button type="button" class="is-primary" onclick="clearMenuSearch()">' + escapeCartHtml(t('clearSearch')) + '</button>' +
+          '<button type="button" class="is-ghost" onclick="showAllMenu()">' + escapeCartHtml(t('showAll')) + '</button>' +
+        '</div>';
+      return '<div class="pfr-empty" role="status">' +
+        '<div class="pfr-empty-art"><i class="fa-solid ' + icon + '" aria-hidden="true"></i></div>' +
+        '<h3>' + escapeCartHtml(title) + '</h3><p>' + body + '</p>' + actions +
+      '</div>';
+    }
+
+    function takeawayKindChips(dish) {
+      const kinds = window.dishKindList ? window.dishKindList(dish) : [];
+      if (!kinds.length) return '';
+      const labels = {};
+      (window.DISH_KIND_TAGS || []).forEach(function (tag) { labels[tag.id] = tag.label; });
+      return '<div class="dish-tags">' + kinds.map(function (id) {
+        return '<span class="dish-tag" data-kind="' + escapeCartHtml(id) + '">' + escapeCartHtml(labels[id] || id) + '</span>';
+      }).join('') + '</div>';
     }
 
     function setCategory(cat) {
@@ -1530,56 +2092,76 @@
 
     function renderTakeawayMenu() {
       const container = document.getElementById('menuList');
-      const search = (document.getElementById('searchInput').value || '').toLowerCase();
+      const rawSearch = (document.getElementById('searchInput').value || '').trim();
+      const search = rawSearch.toLowerCase();
+
+      if (!menuItemsLoaded) {
+        container.setAttribute('aria-busy', 'true');
+        container.innerHTML = menuSkeletonHtml();
+        return;
+      }
+      container.removeAttribute('aria-busy');
       container.innerHTML = '';
 
       const keys = Object.keys(allMenuItems);
       if (keys.length === 0) {
-        container.innerHTML = '<p class="text-center text-slate-400 py-12 text-xs">No takeaway items available.</p>';
+        container.innerHTML = menuEmptyHtml('none', '');
+        window.restoreMenuSelection();
         return;
       }
 
-      const catsToDisplay = search || !activeCategory || activeCategory === '__all__' ? allCategories : [activeCategory];
+      const catsToDisplay = search || menuKindFilter || !activeCategory || activeCategory === '__all__' ? allCategories : [activeCategory];
+      let shownCount = 0;
 
       catsToDisplay.forEach(catName => {
         const catDishes = keys.filter(id => {
           const d = allMenuItems[id];
+          if (!d || d.available === false) return false;
           const matchesCat = (d.category || 'General').toLowerCase() === catName.toLowerCase();
-          const matchesSearch = !search || d.name.toLowerCase().includes(search) || String(d.ingredients || '').toLowerCase().includes(search);
-          return matchesCat && matchesSearch;
+          const matchesSearch = !search || String(d.name || '').toLowerCase().includes(search) || String(d.ingredients || '').toLowerCase().includes(search);
+          const matchesKind = !menuKindFilter || (window.dishKindList ? window.dishKindList(d) : []).indexOf(menuKindFilter) >= 0;
+          return matchesCat && matchesSearch && matchesKind;
         });
 
         if (catDishes.length > 0) {
           const catHeader = document.createElement('div');
-          catHeader.className = "pt-2 pb-1";
-          catHeader.innerHTML = `<h2 class="text-xs font-black uppercase tracking-wider text-purple-950 border-b-2 border-purple-900 pb-1">${escapeCartHtml(catName)}</h2>`;
+          catHeader.className = 'pfr-cat-head';
+          catHeader.innerHTML = `<h2>${escapeCartHtml(catName)}</h2><span>${catDishes.length}</span>`;
           container.appendChild(catHeader);
 
           catDishes.forEach(id => {
             const dish = allMenuItems[id];
-            if (dish.available === false) return;
             const hasVariants = dish.variants && dish.variants.length > 0;
             const price = dish.price || 0;
+            const img = window.safeUrl(dish.image);
+            const ingredients = window.dishIngredientsText ? window.dishIngredientsText(dish) : '';
+            shownCount++;
 
             container.innerHTML += `
-              <div data-menu-id="${escapeCartHtml(id)}" onclick="selectMenuCard(this)" class="pfr-menu-card bg-white p-3 rounded-2xl border shadow-sm flex items-center justify-between gap-2">
-                <div class="flex items-center gap-2.5 min-w-0">
-                  ${window.safeUrl(dish.image) !== '#' ? `<img src="${window.safeUrl(dish.image)}" class="w-12 h-12 rounded-2xl object-cover shrink-0">` : '<div class="w-12 h-12 bg-purple-50 text-purple-900 rounded-2xl flex items-center justify-center font-bold shrink-0">🥡</div>'}
-                  <div class="min-w-0">
-                    <h3 class="font-black text-slate-900 text-xs truncate">${escapeCartHtml(dish.name)}</h3>
-                    ${window.dishContainsHtml ? window.dishContainsHtml(dish) : ''}
-                    <span class="text-purple-950 font-black text-xs block mt-0.5">
-                      ${hasVariants ? '<span class="text-[9px] text-purple-700 font-extrabold uppercase bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200">Options</span>' : 'Rs. ' + price.toLocaleString()}
-                    </span>
+              <div data-menu-id="${escapeCartHtml(id)}" onclick="selectMenuCard(this)" class="pfr-menu-card dish-card">
+                ${img !== '#' ? `<img src="${img}" alt="${escapeCartHtml(dish.name)}" loading="lazy" class="dish-thumb">` : '<div class="dish-thumb is-placeholder" aria-hidden="true">🥡</div>'}
+                <div class="dish-body">
+                  <h3 class="dish-name">${escapeCartHtml(dish.name)}</h3>
+                  ${takeawayKindChips(dish)}
+                  ${ingredients ? `<p class="dish-desc">${escapeCartHtml(ingredients)}</p>` : ''}
+                  <div class="dish-foot">
+                    ${hasVariants ? '<span class="dish-options">Options</span>' : `<span class="dish-price">Rs. ${price.toLocaleString()}</span>`}
+                    <button type="button" onclick="handleTakeawayAdd(${jsCallArg(id)})" class="pfr-add-btn">${hasVariants ? 'Select ❯' : t('add')}</button>
                   </div>
                 </div>
-                <button onclick="handleTakeawayAdd(${jsCallArg(id)})" class="bg-purple-900 text-white font-bold px-3 py-1.5 rounded-xl text-xs shrink-0">${hasVariants ? 'Select ❯' : t('add')}</button>
               </div>
             `;
           });
         }
       });
-      if (!search && activeCategory && activeCategory !== '__all__') {
+
+      if (!shownCount && (search || menuKindFilter || !activeCategory || !nextCategoryAfter(activeCategory))) {
+        container.innerHTML = menuEmptyHtml(search || menuKindFilter ? 'search' : 'none', rawSearch);
+        window.restoreMenuSelection();
+        return;
+      }
+
+      if (!search && !menuKindFilter && activeCategory && activeCategory !== '__all__') {
         const next = nextCategoryAfter(activeCategory);
         if (next) {
           container.innerHTML += `
@@ -1672,8 +2254,12 @@
     function notifyCartAdd(id, name) {
       lastAddedCartName = String(name || lastAddedCartName || '').trim();
       const qty = window.cartQtyCount(takeawayCart);
+      const preview = typeof window.cartBarPreview === 'function'
+        ? window.cartBarPreview(takeawayCart, lastAddedCartName)
+        : null;
+      const lineQty = (preview && preview.lineQty) || 1;
       window.flashAddFeedback(id, name, qty, {
-        toast: t('addedToast').replace('{name}', String(name || 'Item')) + ' · ' + cartCountLabel(qty),
+        toast: t('addedToast').replace('{name}', String(name || 'Item')).replace('{n}', String(lineQty)),
         addedBtn: t('addedBtn')
       });
     }
