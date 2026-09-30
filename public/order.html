@@ -34,6 +34,15 @@
       --pfr-line: #e8e5f0;
       --pfr-radius: 22px;
       --pfr-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px -14px rgba(59, 7, 100, .28);
+      --trk-glow: transparent;
+      --trk-glow-received: rgba(139, 92, 246, .42);
+      --trk-glow-kitchen: rgba(245, 158, 11, .4);
+      --trk-glow-ready: rgba(16, 185, 129, .4);
+      --trk-glow-delivery: rgba(14, 165, 233, .38);
+      --trk-glow-done: rgba(16, 185, 129, .28);
+      --trk-glow-wait: rgba(100, 116, 139, .28);
+      --trk-glow-bad: rgba(244, 63, 94, .32);
+      --trk-glow-blur: 28px;
       background: #f8fafc;
       color: var(--pfr-ink);
       overflow-x: hidden;
@@ -44,7 +53,34 @@
       border: 1px solid var(--pfr-line);
       border-radius: var(--pfr-radius);
       box-shadow: var(--pfr-shadow);
+      position: relative;
+      z-index: 1;
     }
+    body.pfr-track #orderRoot {
+      position: relative;
+      overflow: visible;
+    }
+    body.pfr-track #orderRoot::before {
+      content: '';
+      position: absolute;
+      inset: -36px -16px -12px;
+      z-index: -1;
+      pointer-events: none;
+      border-radius: 48px;
+      background: radial-gradient(ellipse at 50% 18%, var(--trk-glow) 0%, transparent 68%);
+      filter: blur(var(--trk-glow-blur));
+      opacity: .5;
+      transition: background .6s ease, opacity .6s ease;
+      animation: trkAura 8s ease-in-out infinite;
+    }
+    body.pfr-track #orderRoot:has(.trk-stage[data-mood="received"]) { --trk-glow: var(--trk-glow-received); }
+    body.pfr-track #orderRoot:has(.trk-stage[data-mood="kitchen"]) { --trk-glow: var(--trk-glow-kitchen); }
+    body.pfr-track #orderRoot:has(.trk-stage[data-mood="ready"]) { --trk-glow: var(--trk-glow-ready); }
+    body.pfr-track #orderRoot:has(.trk-stage[data-mood="delivery"]) { --trk-glow: var(--trk-glow-delivery); }
+    body.pfr-track #orderRoot:has(.trk-stage[data-mood="done"]) { --trk-glow: var(--trk-glow-done); }
+    body.pfr-track #orderRoot:has(.trk-stage[data-mood="wait"]) { --trk-glow: var(--trk-glow-wait); }
+    body.pfr-track #orderRoot:not(:has(.trk-stage))::before { opacity: 0; animation: none; }
+    @keyframes trkAura { 0%,100% { opacity: .42; } 50% { opacity: .62; } }
     #chatDrawer.hidden, #arrivedAlertBox.hidden, #alertBanner.hidden, #liveMapCard.hidden { display: none !important; }
     .live-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease; }
     #liveMapCard.is-open .live-panel { grid-template-rows: 1fr; }
@@ -83,6 +119,26 @@
       display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
       border-radius: 9999px; font-size: 11px; font-weight: 800; color: #fff;
       background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18);
+    }
+    @media (min-width: 768px) {
+      body.pfr-track {
+        background: linear-gradient(180deg, #f3e8ff 0%, #f8fafc 40%, #eef2ff 100%);
+      }
+      body.pfr-track main.trk-frame {
+        padding: 22px 20px 24px;
+        border-radius: 28px;
+        background: rgba(255,255,255,.62);
+        border: 1px solid rgba(255,255,255,.72);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        box-shadow:
+          0 1px 2px rgba(15, 23, 42, .05),
+          0 18px 40px -22px rgba(59, 7, 100, .42),
+          0 48px 90px -50px rgba(15, 23, 42, .38);
+      }
+      body.pfr-track .trk-header-inner { max-width: 28rem; }
+      body.pfr-track #orderRoot::before { inset: -72px -52px -28px; opacity: .68; --trk-glow-blur: 36px; }
+      body.pfr-track .trk-eta-clock { font-size: 44px; text-shadow: 0 8px 24px rgba(59, 7, 100, .18); }
     }
 
     /* Alerts */
@@ -155,22 +211,36 @@
     body.pfr-track .pfr-chat-badge { top: -6px; right: -6px; }
 
     /* Hero */
+    body.pfr-track .trk-stage { display: flex; flex-direction: column; gap: 12px; }
     body.pfr-track .trk-hero {
       position: relative; overflow: hidden; border-radius: var(--pfr-radius);
       padding: 16px 16px 15px; color: #fff;
       box-shadow: 0 16px 32px -18px rgba(59, 7, 100, .55);
+      border: 1px solid rgba(255,255,255,.28);
+    }
+    body.pfr-track .trk-hero::before {
+      content: ''; position: absolute; inset: -40% -20% auto auto; width: 70%; height: 90%;
+      background: radial-gradient(circle, rgba(255,255,255,.22) 0%, transparent 70%);
+      animation: trkHeroDrift 12s ease-in-out infinite;
+      pointer-events: none;
     }
     body.pfr-track .trk-hero::after {
       content: ''; position: absolute; inset: 0; pointer-events: none;
-      background: linear-gradient(180deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 42%);
+      background: linear-gradient(180deg, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 42%);
     }
+    body.pfr-track .trk-stage[data-mood="kitchen"] .trk-hero { box-shadow: 0 16px 32px -16px rgba(245, 158, 11, .55); border-color: rgba(253, 230, 138, .45); }
+    body.pfr-track .trk-stage[data-mood="ready"] .trk-hero { box-shadow: 0 16px 32px -16px rgba(16, 185, 129, .5); border-color: rgba(167, 243, 208, .5); }
+    body.pfr-track .trk-stage[data-mood="delivery"] .trk-hero { box-shadow: 0 16px 32px -16px rgba(14, 165, 233, .5); }
     body.pfr-track .trk-hero-emoji {
-      width: 48px; height: 48px; border-radius: 16px;
+      position: relative; z-index: 1;
+      width: 52px; height: 52px; border-radius: 16px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 24px; background: rgba(255,255,255,.16); backdrop-filter: blur(8px);
+      font-size: 26px; background: rgba(255,255,255,.18); backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,.28);
     }
-    body.pfr-track .trk-hero-title { font-size: 18px; font-weight: 800; letter-spacing: -.02em; margin-top: 10px; }
-    body.pfr-track .trk-hero-body { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.9); margin-top: 4px; line-height: 1.45; }
+    body.pfr-track .trk-hero-title { position: relative; z-index: 1; font-size: 18px; font-weight: 800; letter-spacing: -.02em; margin-top: 10px; }
+    body.pfr-track .trk-hero-body { position: relative; z-index: 1; font-size: 13px; font-weight: 600; color: rgba(255,255,255,.9); margin-top: 4px; line-height: 1.45; }
+    @keyframes trkHeroDrift { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-12px, 8px); } }
 
     /* Countdown */
     body.pfr-track .trk-eta {
@@ -190,19 +260,45 @@
     body.pfr-track .trk-live i {
       width: 6px; height: 6px; border-radius: 999px; background: #e11d48;
       animation: trkPulseDot 1.4s ease-in-out infinite;
+      box-shadow: 0 0 0 0 rgba(225, 29, 72, .55);
+    }
+    body.pfr-track .trk-eta[data-state="live"] .trk-live {
+      box-shadow: 0 0 12px rgba(225, 29, 72, .28);
+    }
+    body.pfr-track .trk-eta[data-state="live"] .trk-live i {
+      animation: trkPulseDot 1.4s ease-in-out infinite, trkLiveGlow 1.6s ease-out infinite;
     }
     body.pfr-track .trk-eta[data-state="ready"] .trk-live { color: #047857; border-color: #a7f3d0; }
-    body.pfr-track .trk-eta[data-state="ready"] .trk-live i { background: #10b981; animation: none; }
+    body.pfr-track .trk-eta[data-state="ready"] .trk-live i { background: #10b981; animation: none; box-shadow: none; }
     body.pfr-track .trk-eta[data-state="waiting"] .trk-live { color: var(--pfr-muted); border-color: var(--pfr-line); }
-    body.pfr-track .trk-eta[data-state="waiting"] .trk-live i { background: #94a3b8; animation: none; }
+    body.pfr-track .trk-eta[data-state="waiting"] .trk-live i { background: #94a3b8; animation: none; box-shadow: none; }
     body.pfr-track .trk-eta-clock {
       font-size: 40px; font-weight: 800; letter-spacing: -.04em; line-height: 1.15;
       color: var(--pfr-purple); margin-top: 4px; font-variant-numeric: tabular-nums;
+      text-shadow: 0 6px 18px rgba(59, 7, 100, .12);
     }
     body.pfr-track .trk-eta[data-state="ready"] .trk-eta-clock { color: #047857; }
     body.pfr-track .trk-eta-sub { font-size: 12px; font-weight: 700; color: var(--pfr-muted); margin-top: 2px; }
+    body.pfr-track .trk-eta-bar {
+      height: 6px; margin: 12px 8px 2px; border-radius: 99px; background: rgba(15, 23, 42, .08);
+      overflow: hidden; position: relative;
+    }
+    body.pfr-track .trk-eta-bar > i {
+      display: block; height: 100%; border-radius: inherit;
+      background: linear-gradient(90deg, #34d399, #7c3aed 55%, #c4b5fd);
+      box-shadow: 0 0 10px rgba(124, 58, 237, .45);
+      transition: width .5s ease;
+    }
+    body.pfr-track .trk-eta[data-state="ready"] .trk-eta-bar > i {
+      width: 100% !important;
+      background: linear-gradient(90deg, #34d399, #059669);
+      box-shadow: 0 0 10px rgba(16, 185, 129, .45);
+    }
+    body.pfr-track .trk-eta[data-state="waiting"] .trk-eta-bar { opacity: .4; }
+    body.pfr-track .trk-eta[data-state="waiting"] .trk-eta-bar > i { box-shadow: none; background: #94a3b8; }
     @keyframes trkPulseDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.7); } }
     @keyframes trkPulse { 0% { transform: scale(.92); opacity: .8; } 100% { transform: scale(1.25); opacity: 0; } }
+    @keyframes trkLiveGlow { 0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, .5); } 100% { box-shadow: 0 0 0 8px rgba(225, 29, 72, 0); } }
 
     /* Stepper */
     body.pfr-track .trk-steps {
@@ -213,13 +309,33 @@
     body.pfr-track .trk-dot {
       position: relative; width: 36px; height: 36px; border-radius: 999px;
       display: flex; align-items: center; justify-content: center; font-size: 15px;
-      background: #fff; color: #94a3b8; border: 1.5px solid #e2e8f0; z-index: 1;
+      background: rgba(255,255,255,.72); color: #94a3b8;
+      border: 1px solid rgba(255,255,255,.9);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 4px 10px -6px rgba(15,23,42,.35);
+      backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1;
     }
-    body.pfr-track .trk-step.is-done .trk-dot { background: #10b981; color: #fff; border-color: #10b981; }
+    body.pfr-track .trk-step.is-done .trk-dot {
+      background: #10b981; color: #fff; border-color: #34d399;
+      box-shadow: 0 0 10px rgba(16, 185, 129, .45);
+      backdrop-filter: none;
+    }
     body.pfr-track .trk-step.is-current .trk-dot {
-      background: var(--pfr-purple); color: #fff; border-color: var(--pfr-purple);
-      box-shadow: 0 0 0 6px rgba(91, 33, 182, .16);
-      animation: trkDotGlow 1.8s ease-in-out infinite;
+      background: var(--pfr-purple); color: #fff; border-color: rgba(255,255,255,.35);
+      box-shadow: 0 0 0 5px rgba(91, 33, 182, .18), 0 0 16px rgba(124, 58, 237, .45);
+      animation: trkDotBounce 1.8s ease-in-out infinite;
+      backdrop-filter: none;
+    }
+    body.pfr-track .trk-stage[data-mood="kitchen"] ~ .trk-steps .trk-step.is-current .trk-dot,
+    body.pfr-track .trk-stage[data-mood="kitchen"] + .trk-steps .trk-step.is-current .trk-dot {
+      background: #d97706; box-shadow: 0 0 0 5px rgba(245, 158, 11, .2), 0 0 16px rgba(245, 158, 11, .45);
+    }
+    body.pfr-track .trk-stage[data-mood="ready"] ~ .trk-steps .trk-step.is-current .trk-dot,
+    body.pfr-track .trk-stage[data-mood="ready"] + .trk-steps .trk-step.is-current .trk-dot {
+      background: #059669; box-shadow: 0 0 0 5px rgba(16, 185, 129, .2), 0 0 16px rgba(16, 185, 129, .45);
+    }
+    body.pfr-track .trk-stage[data-mood="delivery"] ~ .trk-steps .trk-step.is-current .trk-dot,
+    body.pfr-track .trk-stage[data-mood="delivery"] + .trk-steps .trk-step.is-current .trk-dot {
+      background: #0284c7; box-shadow: 0 0 0 5px rgba(14, 165, 233, .2), 0 0 16px rgba(14, 165, 233, .45);
     }
     body.pfr-track .trk-step.is-fresh .trk-dot { animation: trkPop .45s ease; }
     body.pfr-track .trk-label { margin-top: 6px; font-size: 10px; font-weight: 800; color: #94a3b8; line-height: 1.2; }
@@ -228,14 +344,19 @@
     body.pfr-track .trk-step.is-current .trk-label { color: var(--pfr-purple); }
     body.pfr-track .trk-link {
       flex: 1 1 0; height: 4px; margin: 16px 2px 0; border-radius: 99px;
-      background: #e2e8f0; position: relative; overflow: hidden; align-self: flex-start;
+      background: #e2e8f0; position: relative; overflow: visible; align-self: flex-start;
+    }
+    body.pfr-track .trk-link::before {
+      content: ''; position: absolute; inset: -3px 0; border-radius: inherit;
+      background: linear-gradient(90deg, #34d399, #7c3aed); transform: scaleX(0); transform-origin: left;
+      filter: blur(4px); opacity: .55;
     }
     body.pfr-track .trk-link::after {
       content: ''; position: absolute; inset: 0; border-radius: inherit;
       background: linear-gradient(90deg, #34d399, #7c3aed); transform: scaleX(0); transform-origin: left;
     }
-    body.pfr-track .trk-link.is-done::after { transform: scaleX(1); }
-    body.pfr-track .trk-link.is-fresh::after { animation: trkFill .45s ease forwards; }
+    body.pfr-track .trk-link.is-done::after, body.pfr-track .trk-link.is-done::before { transform: scaleX(1); }
+    body.pfr-track .trk-link.is-fresh::after, body.pfr-track .trk-link.is-fresh::before { animation: trkFill .45s ease forwards; }
     body.pfr-track .trk-steps[data-cancelled="1"] { opacity: .55; }
     body.pfr-track .trk-steps[data-cancelled="1"]::after {
       content: ''; position: absolute; left: 18px; right: 18px; top: 22px; height: 2px;
@@ -245,44 +366,53 @@
     body.pfr-track .trk-steps[data-count="5"] .trk-step { width: 44px; }
     body.pfr-track .trk-steps[data-count="5"] .trk-dot { width: 32px; height: 32px; font-size: 13px; }
     body.pfr-track .trk-caption { text-align: center; font-size: 11px; font-weight: 700; color: var(--pfr-muted); margin-top: 6px; }
-    @keyframes trkDotGlow {
-      0%,100% { box-shadow: 0 0 0 4px rgba(91, 33, 182, .18); }
-      50% { box-shadow: 0 0 0 8px rgba(91, 33, 182, .08); }
+    @keyframes trkDotBounce {
+      0%,100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
     }
     @keyframes trkPop { 0% { transform: scale(.7); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
     @keyframes trkFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
     /* Receipt */
     body.pfr-track .trk-receipt {
-      background: #fff; border: 1px solid var(--pfr-line); border-radius: 18px; padding: 14px 14px 12px;
+      background: #fffdf8; border: 1px solid #e8e0d4; border-radius: 18px; padding: 16px 16px 14px;
       position: relative; overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 8px 20px -16px rgba(15,23,42,.35);
     }
     body.pfr-track .trk-receipt-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
     body.pfr-track .trk-receipt-kicker { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--pfr-muted); }
     body.pfr-track .trk-receipt-id { font-size: 13px; font-weight: 800; color: var(--pfr-ink); }
     body.pfr-track .trk-receipt-type { font-size: 10px; font-weight: 700; color: #6d28d9; background: var(--pfr-purple-soft); border-radius: 999px; padding: 3px 8px; }
-    body.pfr-track .trk-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 7px 0; }
+    body.pfr-track .trk-receipt-body { border-top: 1px dashed #e0d6c8; padding-top: 4px; }
+    body.pfr-track .trk-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 8px 0; }
     body.pfr-track .trk-item-left { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
     body.pfr-track .trk-qty {
-      min-width: 28px; height: 22px; padding: 0 6px; border-radius: 8px;
+      min-width: 28px; min-height: 24px; padding: 0 7px; border-radius: 999px;
       background: var(--pfr-purple-soft); color: var(--pfr-purple); font-size: 10px; font-weight: 800;
       display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+      font-variant-numeric: tabular-nums;
     }
     body.pfr-track .trk-item-name { font-size: 13px; font-weight: 700; color: var(--pfr-ink); line-height: 1.35; }
-    body.pfr-track .trk-item-price { font-size: 13px; font-weight: 800; color: var(--pfr-ink); white-space: nowrap; }
+    body.pfr-track .trk-item-price { font-size: 13px; font-weight: 800; color: var(--pfr-ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
     body.pfr-track .trk-item-note { font-size: 11px; font-weight: 700; color: #92400e; margin: -2px 0 4px 36px; }
     body.pfr-track .trk-totals {
-      margin-top: 6px; padding-top: 10px; border-top: 1.5px dashed #d8d2e6;
+      margin-top: 6px; padding-top: 12px; border-top: 1.5px dashed #d8d2e6;
       position: relative;
     }
     body.pfr-track .trk-totals::before, body.pfr-track .trk-totals::after {
-      content: ''; position: absolute; top: -7px; width: 14px; height: 14px; border-radius: 999px;
-      background: #f8fafc; border: 1px solid var(--pfr-line);
+      content: ''; position: absolute; top: -9px; width: 18px; height: 18px; border-radius: 999px;
+      background: #f8fafc; border: 1px solid #e8e0d4;
     }
-    body.pfr-track .trk-totals::before { left: -21px; }
-    body.pfr-track .trk-totals::after { right: -21px; }
+    body.pfr-track .trk-totals::before { left: -25px; }
+    body.pfr-track .trk-totals::after { right: -25px; }
     body.pfr-track .trk-tot { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--pfr-muted); padding: 2px 0; }
-    body.pfr-track .trk-tot.is-total { font-size: 15px; font-weight: 800; color: var(--pfr-purple); margin-top: 4px; }
+    body.pfr-track .trk-total-block {
+      margin-top: 8px; padding: 10px 12px; border-radius: 14px;
+      background: var(--pfr-purple-soft); color: var(--pfr-purple);
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-size: 13px; font-weight: 800;
+    }
+    body.pfr-track .trk-total-block span:last-child { font-size: 18px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
 
     /* Address / pay / feedback */
     body.pfr-track .trk-addr {
@@ -384,8 +514,10 @@
     @media (prefers-reduced-motion: reduce) {
       body.pfr-track .trk-skel-bar, body.pfr-track .trk-skel-hero, body.pfr-track .trk-skel-line,
       body.pfr-track .trk-step.is-current .trk-dot, body.pfr-track .trk-step.is-fresh .trk-dot,
-      body.pfr-track .trk-link.is-fresh::after, body.pfr-track .trk-live i,
+      body.pfr-track .trk-link.is-fresh::after, body.pfr-track .trk-link.is-fresh::before,
+      body.pfr-track .trk-live i, body.pfr-track #orderRoot::before, body.pfr-track .trk-hero::before,
       body.pfr-track .trk-arrived-icon::after, body.pfr-track .live-rider::before { animation: none; }
+      body.pfr-track #orderRoot::before, body.pfr-track .trk-eta-bar > i { transition: none; }
       .live-panel, .live-chev { transition: none; }
     }
   </style>
@@ -425,7 +557,7 @@
     </div>
   </div>
 
-  <main class="max-w-md mx-auto p-4 space-y-3">
+  <main class="trk-frame max-w-md mx-auto p-4 space-y-3">
     <div id="orderRoot" class="glass p-5 space-y-4">
       <div class="trk-skel" aria-hidden="true">
         <div class="trk-skel-bar"></div>
@@ -557,6 +689,29 @@
       return { emoji: '📝', title: 'Order received', body: window.isPickupOrder && window.isPickupOrder(order) ? ('Order number ' + escapeHtml(order.orderId || '') + ' · shop එකට ඇවිත් ගන්න.') : 'Shop එකට ඇණවුම ආවා. Confirm වෙනකම් ඉන්න.', tone: 'from-purple-700 to-violet-950' };
     }
 
+    function trackMood(order) {
+      const st = order.status;
+      const flags = window.orderTrackerFlags(order) || {};
+      if (st === 'Cancelled' || st === 'Rejected') return 'bad';
+      if (st === 'PendingPayment') return 'wait';
+      if (isDone(order)) return 'done';
+      if (st === 'Ready') return 'ready';
+      if (flags.delivery) return 'delivery';
+      if (flags.kitchen && !flags.ready) return 'kitchen';
+      return 'received';
+    }
+
+    function trackProgressPct(order) {
+      const doorstep = window.isDoorstepOrder(order);
+      const flags = window.orderTrackerFlags(order) || {};
+      const ons = doorstep
+        ? [flags.ordered, flags.kitchen, flags.ready, flags.delivery, flags.delivered]
+        : [flags.ordered, flags.kitchen, flags.ready, flags.delivered || order.status === 'PickedUp'];
+      let last = 0;
+      ons.forEach(function (on, i) { if (on) last = i; });
+      return ons.length > 1 ? Math.round((last / (ons.length - 1)) * 100) : 0;
+    }
+
     function tracker(order, changed) {
       const doorstep = window.isDoorstepOrder(order);
       const flags = window.orderTrackerFlags(order) || {};
@@ -577,8 +732,7 @@
           ];
       let last = 0;
       steps.forEach(function (s, i) { if (s.on) last = i; });
-      const pct = steps.length > 1 ? (last / (steps.length - 1)) * 100 : 0;
-      void pct;
+      const pct = trackProgressPct(order);
       const parts = [];
       steps.forEach(function (s, i) {
         if (i) {
@@ -597,7 +751,7 @@
       });
       const currentLabel = steps[last] ? steps[last].label : '';
       const caption = cancelled ? 'Order closed' : ('Step ' + (last + 1) + ' of ' + steps.length + ' · ' + currentLabel);
-      return '<div class="trk-steps" data-count="' + steps.length + '" data-cancelled="' + (cancelled ? '1' : '0') + '">' +
+      return '<div class="trk-steps" data-count="' + steps.length + '" data-cancelled="' + (cancelled ? '1' : '0') + '" style="--trk-p:' + pct + '%">' +
         parts.join('') + '</div><p class="trk-caption">' + caption + '</p>';
     }
 
@@ -667,6 +821,8 @@
         ? '<div class="trk-eta-sub">Ready by ' + new Date(order.readyTimestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + '</div>'
         : '';
       const changed = prevStatus && prevStatus !== order.status;
+      const mood = trackMood(order);
+      const pct = trackProgressPct(order);
       const veh = order.deliveryOption === 'Pick up by PickMe Driver'
         ? '<div class="trk-veh space-y-1"><label class="text-[10px] font-black text-purple-950">PickMe vehicle</label><div class="flex gap-1.5"><input id="vehNo" value="' + escapeHtml(order.vehicleNumber || '') + '" class="flex-grow border rounded-xl px-2 py-1 text-xs font-black uppercase"><button type="button" onclick="saveVeh()" class="bg-purple-900 text-white px-3 py-1 rounded-xl text-xs font-black">Save</button></div></div>'
         : '';
@@ -680,6 +836,7 @@
         '<div class="trk-eta" data-state="' + etaState + '">' +
           '<div class="trk-eta-head"><span class="trk-eta-label">Estimated ready</span><span class="trk-live"><i></i>' + etaBadge + '</span></div>' +
           '<div id="readyClock" class="trk-eta-clock">—</div>' +
+          '<div class="trk-eta-bar" aria-hidden="true"><i style="width:' + pct + '%"></i></div>' +
           readyBy +
         '</div>';
 
@@ -691,21 +848,23 @@
             '<span class="trk-status" data-tone="' + tone + '">' + escapeHtml(order.status) + '</span>' +
             '<button type="button" onclick="openChat()" class="trk-chat relative"><i class="fa-solid fa-comment-dots"></i> Chat' + window.chatBadgeHtml(orderKey, window.chatWatch(orderKey, order.chats, 'customer', chatDrawerOpen())) + '</button>' +
           '</div></div>' +
+        '<div class="trk-stage" data-mood="' + mood + '">' +
         '<div class="trk-hero bg-gradient-to-br ' + h.tone + '">' +
           '<div class="trk-hero-emoji">' + h.emoji + '</div>' +
           '<div class="trk-hero-title">' + h.title + '</div>' +
           '<p class="trk-hero-body">' + h.body + '</p>' +
         '</div>' +
         etaCard +
+        '</div>' +
         tracker(order, changed) +
         (addr ? '<div class="trk-addr"><i class="fa-solid fa-house"></i><div>' + escapeHtml(addr) + (km ? '<div class="trk-km">' + escapeHtml(km) + '</div>' : '') + '</div></div>' : '') +
         '<div class="trk-receipt"><div class="trk-receipt-head"><div><div class="trk-receipt-kicker">Receipt</div><div class="trk-receipt-id">' + escapeHtml(order.orderId || '') + '</div></div>' +
           (order.deliveryOption ? '<span class="trk-receipt-type">' + escapeHtml(order.deliveryOption) + '</span>' : '') +
-        '</div>' + items +
+        '</div><div class="trk-receipt-body">' + items + '</div>' +
         '<div class="trk-totals">' +
           '<div class="trk-tot"><span>Food</span><span>Rs. ' + (order.foodTotal || 0).toLocaleString() + '</span></div>' +
           '<div class="trk-tot"><span>Delivery</span><span>Rs. ' + (order.deliveryFee || 0).toLocaleString() + '</span></div>' +
-          '<div class="trk-tot is-total"><span>Total</span><span>Rs. ' + (order.total || 0).toLocaleString() + '</span></div>' +
+          '<div class="trk-total-block"><span>Total</span><span>Rs. ' + (order.total || 0).toLocaleString() + '</span></div>' +
         '</div></div>' + veh +
         paymentHtml(order) + feedbackHtml(order) + cancelBtn + doneBtns;
 
