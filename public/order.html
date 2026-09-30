@@ -19,21 +19,39 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap">
   <style>
-    body { background: radial-gradient(1200px 600px at 50% -10%, #5b21b6 0%, #0f172a 42%, #020617 100%); }
-    .glass { background: rgba(255,255,255,.96); backdrop-filter: blur(12px); }
-    .rail { height: 4px; background: #e2e8f0; border-radius: 99px; }
-    .rail > i { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, #34d399, #7c3aed); transition: width .5s ease; }
-    .dot-now { animation: pulseDot 1.6s ease-in-out infinite; }
-    @keyframes pulseDot { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(88,28,135,.45); } 50% { transform: scale(1.08); box-shadow: 0 0 0 8px rgba(88,28,135,0); } }
-    .hero-glow { box-shadow: 0 18px 40px rgba(88,28,135,.28); }
+    body.pfr-track {
+      --pfr-purple: #3b0764;
+      --pfr-purple-2: #5b21b6;
+      --pfr-purple-soft: #f5f3ff;
+      --pfr-amber: #fbbf24;
+      --pfr-ink: #0f172a;
+      --pfr-muted: #64748b;
+      --pfr-line: #e8e5f0;
+      --pfr-radius: 22px;
+      --pfr-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px -14px rgba(59, 7, 100, .28);
+      background: #f8fafc;
+      color: var(--pfr-ink);
+      overflow-x: hidden;
+      font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    body.pfr-track .glass {
+      background: #fff;
+      border: 1px solid var(--pfr-line);
+      border-radius: var(--pfr-radius);
+      box-shadow: var(--pfr-shadow);
+    }
     #chatDrawer.hidden, #arrivedAlertBox.hidden, #alertBanner.hidden, #liveMapCard.hidden { display: none !important; }
     .live-panel { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s ease; }
     #liveMapCard.is-open .live-panel { grid-template-rows: 1fr; }
     .live-panel > div { overflow: hidden; min-height: 0; }
     .live-chev { transition: transform .3s ease; }
     #liveMapCard.is-open .live-chev { transform: rotate(180deg); }
-    #liveMap { height: 240px; position: relative; z-index: 0; isolation: isolate; }
+    #liveMap { height: 240px; position: relative; z-index: 0; isolation: isolate; border-radius: 18px; }
     .live-pin { background: transparent; border: 0; }
     .live-badge { width: 34px; height: 34px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 17px; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(15,23,42,.35); }
     .live-rider { position: relative; width: 44px; height: 44px; }
@@ -42,45 +60,389 @@
     .live-rider-dir { position: absolute; inset: 0; transition: transform .4s ease; display: none; }
     .live-rider-dir::after { content: ''; position: absolute; left: 50%; top: -6px; transform: translateX(-50%); border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 11px solid #0284c7; }
     @keyframes livePulse { 0% { transform: scale(.7); opacity: .9; } 100% { transform: scale(1.5); opacity: 0; } }
+
+    /* Header */
+    body.pfr-track .trk-header {
+      position: sticky; top: 0; z-index: 30; color: #fff;
+      background: linear-gradient(180deg, rgba(46, 16, 101, .97) 0%, rgba(59, 7, 100, .96) 100%);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 10px 24px -18px rgba(15, 23, 42, .8);
+    }
+    body.pfr-track .trk-header-inner {
+      max-width: 28rem; margin: 0 auto; padding: 10px 16px;
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    }
+    body.pfr-track .trk-header-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    body.pfr-track .trk-header-logo {
+      width: 40px; height: 40px; border-radius: 9999px; border: 2px solid var(--pfr-amber);
+      object-fit: cover; flex-shrink: 0; box-shadow: 0 4px 12px -4px rgba(251, 191, 36, .6);
+    }
+    body.pfr-track .trk-header-title { font-size: 13px; font-weight: 800; letter-spacing: -.01em; line-height: 1.15; }
+    body.pfr-track .trk-header-sub { font-size: 11px; font-weight: 700; color: #fcd34d; }
+    body.pfr-track .trk-menu-pill {
+      display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px;
+      border-radius: 9999px; font-size: 11px; font-weight: 800; color: #fff;
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18);
+    }
+
+    /* Alerts */
+    body.pfr-track .trk-arrived {
+      display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+      border-radius: 20px; background: linear-gradient(135deg, #10b981, #047857); color: #fff;
+      box-shadow: 0 12px 28px -14px rgba(4, 120, 87, .7);
+    }
+    body.pfr-track .trk-arrived-icon {
+      position: relative; width: 42px; height: 42px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 14px; background: rgba(255,255,255,.18); font-size: 18px;
+    }
+    body.pfr-track .trk-arrived-icon::after {
+      content: ''; position: absolute; inset: -4px; border-radius: 16px;
+      border: 2px solid rgba(255,255,255,.45); animation: trkPulse 1.8s ease-out infinite;
+    }
+    body.pfr-track .trk-arrived-ok {
+      min-height: 36px; padding: 0 14px; border-radius: 12px; background: #064e3b;
+      color: #fff; font-size: 12px; font-weight: 800;
+    }
+    body.pfr-track .trk-alert {
+      display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px;
+      border-radius: 18px; background: #fde68a; color: #78350f;
+      box-shadow: var(--pfr-shadow);
+    }
+    body.pfr-track .trk-alert-bell {
+      width: 32px; height: 32px; flex-shrink: 0; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: #f59e0b; color: #fff; font-size: 13px;
+    }
+    body.pfr-track .trk-alert-skip {
+      min-height: 32px; padding: 0 12px; border-radius: 10px; background: #78350f;
+      color: #fef3c7; font-size: 11px; font-weight: 800; flex-shrink: 0;
+    }
+
+    /* Skeleton */
+    body.pfr-track .trk-skel { display: flex; flex-direction: column; gap: 14px; padding: 4px 0 8px; }
+    body.pfr-track .trk-skel-bar, body.pfr-track .trk-skel-hero, body.pfr-track .trk-skel-line {
+      background: linear-gradient(90deg, #f1f5f9 0%, #e9e4f5 50%, #f1f5f9 100%);
+      background-size: 200% 100%; animation: trkShimmer 1.4s ease infinite; border-radius: 12px;
+    }
+    body.pfr-track .trk-skel-bar { height: 18px; width: 42%; }
+    body.pfr-track .trk-skel-hero { height: 88px; width: 100%; border-radius: 18px; }
+    body.pfr-track .trk-skel-steps { display: flex; justify-content: space-between; padding: 6px 8px; }
+    body.pfr-track .trk-skel-dot { width: 36px; height: 36px; border-radius: 999px; background: #f1f5f9; }
+    body.pfr-track .trk-skel-line { height: 12px; width: 100%; }
+    body.pfr-track .trk-skel-line.is-short { width: 62%; }
+    @keyframes trkShimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+    /* Top row */
+    body.pfr-track .trk-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+    body.pfr-track .trk-kicker { font-size: 10px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: #6d28d9; }
+    body.pfr-track .trk-pb { font-size: 28px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; color: var(--pfr-ink); }
+    body.pfr-track .trk-top-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    body.pfr-track .trk-status {
+      display: inline-flex; align-items: center; height: 26px; padding: 0 10px;
+      border-radius: 9999px; font-size: 10px; font-weight: 800; letter-spacing: .02em;
+      background: #fef3c7; color: #92400e;
+    }
+    body.pfr-track .trk-status[data-tone="ready"] { background: #059669; color: #fff; }
+    body.pfr-track .trk-status[data-tone="done"] { background: #d1fae5; color: #065f46; }
+    body.pfr-track .trk-status[data-tone="bad"] { background: #ffe4e6; color: #9f1239; }
+    body.pfr-track .trk-status[data-tone="wait"] { background: #fef3c7; color: #92400e; }
+    body.pfr-track .trk-chat {
+      position: relative; display: inline-flex; align-items: center; gap: 6px;
+      min-height: 36px; padding: 0 14px; border-radius: 9999px;
+      background: var(--pfr-purple); color: #fff; font-size: 12px; font-weight: 800;
+    }
+    body.pfr-track .pfr-chat-badge { top: -6px; right: -6px; }
+
+    /* Hero */
+    body.pfr-track .trk-hero {
+      position: relative; overflow: hidden; border-radius: var(--pfr-radius);
+      padding: 16px 16px 15px; color: #fff;
+      box-shadow: 0 16px 32px -18px rgba(59, 7, 100, .55);
+    }
+    body.pfr-track .trk-hero::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background: linear-gradient(180deg, rgba(255,255,255,.14) 0%, rgba(255,255,255,0) 42%);
+    }
+    body.pfr-track .trk-hero-emoji {
+      width: 48px; height: 48px; border-radius: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; background: rgba(255,255,255,.16); backdrop-filter: blur(8px);
+    }
+    body.pfr-track .trk-hero-title { font-size: 18px; font-weight: 800; letter-spacing: -.02em; margin-top: 10px; }
+    body.pfr-track .trk-hero-body { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.9); margin-top: 4px; line-height: 1.45; }
+
+    /* Countdown */
+    body.pfr-track .trk-eta {
+      padding: 14px 16px 16px; border-radius: 20px; text-align: center;
+      background: linear-gradient(180deg, #faf5ff 0%, #f5f3ff 100%);
+      border: 1px solid #ede9fe;
+    }
+    body.pfr-track .trk-eta[data-state="ready"] { background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%); border-color: #a7f3d0; }
+    body.pfr-track .trk-eta[data-state="waiting"] { background: #f8fafc; border-color: var(--pfr-line); }
+    body.pfr-track .trk-eta-head { display: flex; align-items: center; justify-content: center; gap: 8px; }
+    body.pfr-track .trk-eta-label { font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--pfr-muted); }
+    body.pfr-track .trk-live {
+      display: inline-flex; align-items: center; gap: 5px; height: 18px; padding: 0 8px;
+      border-radius: 9999px; background: #fff; color: #e11d48; font-size: 9px; font-weight: 800; letter-spacing: .08em;
+      border: 1px solid #fecdd3;
+    }
+    body.pfr-track .trk-live i {
+      width: 6px; height: 6px; border-radius: 999px; background: #e11d48;
+      animation: trkPulseDot 1.4s ease-in-out infinite;
+    }
+    body.pfr-track .trk-eta[data-state="ready"] .trk-live { color: #047857; border-color: #a7f3d0; }
+    body.pfr-track .trk-eta[data-state="ready"] .trk-live i { background: #10b981; animation: none; }
+    body.pfr-track .trk-eta[data-state="waiting"] .trk-live { color: var(--pfr-muted); border-color: var(--pfr-line); }
+    body.pfr-track .trk-eta[data-state="waiting"] .trk-live i { background: #94a3b8; animation: none; }
+    body.pfr-track .trk-eta-clock {
+      font-size: 40px; font-weight: 800; letter-spacing: -.04em; line-height: 1.15;
+      color: var(--pfr-purple); margin-top: 4px; font-variant-numeric: tabular-nums;
+    }
+    body.pfr-track .trk-eta[data-state="ready"] .trk-eta-clock { color: #047857; }
+    body.pfr-track .trk-eta-sub { font-size: 12px; font-weight: 700; color: var(--pfr-muted); margin-top: 2px; }
+    @keyframes trkPulseDot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.7); } }
+    @keyframes trkPulse { 0% { transform: scale(.92); opacity: .8; } 100% { transform: scale(1.25); opacity: 0; } }
+
+    /* Stepper */
+    body.pfr-track .trk-steps {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      padding: 4px 0 2px;
+    }
+    body.pfr-track .trk-step { flex: 0 0 auto; width: 52px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    body.pfr-track .trk-dot {
+      position: relative; width: 36px; height: 36px; border-radius: 999px;
+      display: flex; align-items: center; justify-content: center; font-size: 15px;
+      background: #fff; color: #94a3b8; border: 1.5px solid #e2e8f0; z-index: 1;
+    }
+    body.pfr-track .trk-step.is-done .trk-dot { background: #10b981; color: #fff; border-color: #10b981; }
+    body.pfr-track .trk-step.is-current .trk-dot {
+      background: var(--pfr-purple); color: #fff; border-color: var(--pfr-purple);
+      box-shadow: 0 0 0 6px rgba(91, 33, 182, .16);
+      animation: trkDotGlow 1.8s ease-in-out infinite;
+    }
+    body.pfr-track .trk-step.is-fresh .trk-dot { animation: trkPop .45s ease; }
+    body.pfr-track .trk-label { margin-top: 6px; font-size: 10px; font-weight: 800; color: #94a3b8; line-height: 1.2; }
+    body.pfr-track .trk-si { font-size: 8px; font-weight: 700; color: #cbd5e1; }
+    body.pfr-track .trk-step.is-done .trk-label { color: #047857; }
+    body.pfr-track .trk-step.is-current .trk-label { color: var(--pfr-purple); }
+    body.pfr-track .trk-link {
+      flex: 1 1 0; height: 4px; margin: 16px 2px 0; border-radius: 99px;
+      background: #e2e8f0; position: relative; overflow: hidden; align-self: flex-start;
+    }
+    body.pfr-track .trk-link::after {
+      content: ''; position: absolute; inset: 0; border-radius: inherit;
+      background: linear-gradient(90deg, #34d399, #7c3aed); transform: scaleX(0); transform-origin: left;
+    }
+    body.pfr-track .trk-link.is-done::after { transform: scaleX(1); }
+    body.pfr-track .trk-link.is-fresh::after { animation: trkFill .45s ease forwards; }
+    body.pfr-track .trk-steps[data-cancelled="1"] { opacity: .55; }
+    body.pfr-track .trk-steps[data-cancelled="1"]::after {
+      content: ''; position: absolute; left: 18px; right: 18px; top: 22px; height: 2px;
+      background: #fda4af; pointer-events: none;
+    }
+    body.pfr-track .trk-steps { position: relative; }
+    body.pfr-track .trk-steps[data-count="5"] .trk-step { width: 44px; }
+    body.pfr-track .trk-steps[data-count="5"] .trk-dot { width: 32px; height: 32px; font-size: 13px; }
+    body.pfr-track .trk-caption { text-align: center; font-size: 11px; font-weight: 700; color: var(--pfr-muted); margin-top: 6px; }
+    @keyframes trkDotGlow {
+      0%,100% { box-shadow: 0 0 0 4px rgba(91, 33, 182, .18); }
+      50% { box-shadow: 0 0 0 8px rgba(91, 33, 182, .08); }
+    }
+    @keyframes trkPop { 0% { transform: scale(.7); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+    @keyframes trkFill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+    /* Receipt */
+    body.pfr-track .trk-receipt {
+      background: #fff; border: 1px solid var(--pfr-line); border-radius: 18px; padding: 14px 14px 12px;
+      position: relative; overflow: hidden;
+    }
+    body.pfr-track .trk-receipt-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 10px; }
+    body.pfr-track .trk-receipt-kicker { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--pfr-muted); }
+    body.pfr-track .trk-receipt-id { font-size: 13px; font-weight: 800; color: var(--pfr-ink); }
+    body.pfr-track .trk-receipt-type { font-size: 10px; font-weight: 700; color: #6d28d9; background: var(--pfr-purple-soft); border-radius: 999px; padding: 3px 8px; }
+    body.pfr-track .trk-item { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; padding: 7px 0; }
+    body.pfr-track .trk-item-left { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+    body.pfr-track .trk-qty {
+      min-width: 28px; height: 22px; padding: 0 6px; border-radius: 8px;
+      background: var(--pfr-purple-soft); color: var(--pfr-purple); font-size: 10px; font-weight: 800;
+      display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    body.pfr-track .trk-item-name { font-size: 13px; font-weight: 700; color: var(--pfr-ink); line-height: 1.35; }
+    body.pfr-track .trk-item-price { font-size: 13px; font-weight: 800; color: var(--pfr-ink); white-space: nowrap; }
+    body.pfr-track .trk-item-note { font-size: 11px; font-weight: 700; color: #92400e; margin: -2px 0 4px 36px; }
+    body.pfr-track .trk-totals {
+      margin-top: 6px; padding-top: 10px; border-top: 1.5px dashed #d8d2e6;
+      position: relative;
+    }
+    body.pfr-track .trk-totals::before, body.pfr-track .trk-totals::after {
+      content: ''; position: absolute; top: -7px; width: 14px; height: 14px; border-radius: 999px;
+      background: #f8fafc; border: 1px solid var(--pfr-line);
+    }
+    body.pfr-track .trk-totals::before { left: -21px; }
+    body.pfr-track .trk-totals::after { right: -21px; }
+    body.pfr-track .trk-tot { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: var(--pfr-muted); padding: 2px 0; }
+    body.pfr-track .trk-tot.is-total { font-size: 15px; font-weight: 800; color: var(--pfr-purple); margin-top: 4px; }
+
+    /* Address / pay / feedback */
+    body.pfr-track .trk-addr {
+      display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px;
+      border-radius: 16px; background: #f8fafc; border: 1px solid var(--pfr-line);
+      font-size: 12px; font-weight: 700; color: var(--pfr-ink);
+    }
+    body.pfr-track .trk-addr i { color: #059669; margin-top: 2px; }
+    body.pfr-track .trk-km { color: #047857; font-weight: 800; margin-top: 4px; font-size: 11px; }
+    body.pfr-track .trk-pay, body.pfr-track .trk-veh, body.pfr-track .trk-fb {
+      padding: 14px; border-radius: 18px; border: 1px solid;
+    }
+    body.pfr-track .trk-pay.is-sky { background: #f0f9ff; border-color: #bae6fd; color: #0c4a6e; }
+    body.pfr-track .trk-pay.is-amber { background: #fffbeb; border-color: #fde68a; color: #78350f; }
+    body.pfr-track .trk-veh { background: var(--pfr-purple-soft); border-color: #ddd6fe; }
+    body.pfr-track .trk-fb { background: #fff; border-color: #a7f3d0; }
+    body.pfr-track .trk-fb.is-done { background: #ecfdf5; border-color: #a7f3d0; text-align: center; }
+    body.pfr-track #starRow { display: flex; gap: 4px; }
+    body.pfr-track #starRow .fb-star { font-size: 26px; line-height: 1; min-height: 36px; min-width: 32px; }
+
+    /* Actions */
+    body.pfr-track .trk-danger {
+      padding: 14px; border-radius: 18px; background: #fff1f2; border: 1px solid #fecdd3;
+    }
+    body.pfr-track .trk-danger-hint { font-size: 12px; font-weight: 700; color: #9f1239; margin-bottom: 10px; display: flex; gap: 8px; align-items: flex-start; }
+    body.pfr-track .trk-cancel {
+      width: 100%; min-height: 44px; border-radius: 14px; font-size: 13px; font-weight: 800;
+      color: #be123c; background: #fff; border: 1.5px solid #fb7185;
+    }
+    body.pfr-track .trk-cancel:active { background: #e11d48; color: #fff; }
+    body.pfr-track .trk-lock { font-size: 11px; font-weight: 700; color: var(--pfr-muted); text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    body.pfr-track .trk-cta {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; min-height: 48px; border-radius: 16px; font-size: 14px; font-weight: 800;
+      background: var(--pfr-amber); color: #3b0764; box-shadow: 0 8px 18px -10px rgba(251, 191, 36, .8);
+    }
+    body.pfr-track .trk-cta.is-purple { background: var(--pfr-purple); color: #fff; box-shadow: none; }
+    body.pfr-track .trk-empty { text-align: center; padding: 28px 8px 8px; }
+    body.pfr-track .trk-empty p { font-size: 13px; font-weight: 700; color: var(--pfr-muted); margin-bottom: 16px; }
+    body.pfr-track .trk-empty p.is-bad { color: #be123c; }
+
+    body.pfr-track button, body.pfr-track a.trk-cta, body.pfr-track a.trk-menu-pill { -webkit-tap-highlight-color: transparent; }
+    body.pfr-track .trk-chat:active, body.pfr-track .trk-cta:active, body.pfr-track .trk-menu-pill:active,
+    body.pfr-track .trk-arrived-ok:active, body.pfr-track .trk-alert-skip:active { transform: scale(.97); }
+    body.pfr-track .trk-pay button, body.pfr-track .trk-veh button, body.pfr-track .trk-fb button {
+      min-height: 44px; border-radius: 14px; font-weight: 800; font-size: 12px;
+    }
+    body.pfr-track #vehNo, body.pfr-track #feedbackComment, body.pfr-track #slipInput {
+      border-radius: 12px;
+    }
+
+    /* Map + chat */
+    body.pfr-track #liveMapCard { overflow: hidden; }
+    body.pfr-track #trackRiderBtn { min-height: 72px; }
+    body.pfr-track #liveMapInfo {
+      font-size: 11px; font-weight: 800; color: #334155; border: 1px solid var(--pfr-line);
+      border-radius: 16px; padding: 10px 12px;
+    }
+    body.pfr-track #chatDrawer {
+      display: flex; align-items: flex-end; justify-content: center;
+    }
+    @media (min-width: 640px) {
+      body.pfr-track #chatDrawer { align-items: center; padding: 16px; }
+    }
+    body.pfr-track .trk-chat-sheet {
+      background: #fff; width: 100%; max-width: 28rem; border-radius: 24px 24px 0 0;
+      box-shadow: 0 -18px 40px -20px rgba(15,23,42,.45); display: flex; flex-direction: column;
+      height: 80vh; max-height: 80vh; flex-shrink: 0;
+    }
+    @media (min-width: 640px) {
+      body.pfr-track .trk-chat-sheet { border-radius: 24px; height: 520px; }
+    }
+    body.pfr-track .trk-chat-head {
+      padding: 14px 16px; color: #fff; display: flex; justify-content: space-between; align-items: center;
+      border-radius: 24px 24px 0 0;
+      background: linear-gradient(180deg, #4c1d95 0%, #3b0764 100%);
+    }
+    body.pfr-track #chatTitle { font-size: 13px; font-weight: 800; }
+    body.pfr-track .trk-chat-close { min-width: 36px; min-height: 36px; font-weight: 800; }
+    body.pfr-track #chatBox { flex-grow: 1; min-height: 0; padding: 16px; overflow-y: auto; background: #f8fafc; font-size: 12px; }
+    body.pfr-track .trk-chat-foot { padding: 10px 12px 14px; background: #fff; border-top: 1px solid var(--pfr-line); display: flex; gap: 8px; }
+    body.pfr-track #chatInput {
+      flex-grow: 1; border: 1px solid var(--pfr-line); border-radius: 9999px;
+      padding: 10px 14px; font-size: 13px; outline: none; background: #f8fafc; min-height: 44px;
+    }
+    body.pfr-track .trk-send {
+      min-width: 72px; min-height: 44px; border-radius: 9999px; background: var(--pfr-purple);
+      color: #fff; font-size: 13px; font-weight: 800; padding: 0 16px;
+    }
+
+    @media (max-width: 360px) {
+      body.pfr-track .trk-si { display: none; }
+      body.pfr-track .trk-label { font-size: 10px; }
+      body.pfr-track .trk-step { width: 44px; }
+      body.pfr-track .trk-dot { width: 32px; height: 32px; font-size: 13px; }
+      body.pfr-track .trk-pb { font-size: 24px; }
+      body.pfr-track .trk-eta-clock { font-size: 34px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body.pfr-track .trk-skel-bar, body.pfr-track .trk-skel-hero, body.pfr-track .trk-skel-line,
+      body.pfr-track .trk-step.is-current .trk-dot, body.pfr-track .trk-step.is-fresh .trk-dot,
+      body.pfr-track .trk-link.is-fresh::after, body.pfr-track .trk-live i,
+      body.pfr-track .trk-arrived-icon::after, body.pfr-track .live-rider::before { animation: none; }
+      .live-panel, .live-chev { transition: none; }
+    }
   </style>
 </head>
-<body class="min-h-screen font-sans text-slate-800 pb-16">
-  <header class="max-w-md mx-auto px-4 pt-4 pb-2 flex justify-between items-center text-white">
-    <a href="/" class="flex items-center gap-2">
-      <img src="LOGO NEW.jpg" alt="Peoples Family Restaurant" class="w-11 h-11 rounded-full border-2 border-amber-400 object-cover">
-      <div>
-        <div class="text-xs font-black tracking-wide">Peoples Family Restaurant</div>
-        <div class="text-[10px] text-amber-200 font-bold">Live order tracker</div>
-      </div>
-    </a>
-    <a href="/" class="bg-white/10 border border-white/20 px-3 py-1.5 rounded-xl text-[10px] font-black">← Menu</a>
+<body class="pfr-track min-h-screen font-sans pb-16">
+  <header class="trk-header">
+    <div class="trk-header-inner">
+      <a href="/" class="trk-header-brand">
+        <img src="LOGO NEW.jpg" alt="Peoples Family Restaurant" class="trk-header-logo">
+        <div>
+          <div class="trk-header-title">Peoples Family Restaurant</div>
+          <div class="trk-header-sub">Live order tracker</div>
+        </div>
+      </a>
+      <a href="/" class="trk-menu-pill"><i class="fa-solid fa-arrow-left"></i> Menu</a>
+    </div>
   </header>
 
-  <div id="arrivedAlertBox" class="hidden max-w-md mx-auto mt-2 px-4">
-    <div class="bg-emerald-500 text-white p-4 rounded-2xl shadow-xl flex items-center justify-between gap-2">
-      <div>
-        <div class="font-black text-sm">🛵 Rider arrived</div>
-        <p class="text-[11px] font-bold">ගෙදර ළඟයි — doorstep එකට එන්න.</p>
+  <div id="arrivedAlertBox" class="hidden max-w-md mx-auto mt-3 px-4">
+    <div class="trk-arrived">
+      <span class="trk-arrived-icon" aria-hidden="true"><i class="fa-solid fa-motorcycle"></i></span>
+      <div class="min-w-0 flex-1">
+        <div class="font-black text-sm">Rider arrived</div>
+        <p class="text-[11px] font-bold opacity-90">ගෙදර ළඟයි — doorstep එකට එන්න.</p>
       </div>
-      <button type="button" onclick="document.getElementById('arrivedAlertBox').classList.add('hidden')" class="bg-emerald-900 px-3 py-1 rounded-lg text-xs font-black">OK</button>
+      <button type="button" onclick="document.getElementById('arrivedAlertBox').classList.add('hidden')" class="trk-arrived-ok">OK</button>
     </div>
   </div>
 
-  <div id="alertBanner" class="hidden max-w-md mx-auto mt-2 px-4">
-    <div class="bg-amber-300 text-amber-950 p-3 rounded-2xl shadow flex items-start gap-2">
+  <div id="alertBanner" class="hidden max-w-md mx-auto mt-3 px-4">
+    <div class="trk-alert">
+      <span class="trk-alert-bell" aria-hidden="true"><i class="fa-solid fa-bell"></i></span>
       <button type="button" onclick="enableAlerts()" class="flex-1 text-left font-black text-[11px] leading-snug">
-        🔔 Alerts optional — kitchen / ready / delivery phone එකට එන්න ඕනේ නම් Allow කරන්න. නැත්නම් Skip.
+        Alerts optional — kitchen / ready / delivery phone එකට එන්න ඕනේ නම් Allow කරන්න. නැත්නම් Skip.
       </button>
-      <button type="button" onclick="skipAlerts()" class="shrink-0 bg-amber-950 text-amber-100 px-2.5 py-1 rounded-lg text-[10px] font-black">Skip</button>
+      <button type="button" onclick="skipAlerts()" class="trk-alert-skip">Skip</button>
     </div>
   </div>
 
   <main class="max-w-md mx-auto p-4 space-y-3">
-    <div id="orderRoot" class="glass rounded-[28px] shadow-2xl border border-white/70 p-5 space-y-4">
-      <p class="text-center text-slate-400 text-xs py-10 font-bold">Loading your order...</p>
+    <div id="orderRoot" class="glass p-5 space-y-4">
+      <div class="trk-skel" aria-hidden="true">
+        <div class="trk-skel-bar"></div>
+        <div class="trk-skel-hero"></div>
+        <div class="trk-skel-steps">
+          <div class="trk-skel-dot"></div>
+          <div class="trk-skel-dot"></div>
+          <div class="trk-skel-dot"></div>
+          <div class="trk-skel-dot"></div>
+        </div>
+        <div class="trk-skel-line"></div>
+        <div class="trk-skel-line is-short"></div>
+        <div class="trk-skel-line"></div>
+      </div>
     </div>
 
-    <div id="liveMapCard" class="hidden glass rounded-[28px] shadow-2xl border border-white/70 overflow-hidden">
+    <div id="liveMapCard" class="hidden glass overflow-hidden">
       <button id="trackRiderBtn" type="button" onclick="toggleTrackRider()" aria-expanded="false" aria-controls="liveMapPanel" class="w-full flex items-center gap-3 p-4 text-left">
         <span class="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-700 text-white text-xl flex items-center justify-center shrink-0 shadow-md">🛵</span>
         <span class="flex-1 min-w-0">
@@ -92,8 +454,8 @@
       <div id="liveMapPanel" class="live-panel">
         <div>
           <div class="px-4 pb-4 space-y-2">
-            <div id="liveMap" class="rounded-2xl border bg-slate-100 overflow-hidden"></div>
-            <div id="liveMapInfo" class="text-[11px] font-black text-slate-700 bg-slate-50 border rounded-2xl px-3 py-2">Waiting for rider location...</div>
+            <div id="liveMap" class="overflow-hidden bg-slate-100"></div>
+            <div id="liveMapInfo">Waiting for rider location...</div>
           </div>
         </div>
       </div>
@@ -101,15 +463,15 @@
   </main>
 
   <div id="chatDrawer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col h-[80vh] sm:h-[520px]">
-      <div class="p-4 bg-purple-950 text-white flex justify-between items-center rounded-t-3xl">
-        <h3 id="chatTitle" class="font-black text-xs">💬 Order chat · Cashier & Rider</h3>
-        <button type="button" onclick="toggleChat()" class="font-bold px-2">✕</button>
+    <div class="trk-chat-sheet">
+      <div class="trk-chat-head">
+        <h3 id="chatTitle">💬 Order chat · Cashier & Rider</h3>
+        <button type="button" onclick="toggleChat()" class="trk-chat-close">✕</button>
       </div>
-      <div id="chatBox" class="flex-grow p-4 overflow-y-auto space-y-3 bg-slate-50 text-xs"></div>
-      <div class="p-3 bg-white border-t flex gap-2">
-        <input id="chatInput" type="text" placeholder="Type to cashier & rider..." class="flex-grow border rounded-xl px-3 py-2 text-xs outline-none bg-slate-50" onkeypress="if(event.key==='Enter') sendChat()">
-        <button type="button" onclick="sendChat()" class="bg-purple-900 text-white px-4 py-2 rounded-xl text-xs font-black">Send</button>
+      <div id="chatBox" class="space-y-3"></div>
+      <div class="trk-chat-foot">
+        <input id="chatInput" type="text" placeholder="Type to cashier & rider..." onkeypress="if(event.key==='Enter') sendChat()">
+        <button type="button" onclick="sendChat()" class="trk-send">Send</button>
       </div>
     </div>
   </div>
@@ -195,9 +557,10 @@
       return { emoji: '📝', title: 'Order received', body: window.isPickupOrder && window.isPickupOrder(order) ? ('Order number ' + escapeHtml(order.orderId || '') + ' · shop එකට ඇවිත් ගන්න.') : 'Shop එකට ඇණවුම ආවා. Confirm වෙනකම් ඉන්න.', tone: 'from-purple-700 to-violet-950' };
     }
 
-    function tracker(order) {
+    function tracker(order, changed) {
       const doorstep = window.isDoorstepOrder(order);
       const flags = window.orderTrackerFlags(order) || {};
+      const cancelled = order.status === 'Cancelled' || order.status === 'Rejected';
       const steps = doorstep
         ? [
             { on: flags.ordered, icon: '📝', label: 'Ordered', si: 'ඇණවුම' },
@@ -215,17 +578,27 @@
       let last = 0;
       steps.forEach(function (s, i) { if (s.on) last = i; });
       const pct = steps.length > 1 ? (last / (steps.length - 1)) * 100 : 0;
-      return '<div class="relative pt-1 pb-1">' +
-        '<div class="rail mx-7 mt-[18px] absolute left-0 right-0"><i style="width:' + pct + '%"></i></div>' +
-        '<div class="relative flex justify-between">' + steps.map(function (s, i) {
-          const current = s.on && i === last;
-          const cls = current ? 'bg-purple-900 text-white dot-now' : (s.on ? 'bg-emerald-500 text-white' : 'bg-white text-slate-400 border border-slate-200');
-          return '<div class="flex-1 flex flex-col items-center text-center">' +
-            '<div class="w-9 h-9 rounded-full flex items-center justify-center text-sm z-10 ' + cls + '">' + s.icon + '</div>' +
-            '<div class="mt-1.5 text-[9px] font-black ' + (current ? 'text-purple-900' : (s.on ? 'text-emerald-700' : 'text-slate-400')) + '">' + s.label + '</div>' +
-            '<div class="text-[8px] font-bold text-slate-400">' + s.si + '</div>' +
-          '</div>';
-        }).join('') + '</div></div>';
+      void pct;
+      const parts = [];
+      steps.forEach(function (s, i) {
+        if (i) {
+          const linkDone = last >= i;
+          const linkFresh = changed && last === i;
+          parts.push('<span class="trk-link' + (linkDone ? ' is-done' : '') + (linkFresh ? ' is-fresh' : '') + '"></span>');
+        }
+        const current = s.on && i === last;
+        const done = s.on && i < last;
+        const cls = (current ? ' is-current' : '') + (done ? ' is-done' : '') + (current && changed ? ' is-fresh' : '');
+        parts.push('<div class="trk-step' + cls + '">' +
+          '<span class="trk-dot">' + s.icon + '</span>' +
+          '<span class="trk-label">' + s.label + '</span>' +
+          '<span class="trk-si">' + s.si + '</span>' +
+        '</div>');
+      });
+      const currentLabel = steps[last] ? steps[last].label : '';
+      const caption = cancelled ? 'Order closed' : ('Step ' + (last + 1) + ' of ' + steps.length + ' · ' + currentLabel);
+      return '<div class="trk-steps" data-count="' + steps.length + '" data-cancelled="' + (cancelled ? '1' : '0') + '">' +
+        parts.join('') + '</div><p class="trk-caption">' + caption + '</p>';
     }
 
     function canCancel(order) {
@@ -236,88 +609,104 @@
       const pay = window.normalizePayment(order);
       const terminal = ['PickedUp','Settled','Cancelled','Rejected'].indexOf(order.status) >= 0;
       if (pay.method === 'payhere' && pay.status !== 'paid' && !terminal) {
-        return '<div class="bg-sky-50 border border-sky-200 p-3 rounded-2xl space-y-2"><p class="text-[11px] font-black text-sky-950">PayHere — card / LankaQR එකෙන් ගෙවන්න. Paid උනාම kitchen start වෙනවා.</p><button type="button" onclick="payNowPayHere()" class="w-full bg-sky-700 text-white font-black py-2.5 rounded-xl text-[11px]">Pay now — PayHere</button></div>';
+        return '<div class="trk-pay is-sky space-y-2"><p class="text-[11px] font-black">PayHere — card / LankaQR එකෙන් ගෙවන්න. Paid උනාම kitchen start වෙනවා.</p><button type="button" onclick="payNowPayHere()" class="w-full bg-sky-700 text-white">Pay now — PayHere</button></div>';
       }
       if (pay.method === 'cash' && (order.status === 'Arrived' || order.status === 'Dispatched') && pay.status !== 'paid') {
-        return '<div class="bg-amber-50 border border-amber-200 p-3 rounded-2xl text-[11px] font-black text-amber-950">Rider ට cash ගෙවන්න. Rs. ' + (order.total || 0).toLocaleString() + '</div>';
+        return '<div class="trk-pay is-amber text-[11px] font-black">Rider ට cash ගෙවන්න. Rs. ' + (order.total || 0).toLocaleString() + '</div>';
       }
       if (!(pay.method === 'bank' && pay.status !== 'paid' && !terminal)) return '';
       const hint = pay.status === 'pending_verify' ? 'Slip එක cashier බලනවා.' : (pay.status === 'rejected' ? 'Slip reject උනා. ආයෙන් upload කරන්න.' : 'Bank slip එක දාන්න.');
-      const btn = pay.status === 'pending_verify' ? '' : '<input id="slipInput" type="file" accept="image/*" class="mt-2 block w-full text-[11px]"><button type="button" onclick="uploadSlip()" class="mt-2 w-full bg-purple-900 text-white font-black py-2 rounded-xl text-[11px]">Upload bank slip</button>';
-      return '<div class="bg-amber-50 border border-amber-200 p-3 rounded-2xl space-y-1"><p class="text-[11px] font-black text-amber-950">' + hint + '</p>' + btn + '</div>';
+      const btn = pay.status === 'pending_verify' ? '' : '<input id="slipInput" type="file" accept="image/*" class="mt-2 block w-full text-[11px]"><button type="button" onclick="uploadSlip()" class="mt-2 w-full bg-purple-900 text-white">Upload bank slip</button>';
+      return '<div class="trk-pay is-amber space-y-1"><p class="text-[11px] font-black">' + hint + '</p>' + btn + '</div>';
     }
 
     function feedbackHtml(order) {
       if (!isDone(order) || order.status === 'Cancelled' || order.status === 'Rejected') return '';
       if (order.feedback && order.feedback.stars) {
-        return '<div class="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl text-center"><div class="font-black text-emerald-900 text-sm">Thanks for the feedback</div><p class="text-[11px] font-bold text-emerald-800 mt-1">' + '★'.repeat(order.feedback.stars) + '☆'.repeat(5 - order.feedback.stars) + '</p></div>';
+        return '<div class="trk-fb is-done"><div class="font-black text-emerald-900 text-sm">Thanks for the feedback</div><p class="text-[11px] font-bold text-emerald-800 mt-1">' + '★'.repeat(order.feedback.stars) + '☆'.repeat(5 - order.feedback.stars) + '</p></div>';
       }
       if (order.feedbackSkipped) return '';
-      return '<div class="bg-white border border-emerald-200 p-4 rounded-2xl space-y-2">' +
+      return '<div class="trk-fb space-y-2">' +
         '<div class="font-black text-sm text-slate-900">How was Peoples Family Restaurant?</div>' +
         '<p class="text-[11px] font-bold text-slate-600">Delivery උනාට පස්සේ feedback එකක් දෙන්න.</p>' +
-        '<div class="flex gap-1" id="starRow">' +
+        '<div id="starRow">' +
           [1,2,3,4,5].map(function (n) { return '<button type="button" onclick="setFeedbackStars(' + n + ')" class="fb-star text-2xl text-slate-300">☆</button>'; }).join('') +
         '</div>' +
         '<textarea id="feedbackComment" maxlength="200" placeholder="Comment (optional)" class="w-full border rounded-xl p-2 text-[11px] h-14 resize-none bg-slate-50"></textarea>' +
         '<div class="flex gap-2">' +
-          '<button type="button" onclick="skipFeedback()" class="w-1/2 bg-slate-200 font-bold py-2 rounded-xl text-[11px]">Skip</button>' +
-          '<button type="button" onclick="submitFeedback()" class="w-1/2 bg-emerald-600 text-white font-black py-2 rounded-xl text-[11px]">Send feedback</button>' +
+          '<button type="button" onclick="skipFeedback()" class="w-1/2 bg-slate-200 font-bold">Skip</button>' +
+          '<button type="button" onclick="submitFeedback()" class="w-1/2 bg-emerald-600 text-white font-black">Send feedback</button>' +
         '</div></div>';
     }
 
     function render(order) {
       const root = document.getElementById('orderRoot');
       if (!order) {
-        root.innerHTML = '<p class="text-center text-slate-500 text-xs py-8 font-bold">Order එක හොයාගන්න බැහැ. Menu එකට ආපහු යන්න.</p><a href="/" class="block text-center bg-purple-900 text-white font-black py-2.5 rounded-xl text-xs">← Menu</a>';
+        root.innerHTML = '<div class="trk-empty"><p>Order එක හොයාගන්න බැහැ. Menu එකට ආපහු යන්න.</p><a href="/" class="trk-cta is-purple"><i class="fa-solid fa-arrow-left"></i> Menu</a></div>';
         syncLiveTracking(null);
         return;
       }
       if (verifiedUser && !isMine(order)) {
-        root.innerHTML = '<p class="text-center text-rose-700 text-xs py-8 font-black">මේ order එක ඔබේ phone එකට නෙවෙයි.</p><a href="/" class="block text-center bg-purple-900 text-white font-black py-2.5 rounded-xl text-xs">← Menu</a>';
+        root.innerHTML = '<div class="trk-empty"><p class="is-bad">මේ order එක ඔබේ phone එකට නෙවෙයි.</p><a href="/" class="trk-cta is-purple"><i class="fa-solid fa-arrow-left"></i> Menu</a></div>';
         syncLiveTracking(null);
         return;
       }
       const h = hero(order);
       const items = window.orderItemRows(order).map(function (i) {
-        return '<div class="flex justify-between py-1.5 text-xs"><span>' + escapeHtml(i.qty + 'x ' + i.name) + '</span><span class="font-black">Rs. ' + ((i.price * i.qty) || 0).toLocaleString() + '</span></div>' +
-          (i.note ? '<div class="text-[10px] text-amber-800 font-bold">📝 ' + escapeHtml(i.note) + '</div>' : '');
+        return '<div class="trk-item"><div class="trk-item-left"><span class="trk-qty">' + escapeHtml(String(i.qty)) + 'x</span><span class="trk-item-name">' + escapeHtml(i.name) + '</span></div><span class="trk-item-price">Rs. ' + ((i.price * i.qty) || 0).toLocaleString() + '</span></div>' +
+          (i.note ? '<div class="trk-item-note"><i class="fa-solid fa-note-sticky"></i> ' + escapeHtml(i.note) + '</div>' : '');
       }).join('');
       const addr = window.orderDeliveryAddress(order) || '';
       const km = window.orderDistanceLabel(order) || '';
       const ready = order.status === 'Ready';
+      const st = order.status;
+      const tone = ready ? 'ready' : ((st === 'Cancelled' || st === 'Rejected') ? 'bad' : (isDone(order) ? 'done' : 'wait'));
+      const etaState = ready ? 'ready' : ((st === 'PendingPayment' || st === 'Cancelled' || st === 'Rejected') ? 'waiting' : 'live');
+      const etaBadge = ready ? 'READY' : (etaState === 'waiting' ? 'WAIT' : 'LIVE');
+      const readyBy = order.readyTimestamp
+        ? '<div class="trk-eta-sub">Ready by ' + new Date(order.readyTimestamp).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + '</div>'
+        : '';
+      const changed = prevStatus && prevStatus !== order.status;
       const veh = order.deliveryOption === 'Pick up by PickMe Driver'
-        ? '<div class="bg-purple-50 p-3 rounded-2xl border space-y-1"><label class="text-[10px] font-black text-purple-950">🚗 PickMe vehicle</label><div class="flex gap-1.5"><input id="vehNo" value="' + escapeHtml(order.vehicleNumber || '') + '" class="flex-grow border rounded-xl px-2 py-1 text-xs font-black uppercase"><button type="button" onclick="saveVeh()" class="bg-purple-900 text-white px-3 py-1 rounded-xl text-xs font-black">Save</button></div></div>'
+        ? '<div class="trk-veh space-y-1"><label class="text-[10px] font-black text-purple-950">PickMe vehicle</label><div class="flex gap-1.5"><input id="vehNo" value="' + escapeHtml(order.vehicleNumber || '') + '" class="flex-grow border rounded-xl px-2 py-1 text-xs font-black uppercase"><button type="button" onclick="saveVeh()" class="bg-purple-900 text-white px-3 py-1 rounded-xl text-xs font-black">Save</button></div></div>'
         : '';
       const cancelBtn = canCancel(order)
-        ? '<button type="button" onclick="cancelOrder()" class="w-full bg-white border border-rose-300 text-rose-700 font-black py-2.5 rounded-xl text-xs">✕ Cancel this order</button>'
+        ? '<div class="trk-danger"><p class="trk-danger-hint"><i class="fa-solid fa-triangle-exclamation"></i> You can cancel only before the kitchen starts.</p><button type="button" onclick="cancelOrder()" class="trk-cancel">Cancel this order</button></div>'
         : (order.status !== 'Cancelled' && order.status !== 'Rejected' && !isDone(order)
-          ? '<p class="text-[10px] text-slate-500 font-bold text-center">Cashier / kitchen start කරලා. Cancel ඕනේ නම් shop එකට call කරන්න.</p>' : '');
+          ? '<p class="trk-lock"><i class="fa-solid fa-lock"></i> Cashier / kitchen start කරලා. Cancel ඕනේ නම් shop එකට call කරන්න.</p>' : '');
       const doneBtns = (isDone(order) || order.status === 'Cancelled' || order.status === 'Rejected')
-        ? '<a href="/" class="block text-center bg-purple-900 text-white font-black py-2.5 rounded-xl text-xs">New order →</a>' : '';
+        ? '<a href="/" class="trk-cta">New order <i class="fa-solid fa-arrow-right"></i></a>' : '';
+      const etaCard = isDone(order) ? '' :
+        '<div class="trk-eta" data-state="' + etaState + '">' +
+          '<div class="trk-eta-head"><span class="trk-eta-label">Estimated ready</span><span class="trk-live"><i></i>' + etaBadge + '</span></div>' +
+          '<div id="readyClock" class="trk-eta-clock">—</div>' +
+          readyBy +
+        '</div>';
 
       root.innerHTML =
-        '<div class="flex justify-between items-start gap-2">' +
-          '<div><div class="text-[10px] font-black uppercase tracking-[0.18em] text-purple-700">Order number</div>' +
-          '<div class="font-black text-3xl text-slate-900 tracking-tight">' + escapeHtml(order.orderId || '') + '</div></div>' +
-          '<div class="flex gap-2 items-center">' +
-            '<span class="px-2.5 py-1 rounded-full text-[10px] font-black ' + (ready ? 'bg-emerald-600 text-white animate-pulse' : (isDone(order) ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-900')) + '">' + escapeHtml(order.status) + '</span>' +
-            '<button type="button" onclick="openChat()" class="relative bg-purple-900 text-white px-3 py-1.5 rounded-xl text-[11px] font-black">💬 Chat' + window.chatBadgeHtml(orderKey, window.chatWatch(orderKey, order.chats, 'customer', chatDrawerOpen())) + '</button>' +
+        '<div class="trk-top">' +
+          '<div><div class="trk-kicker">Order number</div>' +
+          '<div class="trk-pb">' + escapeHtml(order.orderId || '') + '</div></div>' +
+          '<div class="trk-top-actions">' +
+            '<span class="trk-status" data-tone="' + tone + '">' + escapeHtml(order.status) + '</span>' +
+            '<button type="button" onclick="openChat()" class="trk-chat relative"><i class="fa-solid fa-comment-dots"></i> Chat' + window.chatBadgeHtml(orderKey, window.chatWatch(orderKey, order.chats, 'customer', chatDrawerOpen())) + '</button>' +
           '</div></div>' +
-        '<div class="rounded-3xl p-4 text-white bg-gradient-to-br ' + h.tone + ' hero-glow">' +
-          '<div class="text-3xl">' + h.emoji + '</div>' +
-          '<div class="font-black text-lg mt-1">' + h.title + '</div>' +
-          '<p class="text-[12px] font-bold text-white/90 mt-1 leading-snug">' + h.body + '</p>' +
+        '<div class="trk-hero bg-gradient-to-br ' + h.tone + '">' +
+          '<div class="trk-hero-emoji">' + h.emoji + '</div>' +
+          '<div class="trk-hero-title">' + h.title + '</div>' +
+          '<p class="trk-hero-body">' + h.body + '</p>' +
         '</div>' +
-        tracker(order) +
-        (addr ? '<div class="text-[11px] font-bold text-slate-700 bg-slate-50 border p-3 rounded-2xl">🏠 ' + escapeHtml(addr) + (km ? '<div class="text-emerald-800 font-black mt-1">📏 ' + escapeHtml(km) + '</div>' : '') + '</div>' : '') +
-        '<div class="bg-slate-50 rounded-2xl p-3"><div class="text-[10px] font-black uppercase text-slate-500 mb-1">Items</div>' + items +
-        '<div class="border-t mt-2 pt-2 space-y-1 text-[11px] font-bold text-slate-600">' +
-          '<div class="flex justify-between"><span>Food</span><span>Rs. ' + (order.foodTotal || 0).toLocaleString() + '</span></div>' +
-          '<div class="flex justify-between"><span>Delivery</span><span>Rs. ' + (order.deliveryFee || 0).toLocaleString() + '</span></div>' +
-          '<div class="flex justify-between font-black text-purple-950 text-sm"><span>Total</span><span>Rs. ' + (order.total || 0).toLocaleString() + '</span></div>' +
+        etaCard +
+        tracker(order, changed) +
+        (addr ? '<div class="trk-addr"><i class="fa-solid fa-house"></i><div>' + escapeHtml(addr) + (km ? '<div class="trk-km">' + escapeHtml(km) + '</div>' : '') + '</div></div>' : '') +
+        '<div class="trk-receipt"><div class="trk-receipt-head"><div><div class="trk-receipt-kicker">Receipt</div><div class="trk-receipt-id">' + escapeHtml(order.orderId || '') + '</div></div>' +
+          (order.deliveryOption ? '<span class="trk-receipt-type">' + escapeHtml(order.deliveryOption) + '</span>' : '') +
+        '</div>' + items +
+        '<div class="trk-totals">' +
+          '<div class="trk-tot"><span>Food</span><span>Rs. ' + (order.foodTotal || 0).toLocaleString() + '</span></div>' +
+          '<div class="trk-tot"><span>Delivery</span><span>Rs. ' + (order.deliveryFee || 0).toLocaleString() + '</span></div>' +
+          '<div class="trk-tot is-total"><span>Total</span><span>Rs. ' + (order.total || 0).toLocaleString() + '</span></div>' +
         '</div></div>' + veh +
-        (isDone(order) ? '' : '<div class="p-4 bg-gradient-to-br from-purple-50 to-violet-100 rounded-3xl text-center"><div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Estimated ready</div><div id="readyClock" class="text-4xl font-black text-purple-950 mt-1">—</div></div>') +
         paymentHtml(order) + feedbackHtml(order) + cancelBtn + doneBtns;
 
       document.getElementById('arrivedAlertBox').classList.toggle('hidden', order.status !== 'Arrived');
