@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <script src="js/firebase-config.js?v=60"></script>
+  <script src="js/firebase-config.js?v=61"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -1059,7 +1059,7 @@
           patch.payment = window.paymentStaffPatch(order, 'paid', 'cashier');
         }
       }
-      db.ref('orders/' + key).update(patch).catch(function (err) {
+      window.applyOrderFields(db, key, patch, order).catch(function (err) {
         alert('Update failed. ' + ((err && (err.message || err.code)) || 'Try again'));
       });
     }
@@ -1091,12 +1091,12 @@
         return alert('Rider තාම customer ට දීලා cash collect කරලා නැහැ. Cashier confirm කරන්න බෑ.');
       }
       if (!confirm('Rider ගෙන් cash Rs. ' + (order.total || 0).toLocaleString() + ' ලැබුණාද?\nConfirm කළාම rider account එකෙන් මේ job එක release වෙනවා.')) return;
-      db.ref('orders/' + key).update({
+      window.applyOrderFields(db, key, {
         status: 'Settled',
         payment: window.paymentStaffPatch(order, 'paid', 'cashier'),
         cashCollectedAt: Date.now(),
         riderSettledAt: Date.now()
-      }).catch(window.alertDbError);
+      }, order).catch(window.alertDbError);
     }
 
     function confirmPayHerePaid(key) {
@@ -1143,7 +1143,7 @@
       } else {
         patch.payment = window.paymentStaffPatch(order, 'rejected', 'cashier');
       }
-      db.ref(`orders/${activeInspectingOrderKey}`).update(patch).then(() => {
+      window.applyOrderFields(db, activeInspectingOrderKey, patch, order).then(() => {
         document.getElementById('slipModal').classList.add('hidden');
         activeInspectingOrderKey = null;
       }).catch(window.alertDbError);
@@ -1302,7 +1302,7 @@
         return alert('Rider cash ගෙනාවා. මුලින් Confirm cash received කරලා rider release කරන්න.');
       }
       if (!confirm('මෙම ඇණවුම cancel කරන්නද?\nCustomer ට Order cancelled කියලා පේනවා. Rider list එකෙනුත් යනවා.')) return;
-      db.ref(`orders/${key}`).update({ status: 'Cancelled', cancelledAt: Date.now() }).catch(window.alertDbError);
+      window.applyOrderFields(db, key, { status: 'Cancelled', cancelledAt: Date.now() }, order).catch(window.alertDbError);
     }
 
     function settleCashierBill(key) {
@@ -1332,7 +1332,7 @@
       if (window.paymentStaffPatch && window.normalizePayment(order).status !== 'paid') {
         patch.payment = window.paymentStaffPatch(order, 'paid', 'cashier');
       }
-      db.ref('orders/' + key).update(patch).catch(window.alertDbError);
+      window.applyOrderFields(db, key, patch, order).catch(window.alertDbError);
     }
 
     function openCashierOrder() {

@@ -514,6 +514,161 @@ window.customerCanCancelOrder = function (order) {
   }
 };
 
+window.CUSTOMER_ORDER_TERMINAL = {
+  PickedUp: true,
+  Settled: true,
+  Cancelled: true,
+  Rejected: true
+};
+
+window.isCustomerOrderTerminal = function (orderOrStatus) {
+  var st = typeof orderOrStatus === 'string'
+    ? orderOrStatus
+    : String((orderOrStatus && orderOrStatus.status) || '');
+  return !!window.CUSTOMER_ORDER_TERMINAL[st];
+};
+
+window.isCustomerOrderInProgress = function (order) {
+  return !!(order && order.status) && !window.isCustomerOrderTerminal(order);
+};
+
+window.findBlockingCustomerOrder = function (cache, identity) {
+  identity = identity || {};
+  var uid = identity.uid || '';
+  var phone = window.customerPhoneKey(identity.phone || '');
+  var best = null;
+  Object.keys(cache || {}).forEach(function (k) {
+    var o = cache[k];
+    if (!o || !window.isCustomerOrderInProgress(o)) return;
+    var mine = false;
+    if (uid && o.customerUid && o.customerUid === uid) mine = true;
+    if (!mine && identity.belongs && identity.belongs(o, k)) mine = true;
+    if (!mine && phone && o.customerUid && o.customerUid === uid && window.customerPhoneKey(o.customerPhone) === phone) {
+      mine = true;
+    }
+    if (!mine) return;
+    var ts = (window.orderTimeMs && window.orderTimeMs(o)) || o.timestamp || 0;
+    if (!best || ts >= best.ts) best = { key: k, order: o, ts: ts };
+  });
+  return best ? { key: best.key, order: best.order } : null;
+};
+
+window.blockingOrderFromLock = function (lock, cache) {
+  if (!lock || !lock.orderKey) return null;
+  var o = cache && cache[lock.orderKey];
+  if (o && window.isCustomerOrderTerminal(o)) return null;
+  if (o && window.isCustomerOrderInProgress(o)) return { key: lock.orderKey, order: o };
+  if (!o) return { key: lock.orderKey, order: { orderId: lock.orderId || '', status: 'Received' } };
+  return null;
+};
+
+window.activeOrderBlockCopy = function (blocking) {
+  function esc(s) {
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  }
+  var id = blocking && blocking.order && blocking.order.orderId;
+  var key = blocking && blocking.key;
+  var idBit = id ? ' #' + id : '';
+  var en = 'You currently have an active order' + idBit + ' in progress. Please wait until it is completed before placing a new order.';
+  var si = 'ඔබට දැනට active order' + idBit + ' එකක් තියෙනවා. ඒක complete වෙනකම් අලුත් order එකක් දාන්න බෑ.';
+  var extra = 'If you need extra items right now, please call the shop or put everything in this one order.';
+  var extraSi = 'තව items ඕන නම් shop එකට කතා කරන්න, නැත්නම් ඒවා මේ order එකටම දාලා submit කරන්න.';
+  var href = key ? ('/order.html?id=' + encodeURIComponent(key)) : '';
+  var html = '<p class="text-[11px] font-black text-rose-800 leading-snug">' + esc(en) + '</p>' +
+    '<p class="text-[11px] font-bold text-rose-700 leading-snug mt-1">' + esc(si) + '</p>' +
+    '<p class="text-[10px] font-semibold text-slate-600 leading-snug mt-1">' + esc(extra) + '</p>' +
+    '<p class="text-[10px] font-semibold text-slate-600 leading-snug">' + esc(extraSi) + '</p>' +
+    (href ? '<a href="' + href + '" class="block mt-2 text-center text-[11px] font-black text-purple-800 underline">Track order' + esc(idBit) + '</a>' : '');
+  return { en: en + ' ' + extra, si: si, html: html };
+};
+
+window.customerActiveCreatePatch = function (orderKey, payload) {
+  var patch = {};
+  if (!orderKey || !payload) return patch;
+  patch['orders/' + orderKey] = payload;
+  var uid = payload.customerUid;
+  var lock = {
+    orderKey: String(orderKey),
+    orderId: String(payload.orderId || ''),
+    at: Date.now()
+  };
+  if (uid) patch['customer_active/' + uid] = lock;
+  var phoneKey = window.customerPhoneKey(payload.customerPhone);
+  if (phoneKey && phoneKey.length === 9) {
+    patch['customer_active_phone/' + phoneKey] = {
+      orderKey: String(orderKey),
+      uid: String(uid || ''),
+      orderId: String(payload.orderId || ''),
+      at: Date.now()
+    };
+  }
+  return patch;
+};
+
+window.customerActiveClearPatch = function (orderKey, order, locks) {
+  var patch = {};
+  locks = locks || {};
+  var uid = (order && order.customerUid) || locks.uid;
+  var phoneKey = window.customerPhoneKey(order && order.customerPhone) || locks.phoneKey;
+  if (uid && locks.uidLock && locks.uidLock.orderKey === orderKey) {
+    patch['customer_active/' + uid] = null;
+  }
+  if (phoneKey && locks.phoneLock && locks.phoneLock.orderKey === orderKey) {
+    patch['customer_active_phone/' + phoneKey] = null;
+  }
+  return patch;
+};
+
+window.clearCustomerActiveLocksIfMatch = function (db, orderKey, order) {
+  if (!db || !orderKey) return Promise.resolve();
+  var uid = order && order.customerUid;
+  var phoneKey = window.customerPhoneKey(order && order.customerPhone);
+  var reads = [];
+  reads.push(uid ? db.ref('customer_active/' + uid).once('value') : Promise.resolve(null));
+  reads.push(phoneKey ? db.ref('customer_active_phone/' + phoneKey).once('value') : Promise.resolve(null));
+  return Promise.all(reads).then(function (snaps) {
+    function valOf(s) { return s && s.val ? s.val() : null; }
+    var patch = window.customerActiveClearPatch(orderKey, order, {
+      uid: uid,
+      phoneKey: phoneKey,
+      uidLock: valOf(snaps[0]),
+      phoneLock: valOf(snaps[1])
+    });
+    if (!Object.keys(patch).length) return;
+    return db.ref().update(patch);
+  });
+};
+
+window.applyOrderFields = function (db, orderKey, fields, order) {
+  if (!db || !orderKey || !fields) return Promise.reject(new Error('Order update missing'));
+  return db.ref('orders/' + orderKey).update(fields).then(function () {
+    if (fields.status && window.isCustomerOrderTerminal({ status: fields.status })) {
+      return window.clearCustomerActiveLocksIfMatch(db, orderKey, order || {});
+    }
+  });
+};
+
+window.refreshCustomerCheckoutProceed = function (opts) {
+  opts = opts || {};
+  var proceedBtn = document.getElementById('proceedOrderBtn');
+  var warn = document.getElementById('activeOrderCheckoutWarn');
+  var blocking = opts.blocking || null;
+  var copy = window.activeOrderBlockCopy(blocking);
+  if (warn) {
+    if (blocking) {
+      warn.classList.remove('hidden');
+      warn.innerHTML = copy.html;
+    } else {
+      warn.classList.add('hidden');
+      warn.innerHTML = '';
+    }
+  }
+  if (!proceedBtn) return !!blocking;
+  if (opts.forceDisabled || blocking) proceedBtn.disabled = true;
+  else if (!opts.submitting) proceedBtn.disabled = false;
+  return !!blocking;
+};
+
 window.orderTrackerFlags = function (order) {
   var st = (order && order.status) || '';
   var done = st === 'PickedUp' || st === 'Settled';
@@ -674,7 +829,7 @@ window.settleDineInBill = function (db, key, order, actor) {
   if (window.paymentStaffPatch && window.normalizePayment(order).status !== "paid") {
     patch.payment = window.paymentStaffPatch(order, "paid", actor || "cashier");
   }
-  return db.ref("orders/" + key).update(patch);
+  return window.applyOrderFields(db, key, patch, order);
 };
 
 window.isDbPermissionDenied = function (err) {

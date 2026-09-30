@@ -60,7 +60,7 @@
       }
     })();
   </script>
-  <script src="js/firebase-config.js?v=60"></script>
+  <script src="js/firebase-config.js?v=61"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -510,9 +510,12 @@
         <textarea id="kitchenNoteInput" placeholder="Note" class="w-full border rounded-xl p-2 text-xs bg-slate-50 outline-none h-14 resize-none font-medium"></textarea>
       </div>
 
-      <div class="pt-2 flex gap-2">
+      <div class="pt-2 space-y-2">
+        <div id="activeOrderCheckoutWarn" class="hidden rounded-2xl border border-rose-200 bg-rose-50 p-3"></div>
+        <div class="flex gap-2">
         <button type="button" onclick="setCheckoutModalOpen(false)" class="w-1/2 bg-slate-200 py-2.5 rounded-xl text-xs font-bold" data-i18n="cancel">Cancel</button>
         <button id="proceedOrderBtn" onclick="finalizeAndSubmitOrder()" class="w-1/2 bg-purple-900 text-white font-black py-2.5 rounded-2xl text-xs" data-i18n="proceed">Proceed</button>
+        </div>
       </div>
     </div>
   </div>
@@ -646,6 +649,7 @@
     let lastDeliveryCoords = null;
     let lastGeocodedLandmark = '';
     let lastOrdersCache = {};
+    let customerActiveLock = null;
     let pendingAfterAuth = '';
     let pendingAuthUser = null;
     let pendingEmailOtp = null;
@@ -876,11 +880,7 @@
         checkoutBtn.className = 'pfr-checkout-cta' + (open ? '' : ' is-closed');
         checkoutBtn.innerText = open ? t('checkoutBtn') : t('closedNow');
       }
-      if (proceedBtn && !open) {
-        proceedBtn.disabled = true;
-      } else if (proceedBtn && open && proceedBtn.innerText !== 'Submitting...') {
-        proceedBtn.disabled = false;
-      }
+      refreshCheckoutProceedState();
     }
 
     function assertShopOpenForOrder() {
@@ -963,6 +963,44 @@
       const orderPhone = normalizePhone(order.customerPhone);
       if (myPhone.length >= 9 && orderPhone.length >= 9 && myPhone.slice(-9) === orderPhone.slice(-9)) return true;
       return false;
+    }
+
+    function currentBlockingOrder() {
+      const uid = firebase.auth().currentUser && firebase.auth().currentUser.uid;
+      const fromCache = window.findBlockingCustomerOrder
+        ? window.findBlockingCustomerOrder(lastOrdersCache, {
+            uid: uid,
+            phone: verifiedUser && verifiedUser.phone,
+            belongs: function (o) { return isMyTakeawayOrder(o) && uid && o.customerUid === uid; }
+          })
+        : null;
+      if (fromCache) return fromCache;
+      return window.blockingOrderFromLock ? window.blockingOrderFromLock(customerActiveLock, lastOrdersCache) : null;
+    }
+
+    function refreshCheckoutProceedState() {
+      const tableDineIn = typeof tableIdFromUrl === 'function' && !!tableIdFromUrl();
+      const firstOpen = tableDineIn
+        ? true
+        : (typeof window.firstAvailableOrderMode === 'function'
+          ? !!window.firstAvailableOrderMode(orderTimings, adminDeliverySettings)
+          : true);
+      if (typeof window.refreshCustomerCheckoutProceed === 'function') {
+        window.refreshCustomerCheckoutProceed({
+          blocking: currentBlockingOrder(),
+          forceDisabled: !isShopOpen() || !firstOpen,
+          submitting: orderSubmitting
+        });
+      }
+    }
+
+    function alertIfBlockedActiveOrder() {
+      const blocking = currentBlockingOrder();
+      if (!blocking) return false;
+      const copy = window.activeOrderBlockCopy ? window.activeOrderBlockCopy(blocking) : { en: 'You currently have an active order in progress.' };
+      alert(copy.en + (copy.si ? ('\n\n' + copy.si) : ''));
+      refreshCheckoutProceedState();
+      return true;
     }
 
     function updateAuthHeader() {
@@ -1878,6 +1916,7 @@
         updateCheckoutUIStates();
         renderCart();
         setCheckoutModalOpen(true);
+        refreshCheckoutProceedState();
         return;
       }
       if (checkoutHint) checkoutHint.innerHTML = 'Delivery නම් <b>Deliver to doorstep</b> තෝරලා location pin කරන්න.';
@@ -1889,6 +1928,7 @@
       if (selectedDeliveryMode === 'doorstep') {
         hydrateDoorstepFromSavedPin();
       }
+      refreshCheckoutProceedState();
     }
 
     function checkoutModeStatus(mode) {
@@ -1921,6 +1961,7 @@
           proceedBtn.classList.add('hidden');
           proceedBtn.disabled = true;
         }
+        refreshCheckoutProceedState();
         return;
       }
       const firstOpen = window.firstAvailableOrderMode(orderTimings, adminDeliverySettings);
@@ -1958,6 +1999,7 @@
         if (!firstOpen) proceedBtn.disabled = true;
         else if (!orderSubmitting) proceedBtn.disabled = false;
       }
+      refreshCheckoutProceedState();
     }
 
     function hydrateDoorstepFromSavedPin() {
@@ -2176,6 +2218,7 @@
     function finalizeAndSubmitOrder() {
       if (orderSubmitting) return;
       if (!assertShopOpenForOrder()) return;
+      if (alertIfBlockedActiveOrder()) return;
       if (!(typeof tableIdFromUrl === 'function' && tableIdFromUrl())) {
         const modeSt = checkoutModeStatus(selectedDeliveryMode);
         if (!modeSt.available) {
@@ -2224,6 +2267,10 @@
       if (liveUser && liveUser.uid) user = liveUser;
       if (!user || !user.uid) {
         throw new Error('PERMISSION_DENIED — phone එකේ login/network fail. Internet on කරලා ආයෙන් try කරන්න.');
+      }
+      if (alertIfBlockedActiveOrder()) {
+        window.unlockButton(proceedBtn);
+        return;
       }
       if (selectedDeliveryMode === 'doorstep' && lastDeliveryCoords && lastDeliveryCoords.lat) {
         computedRoadDistance = await calculateRoadDistance(
@@ -2296,7 +2343,7 @@
         ? { lat: lastDeliveryCoords.lat, lng: lastDeliveryCoords.lng }
         : (verifiedUser.lastCoords || null);
 
-      await orderRef.set(payload);
+      await db.ref().update(window.customerActiveCreatePatch(orderRef.key, payload));
         takeawayCart = [];
         renderCart();
         slipFileBase64 = '';
@@ -2347,7 +2394,13 @@
       } catch (err) {
         var code = (err && (err.code || err.message)) || '';
         window.unlockButton(proceedBtn);
-        alert('Order submit failed. ' + code + '\nInternet on කරලා ආයෙන් Place order ඔබන්න.');
+        if (window.isDbPermissionDenied && window.isDbPermissionDenied(err)) {
+          var copy = window.activeOrderBlockCopy(currentBlockingOrder());
+          alert(copy.en + '\n\n' + copy.si);
+          refreshCheckoutProceedState();
+        } else {
+          alert('Order submit failed. ' + code + '\nInternet on කරලා ආයෙන් Place order ඔබන්න.');
+        }
       } finally {
         orderSubmitting = false;
       }
@@ -2384,6 +2437,14 @@
         }, function (err) {
           if (typeof window.onDbListenError === 'function') window.onDbListenError(err, { optional: true });
         });
+        db.ref('customer_active/' + uid).on('value', function (snap) {
+          customerActiveLock = snap.val() || null;
+          if (customerActiveLock && customerActiveLock.orderKey) attach(customerActiveLock.orderKey);
+          renderMyActiveOrder();
+          refreshCheckoutProceedState();
+        }, function (err) {
+          if (typeof window.onDbListenError === 'function') window.onDbListenError(err, { optional: true });
+        });
       }).catch(function () {
         renderMyActiveOrder();
       });
@@ -2393,7 +2454,7 @@
       const orders = lastOrdersCache || {};
       return Object.keys(orders).reverse().filter(function (k) {
           const o = orders[k];
-        return isMyTakeawayOrder(o) && o.status !== 'PickedUp' && o.status !== 'Settled' && !o.customerDismissed && !o.customerHidden;
+        return isMyTakeawayOrder(o) && window.isCustomerOrderInProgress(o) && !o.customerDismissed && !o.customerHidden;
       });
     }
 
@@ -2538,6 +2599,7 @@
 
       if (!wrap) {
         isInitialLoaded = true;
+        refreshCheckoutProceedState();
             return;
           }
 
@@ -2551,6 +2613,7 @@
         clearInterval(countdownInterval);
         renderPostDeliveryCard();
         isInitialLoaded = true;
+        refreshCheckoutProceedState();
             return;
       }
 
@@ -2590,6 +2653,7 @@
       startCountdowns();
       renderPostDeliveryCard();
         isInitialLoaded = true;
+      refreshCheckoutProceedState();
     }
 
     function bankInfoText() {
@@ -2786,11 +2850,11 @@
         return alert(t('cancelHint'));
       }
       if (!confirm('මේ order එක cancel කරන්නද?')) return;
-      db.ref('orders/' + orderKey).update({
+      window.applyOrderFields(db, orderKey, {
         status: 'Cancelled',
         cancelledAt: Date.now(),
         cancelledBy: 'customer'
-      }).catch(window.alertDbError);
+      }, order).catch(window.alertDbError);
     }
 
     function customerDeleteOrder(key) {
