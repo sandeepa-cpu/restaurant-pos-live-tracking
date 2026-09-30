@@ -112,6 +112,25 @@
         ".read": true,
         ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"
       },
+      "order_timings": {
+        ".read": true,
+        ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^admin(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_admin_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
+        ".validate": "newData.hasChildren(['delivery', 'pickup', 'updatedAt'])",
+        "delivery": {
+          ".validate": "newData.hasChildren(['start', 'end'])",
+          "start": { ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/))" },
+          "end": { ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/))" },
+          "$other": { ".validate": false }
+        },
+        "pickup": {
+          ".validate": "newData.hasChildren(['start', 'end'])",
+          "start": { ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/))" },
+          "end": { ".validate": "newData.isString() && (newData.val() === '' || newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/))" },
+          "$other": { ".validate": false }
+        },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      },
       "$other": {
         ".read": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))",
         ".write": "auth != null && auth.token.email != null && (auth.token.email.matches(/^(admin|cashier|steward)(_[a-z0-9]+)?(_[a-z0-9]+)?@peoples-family-restaurant[.]web[.]app$/) || auth.token.email.matches(/^station_(admin|cashier|steward)_[a-z0-9]+@peoples-family-restaurant[.]web[.]app$/))"

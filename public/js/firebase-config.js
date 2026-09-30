@@ -1303,10 +1303,6 @@ window.unlockButton = function (btn) {
   btn.classList.remove('pfr-busy');
 };
 
-window.DELIVERY_OPEN_HOUR = 18;
-window.DELIVERY_LOCK_NOTE = 'Available after 6:00 PM / සවස 6:00 න් පසු ලබා ගත හැක';
-window.DELIVERY_LOCK_MSG = 'ඩිලිවරි පහසුකම සවස 6:00 න් පසු පමණක් සක්‍රීය වේ. කරුණාකර Pickup හෝ PickMe තෝරන්න.\nDelivery is available only after 6:00 PM.';
-
 window.sriLankaHour = function (now) {
   var d = now || new Date();
   try {
@@ -1316,9 +1312,249 @@ window.sriLankaHour = function (now) {
   }
 };
 
-window.deliveryUnlocked = function (now) {
-  return window.sriLankaHour(now) >= window.DELIVERY_OPEN_HOUR;
-};
+/* ORDER_TIMINGS_HELPERS_START */
+(function (root) {
+  var HM = /^([01]?\d|2[0-3]):([0-5]\d)$/;
+  var MODE_META = {
+    self: { windowKey: 'pickup', option: 'self', en: 'Pickup', si: 'Pickup', others: 'PickMe or Delivery' },
+    pickme: { windowKey: 'pickup', option: 'pickme', en: 'PickMe', si: 'PickMe', others: 'Pickup or Delivery' },
+    doorstep: { windowKey: 'delivery', option: 'doorstep', en: 'Delivery', si: 'ඩිලිවරි', others: 'Pickup or PickMe' }
+  };
+
+  function pad2(n) {
+    return (n < 10 ? '0' : '') + n;
+  }
+
+  function parseHm(value) {
+    var m = String(value || '').trim().match(HM);
+    if (!m) return null;
+    var h = parseInt(m[1], 10);
+    var min = parseInt(m[2], 10);
+    if (h > 23 || min > 59) return null;
+    return (h * 60) + min;
+  }
+
+  function colomboMinutesNow(now) {
+    var d = now || new Date();
+    try {
+      var parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Colombo',
+        hour: '2-digit',
+        minute: '2-digit',
+        hourCycle: 'h23'
+      }).formatToParts(d);
+      var hour = parseInt((parts.find(function (p) { return p.type === 'hour'; }) || {}).value, 10);
+      var minute = parseInt((parts.find(function (p) { return p.type === 'minute'; }) || {}).value, 10);
+      if (hour !== hour || minute !== minute) return (d.getHours() * 60) + d.getMinutes();
+      return (hour * 60) + minute;
+    } catch (e) {
+      return (d.getHours() * 60) + d.getMinutes();
+    }
+  }
+
+  function isWithinWindow(startHm, endHm, nowMin) {
+    var s = parseHm(startHm);
+    var e = parseHm(endHm);
+    if (s == null && e == null) return true;
+    if (nowMin == null || nowMin !== nowMin) return false;
+    if (s != null && e == null) return nowMin >= s;
+    if (s == null && e != null) return nowMin < e;
+    if (s === e) return true;
+    if (s < e) return nowMin >= s && nowMin < e;
+    return nowMin >= s || nowMin < e;
+  }
+
+  function formatHm12(hm) {
+    var mins = parseHm(hm);
+    if (mins == null) return '';
+    var h = Math.floor(mins / 60);
+    var m = mins % 60;
+    var am = h < 12;
+    var h12 = (h % 12) || 12;
+    return h12 + ':' + pad2(m) + (am ? ' AM' : ' PM');
+  }
+
+  function formatHmSi(hm) {
+    var mins = parseHm(hm);
+    if (mins == null) return '';
+    var h = Math.floor(mins / 60);
+    var m = mins % 60;
+    var h12 = (h % 12) || 12;
+    var period = h < 12 ? 'උදේ' : (h < 16 ? 'දවල්' : (h < 19 ? 'සවස' : 'රාත්‍රී'));
+    return period + ' ' + h12 + ':' + pad2(m);
+  }
+
+  function pairFrom(node) {
+    var row = node || {};
+    return { start: String(row.start || ''), end: String(row.end || '') };
+  }
+
+  function normalizeOrderTimings(raw) {
+    // Missing node (never saved): keep today's hardcoded delivery-from-18:00 behaviour.
+    // An explicit empty save ({ start: '', end: '' }) means no extra time limit.
+    if (raw == null) {
+      return {
+        delivery: { start: '18:00', end: '' },
+        pickup: { start: '', end: '' }
+      };
+    }
+    return {
+      delivery: pairFrom(raw.delivery),
+      pickup: pairFrom(raw.pickup)
+    };
+  }
+
+  function windowHasLimit(pair) {
+    return parseHm(pair.start) != null || parseHm(pair.end) != null;
+  }
+
+  function formatWindowEn(pair) {
+    var s = parseHm(pair.start);
+    var e = parseHm(pair.end);
+    if (s == null && e == null) return '';
+    if (s != null && e == null) return formatHm12(pair.start) + ' onward';
+    if (s == null && e != null) return 'until ' + formatHm12(pair.end);
+    return formatHm12(pair.start) + ' – ' + formatHm12(pair.end);
+  }
+
+  function formatWindowSi(pair) {
+    var s = parseHm(pair.start);
+    var e = parseHm(pair.end);
+    if (s == null && e == null) return '';
+    if (s != null && e == null) return formatHmSi(pair.start) + ' න් පසු';
+    if (s == null && e != null) return formatHmSi(pair.end) + ' දක්වා';
+    return formatHmSi(pair.start) + ' – ' + formatHmSi(pair.end);
+  }
+
+  function overnightHint(startHm, endHm) {
+    var s = parseHm(startHm);
+    var e = parseHm(endHm);
+    if (s == null || e == null || s === e || s < e) return '';
+    return startHm + ' to ' + endHm + ' (next day)';
+  }
+
+  function orderModeStatus(mode, timings, options, now) {
+    var meta = MODE_META[mode] || MODE_META.doorstep;
+    var opts = options || {};
+    var enabled = opts[meta.option] !== false;
+    var norm = normalizeOrderTimings(timings);
+    var pair = norm[meta.windowKey];
+    var nowMin = colomboMinutesNow(now);
+    var en = meta.en;
+    var si = meta.si;
+
+    if (!enabled) {
+      return {
+        available: false,
+        reason: 'off',
+        note: 'Temporarily unavailable / තාවකාලිකව අක්‍රීයයි',
+        message: si + ' පහසුකම තාවකාලිකව අක්‍රීයයි.\n' + en + ' is temporarily unavailable.',
+        preview: 'Switched OFF',
+        start: pair.start,
+        end: pair.end
+      };
+    }
+
+    if (!windowHasLimit(pair) || isWithinWindow(pair.start, pair.end, nowMin)) {
+      var both = parseHm(pair.start) != null && parseHm(pair.end) != null;
+      var openNote = windowHasLimit(pair)
+        ? ('Available ' + formatWindowEn(pair) + ' / ' + formatWindowSi(pair) + (both ? ' අතර' : ''))
+        : '';
+      var until = parseHm(pair.end) != null ? ('OPEN until ' + formatHm12(pair.end)) : (windowHasLimit(pair) ? 'OPEN' : 'OPEN (no time limit)');
+      if (parseHm(pair.start) != null && parseHm(pair.end) != null && parseHm(pair.start) > parseHm(pair.end) && nowMin < parseHm(pair.end)) {
+        until = 'OPEN until ' + formatHm12(pair.end);
+      }
+      return {
+        available: true,
+        reason: 'ok',
+        note: openNote,
+        message: '',
+        preview: 'Now: ' + until,
+        start: pair.start,
+        end: pair.end
+      };
+    }
+
+    var s = parseHm(pair.start);
+    var e = parseHm(pair.end);
+    var reason = 'before';
+    if (s != null && e != null && s < e) {
+      reason = nowMin < s ? 'before' : 'after';
+    } else if (s != null && e != null && s > e) {
+      reason = (nowMin >= e && nowMin < s) ? 'before' : 'after';
+    } else if (s != null && e == null) {
+      reason = nowMin < s ? 'before' : 'after';
+    } else {
+      reason = 'after';
+    }
+
+    var enRange = formatWindowEn(pair);
+    var siRange = formatWindowSi(pair);
+    var note;
+    var message;
+    if (s != null && e == null) {
+      note = 'Available after ' + formatHm12(pair.start) + ' / ' + formatHmSi(pair.start) + ' න් පසු ලබා ගත හැක';
+      message = si + ' පහසුකම ' + formatHmSi(pair.start) + ' න් පසු පමණක් සක්‍රීය වේ. කරුණාකර ' + meta.others + ' තෝරන්න.\n' + en + ' is available only after ' + formatHm12(pair.start) + '. Please choose ' + meta.others + '.';
+    } else if (s != null && e != null) {
+      note = 'Available ' + formatHm12(pair.start) + ' – ' + formatHm12(pair.end) + ' / ' + siRange + ' අතර';
+      message = si + ' පහසුකම ' + formatHmSi(pair.start) + ' සහ ' + formatHmSi(pair.end) + ' අතර පමණක් සක්‍රීය වේ. කරුණාකර ' + meta.others + ' තෝරන්න.\n' + en + ' is available between ' + formatHm12(pair.start) + ' and ' + formatHm12(pair.end) + '. Please choose ' + meta.others + '.';
+    } else {
+      note = 'Available until ' + formatHm12(pair.end) + ' / ' + formatHmSi(pair.end) + ' දක්වා';
+      message = si + ' පහසුකම ' + formatHmSi(pair.end) + ' දක්වා පමණක් සක්‍රීය වේ. කරුණාකර ' + meta.others + ' තෝරන්න.\n' + en + ' is available until ' + formatHm12(pair.end) + '. Please choose ' + meta.others + '.';
+    }
+
+    var preview = reason === 'before' && s != null
+      ? ('Now: closed, opens ' + formatHm12(pair.start))
+      : (e != null ? ('Now: closed (until ' + formatHm12(pair.end) + ')') : 'Now: closed');
+
+    return {
+      available: false,
+      reason: reason,
+      note: note,
+      message: message,
+      preview: preview,
+      start: pair.start,
+      end: pair.end,
+      rangeEn: enRange
+    };
+  }
+
+  function firstAvailableOrderMode(timings, options, now) {
+    var order = ['self', 'pickme', 'doorstep'];
+    for (var i = 0; i < order.length; i++) {
+      if (orderModeStatus(order[i], timings, options, now).available) return order[i];
+    }
+    return null;
+  }
+
+  function orderModesClosedMessage(timings, options, now) {
+    var opts = options || {};
+    var bits = [];
+    if (opts.doorstep !== false) {
+      var d = orderModeStatus('doorstep', timings, { doorstep: true }, now);
+      bits.push('Delivery ' + (d.start || d.end ? formatWindowEn({ start: d.start, end: d.end }) || 'anytime' : 'anytime'));
+    }
+    if (opts.self !== false) {
+      var p = orderModeStatus('self', timings, { self: true }, now);
+      bits.push('Pickup ' + (p.start || p.end ? formatWindowEn({ start: p.start, end: p.end }) || 'anytime' : 'anytime'));
+    }
+    return 'No pickup or delivery right now' + (bits.length ? '. ' + bits.join(', ') : '.');
+  }
+
+  root.parseHm = parseHm;
+  root.parseHmToMinutes = parseHm;
+  root.colomboMinutesNow = colomboMinutesNow;
+  root.isWithinWindow = isWithinWindow;
+  root.formatHm12 = formatHm12;
+  root.formatHmSi = formatHmSi;
+  root.normalizeOrderTimings = normalizeOrderTimings;
+  root.overnightHint = overnightHint;
+  root.orderModeStatus = orderModeStatus;
+  root.firstAvailableOrderMode = firstAvailableOrderMode;
+  root.orderModesClosedMessage = orderModesClosedMessage;
+  root.formatWindowEn = formatWindowEn;
+})(typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this));
+/* ORDER_TIMINGS_HELPERS_END */
 
 window.updateCategoryArrows = function () {
   var slider = document.getElementById('categorySlider');

@@ -60,7 +60,7 @@
       }
     })();
   </script>
-  <script src="js/firebase-config.js?v=59"></script>
+  <script src="js/firebase-config.js?v=60"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -632,6 +632,7 @@
     let slipFileBase64 = '';
     const RESTAURANT_COORDS = window.PEOPLES_SHOP || { lat: 6.7190174, lng: 80.0682103 };
     let adminDeliverySettings = { self: true, pickme: true, doorstep: true };
+    let orderTimings = null;
     let deliveryPricingConfig = window.mergeDeliveryPricing();
     let audioCtx = null;
     let hasPlayedReadySound = false;
@@ -806,34 +807,15 @@
     }
 
     function parseHmToMinutes(value) {
-      const m = String(value || '').match(/^(\d{1,2}):(\d{2})$/);
-      if (!m) return null;
-      const h = parseInt(m[1], 10);
-      const min = parseInt(m[2], 10);
-      if (h > 23 || min > 59) return null;
-      return (h * 60) + min;
+      return window.parseHm(value);
     }
 
     function colomboMinutesNow() {
-      const parts = new Intl.DateTimeFormat('en-GB', {
-        timeZone: 'Asia/Colombo',
-        hour: '2-digit',
-        minute: '2-digit',
-        hourCycle: 'h23'
-      }).formatToParts(new Date());
-      const hour = parseInt((parts.find(function (p) { return p.type === 'hour'; }) || {}).value, 10);
-      const minute = parseInt((parts.find(function (p) { return p.type === 'minute'; }) || {}).value, 10);
-      return (hour * 60) + minute;
+      return window.colomboMinutesNow();
     }
 
     function formatShopTime(hm) {
-      const mins = parseHmToMinutes(hm);
-      if (mins == null) return hm;
-      const h = Math.floor(mins / 60);
-      const m = mins % 60;
-      const am = h < 12;
-      const h12 = (h % 12) || 12;
-      return h12 + ':' + String(m).padStart(2, '0') + (am ? ' AM' : ' PM');
+      return window.formatHm12(hm) || hm;
     }
 
     function shopHoursLabel() {
@@ -1364,6 +1346,12 @@
       dataStarted = true;
       db.ref('settings/delivery_options').on('value', snap => {
         if (snap.exists()) adminDeliverySettings = snap.val();
+        refreshOpenCheckoutModes();
+      }, function (err) { window.onDbListenError(err, { optional: true }); });
+
+      db.ref('settings/order_timings').on('value', snap => {
+        orderTimings = snap.exists() ? snap.val() : null;
+        refreshOpenCheckoutModes();
       }, function (err) { window.onDbListenError(err, { optional: true }); });
 
       db.ref('settings/delivery_pricing').on('value', snap => {
@@ -1894,40 +1882,81 @@
       }
       if (checkoutHint) checkoutHint.innerHTML = 'Delivery නම් <b>Deliver to doorstep</b> තෝරලා location pin කරන්න.';
 
-      let availableModes = [];
-      if (adminDeliverySettings.self !== false) availableModes.push({ id: 'self', title: 'Pickup', sub: 'Collect at the shop' });
-      if (adminDeliverySettings.pickme !== false) availableModes.push({ id: 'pickme', title: 'PickMe', sub: 'Your driver collects' });
-      if (adminDeliverySettings.doorstep !== false) availableModes.push({ id: 'doorstep', title: 'Delivery', sub: 'Bring to your door' });
-
-      if (availableModes.length === 0) {
-        container.innerHTML = '<p class="text-xs text-rose-600 font-bold text-center">Admin has disabled all delivery methods currently.</p>';
-        document.getElementById('proceedOrderBtn').classList.add('hidden');
-      } else {
-        document.getElementById('proceedOrderBtn').classList.remove('hidden');
-        const deliveryOpen = window.deliveryUnlocked();
-        const pickupMode = availableModes.find(m => m.id === 'self') || availableModes.find(m => m.id !== 'doorstep' || deliveryOpen);
-        selectedDeliveryMode = pickupMode ? pickupMode.id : availableModes[0].id;
-        selectedDoorstepPay = 'cash';
-        const modeIcons = { self: 'fa-bag-shopping', pickme: 'fa-car', doorstep: 'fa-motorcycle' };
-        availableModes.forEach(m => {
-          container.innerHTML += `
-            <label onclick="selectDeliveryMode('${m.id}')" id="modeCard-${m.id}" class="${deliveryModeClass(m.id)}">
-              <span class="mode-choice-icon"><i class="fa-solid ${modeIcons[m.id] || 'fa-circle'}"></i></span>
-              <div class="min-w-0 flex-1">
-                <div class="font-black text-[13px] text-slate-900">${m.title}</div>
-                <div class="text-[11px] text-slate-500 font-semibold">${m.sub}</div>
-                ${m.id === 'doorstep' ? `<div id="deliveryLockNote" class="pfr-lock-note text-[9px] leading-snug font-black mt-0.5 whitespace-normal${deliveryOpen ? ' hidden' : ''}">🔒 ${window.DELIVERY_LOCK_NOTE}</div>` : ''}
-              </div>
-            </label>
-          `;
-        });
-      }
-
+      paintCheckoutModes(false);
       updateCheckoutUIStates();
       renderCart();
       setCheckoutModalOpen(true);
       if (selectedDeliveryMode === 'doorstep') {
         hydrateDoorstepFromSavedPin();
+      }
+    }
+
+    function checkoutModeStatus(mode) {
+      return window.orderModeStatus(mode, orderTimings, adminDeliverySettings);
+    }
+
+    function refreshOpenCheckoutModes() {
+      const modal = document.getElementById('checkoutOptionsModal');
+      if (!modal || modal.classList.contains('hidden')) return;
+      if (typeof tableIdFromUrl === 'function' && tableIdFromUrl()) return;
+      paintCheckoutModes(true);
+    }
+
+    function paintCheckoutModes(preserveSelection) {
+      const container = document.getElementById('deliveryModesContainer');
+      const proceedBtn = document.getElementById('proceedOrderBtn');
+      if (!container) return;
+      const titles = {
+        self: { title: 'Pickup', sub: 'Collect at the shop' },
+        pickme: { title: 'PickMe', sub: 'Your driver collects' },
+        doorstep: { title: 'Delivery', sub: 'Bring to your door' }
+      };
+      const modeIcons = { self: 'fa-bag-shopping', pickme: 'fa-car', doorstep: 'fa-motorcycle' };
+      const offered = ['self', 'pickme', 'doorstep'].filter(function (id) {
+        return adminDeliverySettings[id] !== false;
+      });
+      if (!offered.length) {
+        container.innerHTML = '<p class="text-xs text-rose-600 font-bold text-center">Admin has disabled all delivery methods currently.</p>';
+        if (proceedBtn) {
+          proceedBtn.classList.add('hidden');
+          proceedBtn.disabled = true;
+        }
+        return;
+      }
+      const firstOpen = window.firstAvailableOrderMode(orderTimings, adminDeliverySettings);
+      const prev = selectedDeliveryMode;
+      if (preserveSelection && checkoutModeStatus(prev).available) {
+        selectedDeliveryMode = prev;
+      } else if (firstOpen) {
+        if (preserveSelection && prev && prev !== firstOpen && offered.indexOf(prev) >= 0) {
+          const left = checkoutModeStatus(prev);
+          if (left.message) window.pfrToast(left.message);
+        }
+        selectedDeliveryMode = firstOpen;
+      } else {
+        selectedDeliveryMode = offered[0];
+      }
+      selectedDoorstepPay = selectedDeliveryMode === 'doorstep' ? (selectedDoorstepPay || 'cash') : 'cash';
+      container.innerHTML = offered.map(function (id) {
+        const m = titles[id];
+        const st = checkoutModeStatus(id);
+        const lock = !st.available && st.note
+          ? '<div id="modeLockNote-' + id + '" class="pfr-lock-note text-[9px] leading-snug font-black mt-0.5 whitespace-normal">🔒 ' + escapeCartHtml(st.note) + '</div>'
+          : '';
+        return '<label onclick="selectDeliveryMode(\'' + id + '\')" id="modeCard-' + id + '" class="' + deliveryModeClass(id) + '">' +
+          '<span class="mode-choice-icon"><i class="fa-solid ' + (modeIcons[id] || 'fa-circle') + '"></i></span>' +
+          '<div class="min-w-0 flex-1">' +
+          '<div class="font-black text-[13px] text-slate-900">' + m.title + '</div>' +
+          '<div class="text-[11px] text-slate-500 font-semibold">' + m.sub + '</div>' +
+          lock +
+          '</div></label>';
+      }).join('') + (!firstOpen
+        ? '<p id="modesClosedNote" class="text-xs text-rose-600 font-bold text-center col-span-full">' + escapeCartHtml(window.orderModesClosedMessage(orderTimings, adminDeliverySettings)) + '</p>'
+        : '');
+      if (proceedBtn) {
+        proceedBtn.classList.remove('hidden');
+        if (!firstOpen) proceedBtn.disabled = true;
+        else if (!orderSubmitting) proceedBtn.disabled = false;
       }
     }
 
@@ -1943,30 +1972,24 @@
     }
 
     function deliveryModeClass(m) {
-      return 'mode-choice' + (m === selectedDeliveryMode ? ' is-on' : '') + (m === 'doorstep' && !window.deliveryUnlocked() ? ' is-locked' : '');
+      return 'mode-choice' + (m === selectedDeliveryMode ? ' is-on' : '') + (!checkoutModeStatus(m).available ? ' is-locked' : '');
     }
 
     function refreshDeliveryModeCards() {
-      ['self', 'pickme', 'doorstep'].forEach(m => {
-        const card = document.getElementById(`modeCard-${m}`);
-        if (card) card.className = deliveryModeClass(m);
-      });
-      const note = document.getElementById('deliveryLockNote');
-      if (note) note.classList.toggle('hidden', window.deliveryUnlocked());
+      paintCheckoutModes(true);
     }
 
     setInterval(function () {
       const modal = document.getElementById('checkoutOptionsModal');
-      if (!modal || modal.classList.contains('hidden') || !document.getElementById('modeCard-doorstep')) return;
-      if (selectedDeliveryMode === 'doorstep' && !window.deliveryUnlocked() && document.getElementById('modeCard-self')) {
-        selectDeliveryMode('self');
-      }
-      refreshDeliveryModeCards();
+      if (!modal || modal.classList.contains('hidden')) return;
+      if (typeof tableIdFromUrl === 'function' && tableIdFromUrl()) return;
+      paintCheckoutModes(true);
     }, 30000);
 
     function selectDeliveryMode(mode) {
-      if (mode === 'doorstep' && !window.deliveryUnlocked()) {
-        window.pfrToast(window.DELIVERY_LOCK_MSG);
+      const st = checkoutModeStatus(mode);
+      if (!st.available) {
+        window.pfrToast(st.message);
         return;
       }
       selectedDeliveryMode = mode;
@@ -2153,9 +2176,13 @@
     function finalizeAndSubmitOrder() {
       if (orderSubmitting) return;
       if (!assertShopOpenForOrder()) return;
-      if (selectedDeliveryMode === 'doorstep' && !window.deliveryUnlocked()) {
-        window.pfrToast(window.DELIVERY_LOCK_MSG);
-        return;
+      if (!(typeof tableIdFromUrl === 'function' && tableIdFromUrl())) {
+        const modeSt = checkoutModeStatus(selectedDeliveryMode);
+        if (!modeSt.available) {
+          window.pfrToast(modeSt.message || window.orderModesClosedMessage(orderTimings, adminDeliverySettings));
+          paintCheckoutModes(true);
+          return;
+        }
       }
       const identity = readCheckoutIdentity();
       if (!identity) return;

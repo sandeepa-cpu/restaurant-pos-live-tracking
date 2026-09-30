@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>Peoples Family Restaurant - Admin Panel</title>
   <link rel="icon" type="image/jpeg" href="LOGO NEW.jpg">
-  <script src="js/firebase-config.js?v=59"></script>
+  <script src="js/firebase-config.js?v=60"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -217,22 +217,77 @@
       <h2 class="font-black text-xs uppercase text-purple-950 border-b pb-2">📦 Delivery & Pricing</h2>
       
       <div class="space-y-3">
-        <h3 class="font-bold text-xs text-slate-700">Takeaway / Delivery Options Control</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <label class="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border cursor-pointer">
-            <span class="font-bold text-xs">01. Pick up myself</span>
-            <input type="checkbox" id="toggle-self" onchange="updateDeliverySettings()" class="w-4 h-4 accent-purple-900">
-          </label>
-          <label class="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border cursor-pointer">
-            <span class="font-bold text-xs">02. PickMe Driver</span>
-            <input type="checkbox" id="toggle-pickme" onchange="updateDeliverySettings()" class="w-4 h-4 accent-purple-900">
-          </label>
-          <label class="flex justify-between items-center p-3 bg-slate-50 rounded-2xl border cursor-pointer">
-            <span class="font-bold text-xs">03. Deliver doorstep</span>
-            <input type="checkbox" id="toggle-doorstep" onchange="updateDeliverySettings()" class="w-4 h-4 accent-purple-900">
-          </label>
+        <h3 class="font-bold text-xs text-slate-700">Order Timings</h3>
+        <p class="text-[10px] text-slate-500 font-bold leading-relaxed">On/Off saves immediately (emergency). Start/End times go live only when you press Save timings. Empty times = no extra limit (shop hours still apply). PickMe uses Pickup hours.</p>
+
+        <div id="timingRow-self" class="p-3 rounded-2xl border bg-slate-50 space-y-2">
+          <div class="flex justify-between items-center gap-2">
+            <span class="font-black text-xs text-slate-900">Pickup</span>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <span id="toggleOffLabel-self" class="hidden text-[9px] font-black uppercase text-rose-700">Temporarily OFF (emergency)</span>
+              <span class="text-[10px] font-bold text-slate-600">Available</span>
+              <input type="checkbox" id="toggle-self" onchange="updateDeliverySettings()" class="w-4 h-4 accent-purple-900">
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="space-y-1">
+              <label class="text-[10px] font-bold text-slate-600">Start time</label>
+              <input id="timingPickupStart" type="time" oninput="markOrderTimingsDirty(); refreshTimingPreviews()" class="w-full border rounded-xl p-2 text-xs bg-white outline-none">
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] font-bold text-slate-600">End time</label>
+              <input id="timingPickupEnd" type="time" oninput="markOrderTimingsDirty(); refreshTimingPreviews()" class="w-full border rounded-xl p-2 text-xs bg-white outline-none">
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-2">
+            <p id="timingPreview-self" class="text-[10px] font-bold text-slate-600"></p>
+            <button type="button" onclick="clearOrderWindow('pickup')" class="text-[10px] font-black text-purple-800 underline">Clear</button>
+          </div>
+          <p id="timingHint-pickup" class="text-[10px] font-bold text-amber-700 hidden"></p>
         </div>
-        <div id="saveStatus" class="text-[10px] text-emerald-600 font-bold text-center">Settings are synced live with database.</div>
+
+        <div id="timingRow-doorstep" class="p-3 rounded-2xl border bg-slate-50 space-y-2">
+          <div class="flex justify-between items-center gap-2">
+            <span class="font-black text-xs text-slate-900">Delivery</span>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <span id="toggleOffLabel-doorstep" class="hidden text-[9px] font-black uppercase text-rose-700">Temporarily OFF (emergency)</span>
+              <span class="text-[10px] font-bold text-slate-600">Available</span>
+              <input type="checkbox" id="toggle-doorstep" onchange="updateDeliverySettings()" class="w-4 h-4 accent-purple-900">
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="space-y-1">
+              <label class="text-[10px] font-bold text-slate-600">Start time</label>
+              <input id="timingDeliveryStart" type="time" oninput="markOrderTimingsDirty(); refreshTimingPreviews()" class="w-full border rounded-xl p-2 text-xs bg-white outline-none">
+            </div>
+            <div class="space-y-1">
+              <label class="text-[10px] font-bold text-slate-600">End time</label>
+              <input id="timingDeliveryEnd" type="time" oninput="markOrderTimingsDirty(); refreshTimingPreviews()" class="w-full border rounded-xl p-2 text-xs bg-white outline-none">
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-2">
+            <p id="timingPreview-doorstep" class="text-[10px] font-bold text-slate-600"></p>
+            <button type="button" onclick="clearOrderWindow('delivery')" class="text-[10px] font-black text-purple-800 underline">Clear</button>
+          </div>
+          <p id="timingHint-delivery" class="text-[10px] font-bold text-amber-700 hidden"></p>
+        </div>
+
+        <div id="timingRow-pickme" class="p-3 rounded-2xl border bg-slate-50 space-y-2">
+          <div class="flex justify-between items-center gap-2">
+            <span class="font-black text-xs text-slate-900">PickMe</span>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <span id="toggleOffLabel-pickme" class="hidden text-[9px] font-black uppercase text-rose-700">Temporarily OFF (emergency)</span>
+              <span class="text-[10px] font-bold text-slate-600">Available</span>
+              <input type="checkbox" id="toggle-pickme" onchange="updateDeliverySettings()" class="w-4 h-4 accent-purple-900">
+            </label>
+          </div>
+          <p class="text-[10px] font-bold text-slate-500 leading-relaxed">Uses Pickup hours. No separate Start/End.</p>
+          <p id="timingPreview-pickme" class="text-[10px] font-bold text-slate-600"></p>
+        </div>
+
+        <button type="button" onclick="saveOrderTimings()" class="bg-purple-900 text-white font-black px-5 py-2.5 rounded-xl text-xs">Save timings</button>
+        <div id="saveStatus" class="text-[10px] text-emerald-600 font-bold text-center">On/Off switches sync live. Times need Save timings.</div>
+        <div id="timingsSaveStatus" class="text-[10px] text-emerald-600 font-bold text-center"></div>
       </div>
 
       <div class="space-y-3 pt-3 border-t">
@@ -839,13 +894,164 @@
       return 'https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=' + encodeURIComponent(tableMenuUrl(n));
     }
 
-    // 1. DELIVERY TOGGLES
+    let orderTimingsDirty = false;
+    let lastSavedOrderTimings = null;
+
+    function markOrderTimingsDirty() {
+      orderTimingsDirty = true;
+    }
+
+    function timingInputPair(kind) {
+      if (kind === 'pickup') {
+        return {
+          start: document.getElementById('timingPickupStart'),
+          end: document.getElementById('timingPickupEnd')
+        };
+      }
+      return {
+        start: document.getElementById('timingDeliveryStart'),
+        end: document.getElementById('timingDeliveryEnd')
+      };
+    }
+
+    function readDraftOrderTimings() {
+      const pickup = timingInputPair('pickup');
+      const delivery = timingInputPair('delivery');
+      return {
+        pickup: { start: (pickup.start && pickup.start.value) || '', end: (pickup.end && pickup.end.value) || '' },
+        delivery: { start: (delivery.start && delivery.start.value) || '', end: (delivery.end && delivery.end.value) || '' }
+      };
+    }
+
+    function validateTimingPair(start, end, label) {
+      const s = window.parseHm(start);
+      const e = window.parseHm(end);
+      const startSet = !!(start && String(start).trim());
+      const endSet = !!(end && String(end).trim());
+      if (startSet && s == null) return label + ': invalid start time';
+      if (endSet && e == null) return label + ': invalid end time';
+      if (startSet !== endSet) return label + ': set both start and end, or clear both';
+      if (s != null && e != null && s === e) return label + ': start and end cannot be the same';
+      return '';
+    }
+
+    function applyTimingRowStyle(mode, on) {
+      const row = document.getElementById('timingRow-' + mode);
+      const offLabel = document.getElementById('toggleOffLabel-' + mode);
+      if (row) {
+        row.classList.toggle('bg-rose-50', !on);
+        row.classList.toggle('border-rose-300', !on);
+        row.classList.toggle('bg-slate-50', on);
+      }
+      if (offLabel) offLabel.classList.toggle('hidden', on);
+    }
+
+    function shopHoursWarning(start, end) {
+      const shopOpen = (document.getElementById('adminOpenTime') || {}).value || '';
+      const shopClose = (document.getElementById('adminCloseTime') || {}).value || '';
+      if (!window.parseHm(shopOpen) || !window.parseHm(shopClose)) return '';
+      if (!window.parseHm(start) || !window.parseHm(end)) return '';
+      const startMin = window.parseHm(start);
+      const endMin = window.parseHm(end);
+      const lastMin = endMin === 0 ? 23 * 60 + 59 : endMin - 1;
+      const startInside = window.isWithinWindow(shopOpen, shopClose, startMin);
+      const endInside = window.isWithinWindow(shopOpen, shopClose, lastMin);
+      if (startInside && endInside) return '';
+      return 'This window sits outside shop hours (' + (window.formatHm12(shopOpen) || shopOpen) + ' – ' + (window.formatHm12(shopClose) || shopClose) + ').';
+    }
+
+    function refreshTimingPreviews() {
+      const draft = readDraftOrderTimings();
+      const timings = orderTimingsDirty ? draft : (lastSavedOrderTimings || draft);
+      const options = {
+        self: document.getElementById('toggle-self').checked,
+        pickme: document.getElementById('toggle-pickme').checked,
+        doorstep: document.getElementById('toggle-doorstep').checked
+      };
+      ['self', 'pickme', 'doorstep'].forEach(function (mode) {
+        const el = document.getElementById('timingPreview-' + mode);
+        if (!el) return;
+        el.innerText = window.orderModeStatus(mode, timings, options).preview;
+        applyTimingRowStyle(mode, options[mode]);
+      });
+      ['pickup', 'delivery'].forEach(function (kind) {
+        const pair = draft[kind];
+        const hint = document.getElementById('timingHint-' + kind);
+        if (!hint) return;
+        const overnight = window.overnightHint(pair.start, pair.end);
+        const warn = shopHoursWarning(pair.start, pair.end);
+        const text = [overnight, warn].filter(Boolean).join(' ');
+        hint.innerText = text;
+        hint.classList.toggle('hidden', !text);
+      });
+    }
+
+    function fillOrderTimings(val) {
+      const empty = { pickup: { start: '', end: '' }, delivery: { start: '', end: '' } };
+      const norm = val ? window.normalizeOrderTimings(val) : empty;
+      lastSavedOrderTimings = { pickup: { start: norm.pickup.start || '', end: norm.pickup.end || '' }, delivery: { start: norm.delivery.start || '', end: norm.delivery.end || '' } };
+      if (orderTimingsDirty) {
+        refreshTimingPreviews();
+        return;
+      }
+      const pickup = timingInputPair('pickup');
+      const delivery = timingInputPair('delivery');
+      if (pickup.start) pickup.start.value = lastSavedOrderTimings.pickup.start;
+      if (pickup.end) pickup.end.value = lastSavedOrderTimings.pickup.end;
+      if (delivery.start) delivery.start.value = lastSavedOrderTimings.delivery.start;
+      if (delivery.end) delivery.end.value = lastSavedOrderTimings.delivery.end;
+      refreshTimingPreviews();
+    }
+
+    function clearOrderWindow(kind) {
+      const pair = timingInputPair(kind);
+      if (pair.start) pair.start.value = '';
+      if (pair.end) pair.end.value = '';
+      refreshTimingPreviews();
+    }
+
+    function saveOrderTimings() {
+      const draft = readDraftOrderTimings();
+      const pickupErr = validateTimingPair(draft.pickup.start, draft.pickup.end, 'Pickup');
+      const deliveryErr = validateTimingPair(draft.delivery.start, draft.delivery.end, 'Delivery');
+      const status = document.getElementById('timingsSaveStatus');
+      if (pickupErr || deliveryErr) {
+        if (status) {
+          status.className = 'text-[10px] text-rose-600 font-bold text-center';
+          status.innerText = pickupErr || deliveryErr;
+        }
+        return;
+      }
+      const payload = {
+        pickup: { start: draft.pickup.start || '', end: draft.pickup.end || '' },
+        delivery: { start: draft.delivery.start || '', end: draft.delivery.end || '' },
+        updatedAt: Date.now()
+      };
+      db.ref('settings/order_timings').set(payload).then(function () {
+        orderTimingsDirty = false;
+        lastSavedOrderTimings = { pickup: payload.pickup, delivery: payload.delivery };
+        refreshTimingPreviews();
+        if (status) {
+          status.className = 'text-[10px] text-emerald-600 font-bold text-center';
+          status.innerText = '✅ Order timings saved.';
+          setTimeout(function () { status.innerText = ''; }, 2500);
+        }
+      }).catch(function (err) { notifyDbError(err); });
+    }
+
     db.ref('settings/delivery_options').on('value', snap => {
       const settings = snap.val() || { self: true, pickme: true, doorstep: true };
       document.getElementById('toggle-self').checked = settings.self !== false;
       document.getElementById('toggle-pickme').checked = settings.pickme !== false;
       document.getElementById('toggle-doorstep').checked = settings.doorstep !== false;
+      refreshTimingPreviews();
     }, window.onDbListenError);
+
+    db.ref('settings/order_timings').on('value', snap => {
+      fillOrderTimings(snap.val());
+    }, window.onDbListenError);
+
+    setInterval(refreshTimingPreviews, 30000);
 
     function updateDeliverySettings() {
       const payload = {
@@ -853,10 +1059,11 @@
         pickme: document.getElementById('toggle-pickme').checked,
         doorstep: document.getElementById('toggle-doorstep').checked
       };
+      refreshTimingPreviews();
       db.ref('settings/delivery_options').set(payload).then(() => {
         const status = document.getElementById('saveStatus');
         status.innerText = "✅ Settings updated successfully!";
-        setTimeout(() => status.innerText = "Settings are synced live with database.", 2000);
+        setTimeout(() => status.innerText = "On/Off switches sync live. Times need Save timings.", 2000);
       }).catch(function (err) { notifyDbError(err); });
     }
 
