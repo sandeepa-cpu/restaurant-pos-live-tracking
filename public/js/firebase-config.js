@@ -796,6 +796,19 @@ window.mergeDeliveryPricing = function (raw) {
   };
 };
 
+window.DELIVERY_BASE_KM = 3;
+
+window.computeDoorstepDeliveryFee = function (distanceKm, pricing) {
+  var p = window.mergeDeliveryPricing(pricing);
+  var km = Number(distanceKm);
+  if (!isFinite(km) || km < 0) km = 0;
+  var baseKm = window.DELIVERY_BASE_KM || 3;
+  if (km <= baseKm) return Math.round(p.initCharge);
+  var extra = Math.ceil(km - baseKm);
+  if (extra < 1) extra = 1;
+  return Math.round(p.initCharge + extra * p.perKm);
+};
+
 window.canCancelOrder = function (order) {
   var st = String((order && order.status) || "");
   switch (st) {

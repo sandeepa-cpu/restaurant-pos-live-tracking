@@ -7,7 +7,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <title>Peoples Family Restaurant - Admin Panel</title>
   <link rel="icon" type="image/jpeg" href="LOGO NEW.jpg">
-  <script src="js/firebase-config.js?v=61"></script>
+  <script src="js/firebase-config.js?v=62"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -302,6 +302,7 @@
             <input id="adminPerKmCharge" type="number" class="w-full border rounded-xl p-2.5 text-xs font-semibold outline-none bg-slate-50" placeholder="e.g. 80">
           </div>
         </div>
+        <p class="text-[10px] text-slate-500 font-semibold">Fee = first 3 km at Initial Charge, then extra km × Per KM (rounded up). Example: 5.2 km with 300 + 80 = Rs. 540.</p>
         <button onclick="saveDeliveryPricing()" class="bg-purple-900 text-white font-black px-5 py-2.5 rounded-xl text-xs">Save Delivery Charges</button>
         <div id="pricingSaveStatus" class="text-[10px] text-emerald-600 font-bold text-center"></div>
       </div>

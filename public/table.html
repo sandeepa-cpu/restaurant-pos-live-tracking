@@ -60,7 +60,7 @@
       }
     })();
   </script>
-  <script src="js/firebase-config.js?v=61"></script>
+  <script src="js/firebase-config.js?v=62"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -487,6 +487,7 @@
               <span>Delivery Fee:</span>
               <span id="calcDeliveryFeeText">Rs. 300</span>
             </div>
+            <div class="text-[10px] font-semibold text-slate-500" id="calcFeeBreakdownText">First 3 km: Rs. 300</div>
           </div>
 
           <div class="space-y-2">
@@ -1819,15 +1820,28 @@
 
     function getComputedDeliveryFee() {
       if (selectedDeliveryMode !== 'doorstep') return 0;
+      const fee = window.computeDoorstepDeliveryFee(Number(computedRoadDistance), deliveryPricingConfig);
+      return isFinite(fee) ? fee : 0;
+    }
+
+    function deliveryFeeBreakdownLabel() {
       const pricing = window.mergeDeliveryPricing(deliveryPricingConfig);
-      let fee = 0;
-      if (computedRoadDistance <= 3) {
-        fee = pricing.initCharge;
-      } else {
-        fee = window.safeMoney(computedRoadDistance) * pricing.perKm;
+      const km = Number(computedRoadDistance);
+      const baseKm = window.DELIVERY_BASE_KM || 3;
+      if (!isFinite(km) || km <= baseKm) {
+        return 'First ' + baseKm + ' km: Rs. ' + pricing.initCharge;
       }
-      const rounded = Math.round(window.safeMoney(fee));
-      return isFinite(rounded) ? rounded : 0;
+      const extra = Math.max(1, Math.ceil(km - baseKm));
+      return 'Rs. ' + pricing.initCharge + ' + ' + extra + ' extra km × Rs. ' + pricing.perKm;
+    }
+
+    function refreshDeliveryFeeDisplay() {
+      const distEl = document.getElementById('calcDistanceText');
+      const feeEl = document.getElementById('calcDeliveryFeeText');
+      const brEl = document.getElementById('calcFeeBreakdownText');
+      if (distEl) distEl.innerText = Number(computedRoadDistance || 0).toFixed(1) + ' km (Approx)';
+      if (feeEl) feeEl.innerText = 'Rs. ' + getComputedDeliveryFee().toLocaleString();
+      if (brEl) brEl.innerText = deliveryFeeBreakdownLabel();
     }
 
     function prefillCheckoutIdentity() {
@@ -2134,8 +2148,7 @@
       lastDeliveryCoords = { lat: lat, lng: lng };
       lastGeocodedLandmark = lastGeocodedLandmark || 'Pinned location';
       computedRoadDistance = await calculateRoadDistance(RESTAURANT_COORDS.lat, RESTAURANT_COORDS.lng, lat, lng);
-      document.getElementById('calcDistanceText').innerText = computedRoadDistance.toFixed(1) + ' km (Approx)';
-      document.getElementById('calcDeliveryFeeText').innerText = 'Rs. ' + getComputedDeliveryFee().toLocaleString();
+      refreshDeliveryFeeDisplay();
       document.getElementById('locationStatus').innerText = 'Location pinned. House number ටික address එකට එකතු කරන්න.';
       updateGoogleMapsLink(lat, lng);
       renderCart();
@@ -2209,9 +2222,7 @@
         if (!lastDeliveryCoords) computedRoadDistance = 3.5;
       }
 
-      const fee = getComputedDeliveryFee();
-      document.getElementById('calcDistanceText').innerText = computedRoadDistance.toFixed(1) + ' km (Approx)';
-      document.getElementById('calcDeliveryFeeText').innerText = 'Rs. ' + fee.toLocaleString();
+      refreshDeliveryFeeDisplay();
       renderCart();
     }
 
