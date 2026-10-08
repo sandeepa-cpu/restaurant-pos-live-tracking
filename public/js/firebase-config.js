@@ -809,6 +809,114 @@ window.computeDoorstepDeliveryFee = function (distanceKm, pricing) {
   return Math.round(p.initCharge + extra * p.perKm);
 };
 
+window.SAVED_DELIVERY_PLACES_KEY = "peoples_saved_delivery_places";
+window.SAVED_DELIVERY_PLACES_CAP = 8;
+window.DELIVERY_GPS_MISMATCH_M = 250;
+
+window.haversineMeters = function (a, b) {
+  if (!a || !b) return Infinity;
+  var lat1 = Number(a.lat);
+  var lng1 = Number(a.lng != null ? a.lng : a.lon);
+  var lat2 = Number(b.lat);
+  var lng2 = Number(b.lng != null ? b.lng : b.lon);
+  if (!isFinite(lat1) || !isFinite(lng1) || !isFinite(lat2) || !isFinite(lng2)) return Infinity;
+  return window.haversineKm(lat1, lng1, lat2, lng2) * 1000;
+};
+
+window.deliveryPinsDiffer = function (a, b, meters) {
+  var thresh = Number(meters);
+  if (!isFinite(thresh) || thresh <= 0) thresh = window.DELIVERY_GPS_MISMATCH_M || 250;
+  return window.haversineMeters(a, b) > thresh;
+};
+
+window.normalizeSavedDeliveryPlace = function (raw) {
+  if (!raw || typeof raw !== "object") return null;
+  var lat = Number(raw.lat);
+  var lng = Number(raw.lng != null ? raw.lng : raw.lon);
+  if (!isFinite(lat) || !isFinite(lng)) return null;
+  var label = String(raw.label || "").trim() || "Saved place";
+  var address = String(raw.address || "").trim();
+  var id = String(raw.id || "").trim();
+  if (!id) {
+    id = "p_" + Date.now() + "_" + Math.abs(Math.round(lat * 1e5)) + "_" + Math.abs(Math.round(lng * 1e5));
+  }
+  return {
+    id: id,
+    label: label.slice(0, 40),
+    address: address.slice(0, 300),
+    lat: lat,
+    lng: lng,
+    updatedAt: Number(raw.updatedAt) || Date.now()
+  };
+};
+
+window.loadSavedDeliveryPlaces = function () {
+  try {
+    var raw = JSON.parse(localStorage.getItem(window.SAVED_DELIVERY_PLACES_KEY) || "[]");
+    if (!Array.isArray(raw)) return [];
+    var out = [];
+    var i;
+    for (i = 0; i < raw.length; i++) {
+      var p = window.normalizeSavedDeliveryPlace(raw[i]);
+      if (p) out.push(p);
+    }
+    return out;
+  } catch (e) {
+    return [];
+  }
+};
+
+window.saveSavedDeliveryPlaces = function (list) {
+  var places = Array.isArray(list) ? list.slice() : [];
+  var cap = window.SAVED_DELIVERY_PLACES_CAP || 8;
+  if (places.length > cap) places = places.slice(0, cap);
+  try {
+    localStorage.setItem(window.SAVED_DELIVERY_PLACES_KEY, JSON.stringify(places));
+  } catch (e) {}
+  return places;
+};
+
+window.findSavedDeliveryPlace = function (id) {
+  var key = String(id || "");
+  if (!key) return null;
+  var list = window.loadSavedDeliveryPlaces();
+  var i;
+  for (i = 0; i < list.length; i++) {
+    if (list[i].id === key) return list[i];
+  }
+  return null;
+};
+
+window.upsertSavedDeliveryPlace = function (place) {
+  var p = window.normalizeSavedDeliveryPlace(place);
+  if (!p) return window.loadSavedDeliveryPlaces();
+  p.updatedAt = Date.now();
+  var list = window.loadSavedDeliveryPlaces().filter(function (x) { return x.id !== p.id; });
+  list.unshift(p);
+  return window.saveSavedDeliveryPlaces(list);
+};
+
+window.removeSavedDeliveryPlace = function (id) {
+  var key = String(id || "");
+  var list = window.loadSavedDeliveryPlaces().filter(function (x) { return x.id !== key; });
+  return window.saveSavedDeliveryPlaces(list);
+};
+
+window.seedLastUsedDeliveryPlace = function (coords, address) {
+  var list = window.loadSavedDeliveryPlaces();
+  if (list.length) return list;
+  var lat = coords && Number(coords.lat);
+  var lng = coords && Number(coords.lng != null ? coords.lng : coords.lon);
+  if (!isFinite(lat) || !isFinite(lng)) return list;
+  return window.upsertSavedDeliveryPlace({
+    id: "last_used",
+    label: "Last used",
+    address: address || "",
+    lat: lat,
+    lng: lng
+  });
+};
+
 window.canCancelOrder = function (order) {
   var st = String((order && order.status) || "");
   switch (st) {

@@ -60,7 +60,7 @@
       }
     })();
   </script>
-  <script src="js/firebase-config.js?v=62"></script>
+  <script src="js/firebase-config.js?v=63"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -96,7 +96,11 @@
     #returningCustomerHint.hidden,
     #doorstepSubOptions.hidden,
     #checkoutPayOptions.hidden,
-    #cartItems.hidden {
+    #cartItems.hidden,
+    #deliveryTargetBanner.hidden,
+    #gpsLocationPanel.hidden,
+    #savedPlacesPanel.hidden,
+    #savedPlacesEmpty.hidden {
       display: none !important;
     }
     .pfr-checkout-bar {
@@ -281,6 +285,61 @@
       color: #047857;
       border-color: #a7f3d0;
     }
+    .loc-source-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      min-height: 58px;
+      padding: 8px 4px;
+      border-radius: 14px;
+      border: 1.5px solid #e2e8f0;
+      background: #fff;
+      color: #334155;
+      font-size: 10px;
+      font-weight: 800;
+      line-height: 1.2;
+      text-align: center;
+      cursor: pointer;
+    }
+    .loc-source-btn i { font-size: 14px; color: #6d28d9; }
+    .loc-source-btn.is-on {
+      border-color: #7c3aed;
+      background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 70%, #fff 100%);
+      color: #3b0764;
+      box-shadow: 0 8px 18px -12px rgba(91, 33, 182, .5);
+    }
+    .loc-source-btn.is-on i { color: #5b21b6; }
+    .saved-place-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1.5px solid #ddd6fe;
+      background: #fff;
+      color: #4c1d95;
+      border-radius: 999px;
+      padding: 6px 8px 6px 10px;
+      font-size: 11px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .saved-place-chip.is-on {
+      border-color: #7c3aed;
+      background: #ede9fe;
+    }
+    .saved-place-x {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      line-height: 1;
+      color: #64748b;
+      background: #f1f5f9;
+    }
     @media (max-width: 380px) {
       #headerCallBtn { display: none !important; }
       .hdr-btn { padding: 5px 7px; font-size: 9px; }
@@ -463,18 +522,49 @@
 
       <!-- Doorstep Options with Address Only & Automatic Distance Calculation -->
       <div id="doorstepSubOptions" class="hidden space-y-3 bg-purple-50/60 p-3.5 rounded-2xl border border-purple-200">
-        <span class="text-[11px] font-black text-purple-950 block">Doorstep Delivery Address:</span>
-        
-        <div class="space-y-2.5">
-          <button type="button" id="useLocationBtn" onclick="useCurrentLocation()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl text-sm shadow-md">
-            📍 Use my current location
+        <span class="text-[11px] font-black text-purple-950 block" data-i18n="deliveryWhere">Where should we deliver?</span>
+        <p id="deliveryPinHint" class="text-[10px] text-slate-600 font-semibold" data-i18n="pinThenProceed">Pin the drop-off, then Proceed.</p>
+
+        <div class="grid grid-cols-3 gap-1.5">
+          <button type="button" id="locSourceGps" class="loc-source-btn" onclick="selectLocationSource('gps')">
+            <i class="fa-solid fa-location-crosshairs"></i>
+            <span data-i18n="locGpsShort">GPS</span>
           </button>
+          <button type="button" id="locSourceSaved" class="loc-source-btn" onclick="selectLocationSource('saved')">
+            <i class="fa-solid fa-bookmark"></i>
+            <span data-i18n="locSavedShort">Saved</span>
+          </button>
+          <button type="button" id="locSourceSearch" class="loc-source-btn" onclick="selectLocationSource('search')">
+            <i class="fa-solid fa-map-pin"></i>
+            <span data-i18n="locSearchShort">Search / Pin</span>
+          </button>
+        </div>
+
+        <div id="deliveryTargetBanner" class="hidden text-[10px] font-bold text-amber-900 bg-amber-50 border border-amber-200 rounded-xl p-2.5"></div>
+
+        <div id="gpsLocationPanel" class="hidden">
+          <button type="button" id="useLocationBtn" onclick="useCurrentLocation()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-xl text-sm shadow-md" data-i18n="locGps">
+            Use Current GPS Location
+          </button>
+        </div>
+
+        <div id="savedPlacesPanel" class="hidden space-y-2">
+          <div id="savedPlacesChips" class="flex flex-wrap gap-1.5"></div>
+          <p id="savedPlacesEmpty" class="hidden text-[10px] text-slate-500 font-semibold" data-i18n="noSavedPlaces">No saved places yet</p>
+        </div>
+
+        <div class="space-y-2.5">
           <div id="deliveryMap" class="w-full rounded-xl overflow-hidden border-2 border-emerald-500 bg-slate-100" style="height: 220px; min-height: 220px;"></div>
           <p id="locationStatus" class="text-[10px] text-purple-800 font-semibold">Pin එක ඔබගේ ගෙදරට අදින්න. හෝ උඩ button එකෙන් දැන් ඉන්න තැන select කරන්න.</p>
           <a id="googleMapsPreviewLink" href="#" target="_blank" rel="noopener" class="hidden text-[10px] text-purple-900 font-black underline">Open this pin in Google Maps ↗</a>
           <div class="space-y-1">
             <label class="text-[10px] font-bold text-slate-600 block">🏠 Address / House details</label>
             <textarea id="doorstepAddressInput" placeholder="House No, Street, nearby place..." class="w-full border rounded-xl p-2 text-xs bg-white outline-none h-16 resize-none font-medium" onblur="calculateFeeFromAddress()"></textarea>
+            <button type="button" id="searchAddressBtn" onclick="searchCustomAddress()" class="w-full bg-purple-900 hover:bg-purple-800 text-white font-black py-2 rounded-xl text-xs" data-i18n="searchAddress">Search</button>
+          </div>
+          <div class="flex gap-1.5 items-center">
+            <input id="savePlaceLabelInput" type="text" maxlength="40" class="flex-1 border rounded-xl p-2 text-xs font-semibold outline-none bg-white" placeholder="Home, Office, Parents' Place" data-i18n-placeholder="placeLabelPh">
+            <button type="button" id="savePlaceBtn" onclick="saveCurrentDeliveryPlace()" class="flex-shrink-0 bg-white border border-purple-300 text-purple-900 font-black px-3 py-2 rounded-xl text-[11px]" data-i18n="savePlace">Save place</button>
           </div>
 
           <!-- Delivery Fee Breakdown -->
@@ -649,6 +739,10 @@
     let isRecording = false;
     let lastDeliveryCoords = null;
     let lastGeocodedLandmark = '';
+    let locationSource = 'search';
+    let deviceGpsCoords = null;
+    let deliveryPinConfirmed = false;
+    let selectedPlaceId = '';
     let lastOrdersCache = {};
     let customerActiveLock = null;
     let pendingAfterAuth = '';
@@ -719,7 +813,23 @@
         closedNow: 'Closed',
         hours24: '24 hours',
         savedPinLoaded: 'Last delivery pin loaded. Drag the pin if you moved.',
-        returningHint: 'Welcome back. Last delivery pin will load for doorstep.'
+        returningHint: 'Welcome back. Last delivery pin will load for doorstep.',
+        deliveryWhere: 'Where should we deliver?',
+        pinThenProceed: 'Pin the drop-off, then Proceed.',
+        locGps: 'Use Current GPS Location',
+        locGpsShort: 'GPS',
+        locSavedShort: 'Saved',
+        locSearchShort: 'Search / Pin',
+        noSavedPlaces: 'No saved places yet',
+        savePlace: 'Save place',
+        placeLabelPh: "Home, Office, Parents' Place",
+        searchAddress: 'Search',
+        deliveringNotGps: 'Delivering to {label}, not your current GPS.',
+        deliveringToLabel: 'Delivering to {label}.',
+        lastUsedPin: 'Last used pin loaded. Tap another saved place if this is not the drop-off.',
+        searchMiss: 'Address not found. Pin the drop-off on the map.',
+        placeSaved: 'Place saved on this device.',
+        pinFirst: 'Pin the drop-off first, then save it.'
       },
       si: {
         arrivedTitle: 'Delivery Rider ආවා!',
@@ -774,7 +884,23 @@
         closedNow: 'වහලා',
         hours24: '24 පැය',
         savedPinLoaded: 'කලින් delivery pin එක load වුණා. වෙනස් නම් map එකේ අදින්න.',
-        returningHint: 'Welcome back. Doorstep නම් කලින් pin එක load වෙනවා.'
+        returningHint: 'Welcome back. Doorstep නම් කලින් pin එක load වෙනවා.',
+        deliveryWhere: 'කොහේට deliver කරන්නද?',
+        pinThenProceed: 'Drop-off එක pin කරලා Proceed ඔබන්න.',
+        locGps: 'දැන් ඉන්න GPS තැන',
+        locGpsShort: 'GPS',
+        locSavedShort: 'Saved',
+        locSearchShort: 'Search / Pin',
+        noSavedPlaces: 'Saved places නැහැ',
+        savePlace: 'Save place',
+        placeLabelPh: "Home, Office, Parents' Place",
+        searchAddress: 'Search',
+        deliveringNotGps: '{label} වලට deliver වෙනවා — දැන් GPS තැන නෙවෙයි.',
+        deliveringToLabel: '{label} වලට deliver වෙනවා.',
+        lastUsedPin: 'කලින් pin එක load වුණා. වෙන තැනක් නම් saved place එකක් tap කරන්න.',
+        searchMiss: 'Address හොයාගන්න බැරි වුණා. Map එකේ pin කරන්න.',
+        placeSaved: 'මේ phone එකේ save වුණා.',
+        pinFirst: 'මුලින් drop-off එක pin කරන්න, ඊට පස්සේ save කරන්න.'
       }
     };
 
@@ -986,10 +1112,11 @@
         : (typeof window.firstAvailableOrderMode === 'function'
           ? !!window.firstAvailableOrderMode(orderTimings, adminDeliverySettings)
           : true);
+      const pinMissing = selectedDeliveryMode === 'doorstep' && !deliveryPinConfirmed;
       if (typeof window.refreshCustomerCheckoutProceed === 'function') {
         window.refreshCustomerCheckoutProceed({
           blocking: currentBlockingOrder(),
-          forceDisabled: !isShopOpen() || !firstOpen,
+          forceDisabled: !isShopOpen() || !firstOpen || pinMissing,
           submitting: orderSubmitting
         });
       }
@@ -1325,6 +1452,10 @@
       currentActiveOrderKey = null;
       lastDeliveryCoords = null;
       lastGeocodedLandmark = '';
+      deliveryPinConfirmed = false;
+      deviceGpsCoords = null;
+      selectedPlaceId = '';
+      locationSource = 'search';
       updateAuthHeader();
       renderMyActiveOrder();
     }
@@ -2016,14 +2147,192 @@
       refreshCheckoutProceedState();
     }
 
+    function deliveryPlaceLabel() {
+      if (selectedPlaceId) {
+        const p = window.findSavedDeliveryPlace(selectedPlaceId);
+        if (p && p.label) return p.label;
+      }
+      if (locationSource === 'gps') return 'GPS';
+      return 'the map pin';
+    }
+
+    function updateDeliveryTargetBanner() {
+      const el = document.getElementById('deliveryTargetBanner');
+      if (!el) return;
+      if (selectedDeliveryMode !== 'doorstep' || !deliveryPinConfirmed) {
+        el.classList.add('hidden');
+        el.innerText = '';
+        return;
+      }
+      const label = deliveryPlaceLabel();
+      const differ = deviceGpsCoords && lastDeliveryCoords && window.deliveryPinsDiffer(deviceGpsCoords, lastDeliveryCoords);
+      if (locationSource === 'saved' && selectedPlaceId === 'last_used' && !differ) {
+        el.innerText = t('lastUsedPin');
+        el.classList.remove('hidden');
+        return;
+      }
+      if (differ || (deviceGpsCoords && locationSource !== 'gps')) {
+        el.innerText = t('deliveringNotGps').replace('{label}', label);
+        el.classList.remove('hidden');
+        return;
+      }
+      if (locationSource === 'saved') {
+        el.innerText = t('deliveringToLabel').replace('{label}', label);
+        el.classList.remove('hidden');
+        return;
+      }
+      el.classList.add('hidden');
+      el.innerText = '';
+    }
+
+    function paintLocationSourceButtons() {
+      const gps = document.getElementById('locSourceGps');
+      const saved = document.getElementById('locSourceSaved');
+      const search = document.getElementById('locSourceSearch');
+      if (gps) gps.classList.toggle('is-on', locationSource === 'gps');
+      if (saved) saved.classList.toggle('is-on', locationSource === 'saved');
+      if (search) search.classList.toggle('is-on', locationSource === 'search');
+      const gpsPanel = document.getElementById('gpsLocationPanel');
+      const savedPanel = document.getElementById('savedPlacesPanel');
+      if (gpsPanel) gpsPanel.classList.toggle('hidden', locationSource !== 'gps');
+      if (savedPanel) savedPanel.classList.toggle('hidden', locationSource !== 'saved');
+    }
+
+    function paintSavedPlacesChips() {
+      const wrap = document.getElementById('savedPlacesChips');
+      const empty = document.getElementById('savedPlacesEmpty');
+      if (!wrap) return;
+      const places = window.loadSavedDeliveryPlaces();
+      wrap.innerHTML = '';
+      if (!places.length) {
+        if (empty) empty.classList.remove('hidden');
+        return;
+      }
+      if (empty) empty.classList.add('hidden');
+      places.forEach(function (p) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'saved-place-chip' + (selectedPlaceId === p.id ? ' is-on' : '');
+        const name = document.createElement('span');
+        name.textContent = p.label;
+        const x = document.createElement('span');
+        x.className = 'saved-place-x';
+        x.textContent = '×';
+        x.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          ev.stopPropagation();
+          removeSavedPlaceChip(p.id);
+        });
+        btn.appendChild(name);
+        btn.appendChild(x);
+        btn.addEventListener('click', function () { applySavedPlace(p.id); });
+        wrap.appendChild(btn);
+      });
+    }
+
+    function selectLocationSource(src) {
+      if (src !== 'gps' && src !== 'saved' && src !== 'search') src = 'search';
+      locationSource = src;
+      if (src !== 'saved') selectedPlaceId = selectedPlaceId || '';
+      paintLocationSourceButtons();
+      paintSavedPlacesChips();
+      ensureDeliveryMap();
+      if (src === 'search') {
+        const box = document.getElementById('doorstepAddressInput');
+        if (box) box.focus();
+      }
+      updateDeliveryTargetBanner();
+      refreshCheckoutProceedState();
+    }
+
+    function applySavedPlace(id) {
+      const place = window.findSavedDeliveryPlace(id);
+      if (!place) return;
+      locationSource = 'saved';
+      selectedPlaceId = place.id;
+      const box = document.getElementById('doorstepAddressInput');
+      if (box) {
+        box.value = place.address || '';
+        box.dataset.fromPin = '';
+      }
+      const labelEl = document.getElementById('savePlaceLabelInput');
+      if (labelEl) labelEl.value = place.label === 'Last used' ? '' : place.label;
+      paintLocationSourceButtons();
+      paintSavedPlacesChips();
+      showPinOnMap(place.lat, place.lng, 16);
+      applyPickedLocation(place.lat, place.lng, false);
+      const status = document.getElementById('locationStatus');
+      if (status) status.innerText = t('savedPinLoaded');
+    }
+
+    function removeSavedPlaceChip(id) {
+      window.removeSavedDeliveryPlace(id);
+      if (selectedPlaceId === id) selectedPlaceId = '';
+      paintSavedPlacesChips();
+    }
+
+    function saveCurrentDeliveryPlace() {
+      if (!deliveryPinConfirmed || !lastDeliveryCoords || !lastDeliveryCoords.lat) {
+        return alert(t('pinFirst'));
+      }
+      const labelEl = document.getElementById('savePlaceLabelInput');
+      const addrEl = document.getElementById('doorstepAddressInput');
+      const label = (labelEl && labelEl.value.trim()) || 'Saved place';
+      const address = (addrEl && addrEl.value.trim()) || lastGeocodedLandmark || '';
+      const reuseId = selectedPlaceId || '';
+      const list = window.upsertSavedDeliveryPlace({
+        id: reuseId,
+        label: label,
+        address: address,
+        lat: lastDeliveryCoords.lat,
+        lng: lastDeliveryCoords.lng
+      });
+      selectedPlaceId = (list[0] && list[0].id) || reuseId;
+      locationSource = 'saved';
+      paintLocationSourceButtons();
+      paintSavedPlacesChips();
+      updateDeliveryTargetBanner();
+      const status = document.getElementById('locationStatus');
+      if (status) status.innerText = t('placeSaved');
+    }
+
+    function markMapPinMoved(lat, lng) {
+      if (locationSource === 'gps' && deviceGpsCoords && window.deliveryPinsDiffer(deviceGpsCoords, { lat: lat, lng: lng })) {
+        locationSource = 'search';
+        selectedPlaceId = '';
+        paintLocationSourceButtons();
+      } else if (locationSource === 'saved') {
+        selectedPlaceId = '';
+        locationSource = 'search';
+        paintLocationSourceButtons();
+      }
+    }
+
     function hydrateDoorstepFromSavedPin() {
+      const lastAddr = (document.getElementById('doorstepAddressInput') && document.getElementById('doorstepAddressInput').value.trim())
+        || (verifiedUser && verifiedUser.lastAddress)
+        || '';
+      window.seedLastUsedDeliveryPlace(lastDeliveryCoords || (verifiedUser && verifiedUser.lastCoords), lastAddr);
+      paintSavedPlacesChips();
       setTimeout(function () {
         ensureDeliveryMap();
-        if (lastDeliveryCoords && lastDeliveryCoords.lat) {
-          applySavedPinToMap(false);
-        } else if (document.getElementById('doorstepAddressInput').value.trim()) {
-          calculateFeeFromAddress();
+        const places = window.loadSavedDeliveryPlaces();
+        const onlyLastUsed = places.length === 1 && places[0].id === 'last_used';
+        if (deliveryPinConfirmed && lastDeliveryCoords && lastDeliveryCoords.lat) {
+          showPinOnMap(lastDeliveryCoords.lat, lastDeliveryCoords.lng, 16);
+          selectLocationSource(locationSource || 'search');
+          updateDeliveryTargetBanner();
+          refreshCheckoutProceedState();
+          return;
         }
+        if (onlyLastUsed) {
+          applySavedPlace(places[0].id);
+          return;
+        }
+        deliveryPinConfirmed = false;
+        locationSource = places.length ? 'saved' : 'search';
+        selectLocationSource(locationSource);
+        refreshCheckoutProceedState();
       }, 250);
     }
 
@@ -2121,10 +2430,12 @@
       deliveryMarker = L.marker([start.lat, start.lng], { draggable: true }).addTo(deliveryMap);
       deliveryMarker.on('dragend', function () {
         const p = deliveryMarker.getLatLng();
+        markMapPinMoved(p.lat, p.lng);
         applyPickedLocation(p.lat, p.lng, true);
       });
       deliveryMap.on('click', function (e) {
         deliveryMarker.setLatLng(e.latlng);
+        markMapPinMoved(e.latlng.lat, e.latlng.lng);
         applyPickedLocation(e.latlng.lat, e.latlng.lng, true);
       });
       if (lastDeliveryCoords && lastDeliveryCoords.lat) {
@@ -2148,6 +2459,7 @@
       lastDeliveryCoords = { lat: lat, lng: lng };
       lastGeocodedLandmark = lastGeocodedLandmark || 'Pinned location';
       computedRoadDistance = await calculateRoadDistance(RESTAURANT_COORDS.lat, RESTAURANT_COORDS.lng, lat, lng);
+      deliveryPinConfirmed = true;
       refreshDeliveryFeeDisplay();
       document.getElementById('locationStatus').innerText = 'Location pinned. House number ටික address එකට එකතු කරන්න.';
       updateGoogleMapsLink(lat, lng);
@@ -2164,6 +2476,8 @@
         }
       }
       persistLocalSavedPin();
+      updateDeliveryTargetBanner();
+      refreshCheckoutProceedState();
     }
 
     function useCurrentLocation() {
@@ -2171,59 +2485,70 @@
       if (!navigator.geolocation) {
         return alert('මේ phone එකේ location support නැහැ. Map එකේ pin එක අදින්න.');
       }
+      locationSource = 'gps';
+      selectedPlaceId = '';
+      paintLocationSourceButtons();
       btn.disabled = true;
       btn.innerText = 'Getting your location...';
       document.getElementById('locationStatus').innerText = 'GPS එකෙන් තැන හොයනවා... Allow කරන්න.';
       navigator.geolocation.getCurrentPosition(function (pos) {
         const lat = pos.coords.latitude;
         const lng = pos.coords.longitude;
+        deviceGpsCoords = { lat: lat, lng: lng };
         ensureDeliveryMap();
         showPinOnMap(lat, lng, 18);
         applyPickedLocation(lat, lng, true);
         btn.disabled = false;
-        btn.innerText = '📍 Use my current location';
+        btn.innerText = t('locGps');
       }, function () {
         btn.disabled = false;
-        btn.innerText = '📍 Use my current location';
+        btn.innerText = t('locGps');
         document.getElementById('locationStatus').innerText = 'Location allow කරන්න, නැත්නම් map එකේ pin එක අදින්න.';
         alert('Location permission allow කරන්න. නැත්නම් map එකේ ඔබගේ ගෙදර pin කරන්න.');
       }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
     }
 
-    // Automatically geocode typed address using OpenStreetMap Nominatim
-    async function calculateFeeFromAddress() {
-      const addressText = document.getElementById('doorstepAddressInput').value.trim();
-      if (!addressText) return;
-      document.getElementById('doorstepAddressInput').dataset.fromPin = '';
-      if (lastDeliveryCoords && lastDeliveryCoords.lat && lastDeliveryCoords.lng) {
-        persistLocalSavedPin();
-        renderCart();
+    async function searchCustomAddress() {
+      const box = document.getElementById('doorstepAddressInput');
+      const addressText = (box && box.value.trim()) || '';
+      if (!addressText) {
+        document.getElementById('locationStatus').innerText = t('searchMiss');
         return;
       }
-
+      locationSource = 'search';
+      selectedPlaceId = '';
+      paintLocationSourceButtons();
+      if (box) box.dataset.fromPin = '';
       const query = addressText.toLowerCase().includes('horana') ? addressText : (addressText + ', Horana, Sri Lanka');
-      const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
-
+      const url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(query) + '&limit=1';
       lastGeocodedLandmark = addressText;
+      document.getElementById('locationStatus').innerText = 'Address හොයනවා...';
       try {
         const response = await fetch(url, { headers: { 'Accept': 'application/json' } });
         const results = await response.json();
         if (results && results.length > 0) {
           const lat = parseFloat(results[0].lat);
           const lon = parseFloat(results[0].lon);
-          lastDeliveryCoords = { lat, lng: lon };
           lastGeocodedLandmark = results[0].display_name || addressText;
-          computedRoadDistance = await calculateRoadDistance(RESTAURANT_COORDS.lat, RESTAURANT_COORDS.lng, lat, lon);
           showPinOnMap(lat, lon, 16);
-        } else if (!lastDeliveryCoords) {
-          computedRoadDistance = 3.5; 
+          await applyPickedLocation(lat, lon, false);
+          return;
         }
-      } catch (e) {
-        if (!lastDeliveryCoords) computedRoadDistance = 3.5;
-      }
+      } catch (e) {}
+      deliveryPinConfirmed = !!(lastDeliveryCoords && lastDeliveryCoords.lat);
+      document.getElementById('locationStatus').innerText = t('searchMiss');
+      refreshCheckoutProceedState();
+    }
 
-      refreshDeliveryFeeDisplay();
-      renderCart();
+    function calculateFeeFromAddress() {
+      const addressText = document.getElementById('doorstepAddressInput').value.trim();
+      if (!addressText) return;
+      if (lastDeliveryCoords && lastDeliveryCoords.lat && lastDeliveryCoords.lng) {
+        persistLocalSavedPin();
+        renderCart();
+        return;
+      }
+      searchCustomAddress();
     }
 
     function finalizeAndSubmitOrder() {
