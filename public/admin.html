@@ -18,7 +18,7 @@
   <style>
     .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
     .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-    [data-admin-panel].hidden, #qrDisplayArea.hidden, #takeawayQrArea.hidden, #qrBatchArea.hidden, #menuEditModal.hidden { display: none !important; }
+    [data-admin-panel].hidden, #qrDisplayArea.hidden, #takeawayQrArea.hidden, #qrBatchArea.hidden, #menuEditModal.hidden, #adminOrderModal.hidden { display: none !important; }
     [data-admin-nav] { color: #64748b; background: #fff; border: 1px solid #e2e8f0; }
     [data-admin-nav].active { color: #fff; background: #581c87; border-color: #581c87; }
     .print-only { display: none; }
@@ -725,12 +725,26 @@
     </div>
   </div>
 
+  <div id="adminOrderModal" class="hidden fixed inset-0 z-[80] bg-slate-950/60 flex items-end sm:items-center justify-center sm:p-4" role="dialog" aria-modal="true" aria-labelledby="adminOrderModalTitle" onclick="closeAdminOrderModal()">
+    <div class="bg-white w-full sm:max-w-lg max-h-[92vh] overflow-y-auto custom-scrollbar rounded-t-3xl sm:rounded-3xl shadow-2xl p-5 space-y-3" onclick="event.stopPropagation()">
+      <div class="flex justify-between items-start gap-2 border-b pb-2">
+        <div class="min-w-0">
+          <h3 id="adminOrderModalTitle" class="font-black text-sm text-purple-950 truncate">Order details</h3>
+          <p id="adminOrderModalStatus" class="text-[10px] font-bold text-slate-500 mt-0.5"></p>
+        </div>
+        <button type="button" onclick="closeAdminOrderModal()" aria-label="Close" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-black w-8 h-8 rounded-xl flex-shrink-0">✕</button>
+      </div>
+      <div id="adminOrderModalBody" class="space-y-3 text-xs"></div>
+    </div>
+  </div>
+
   <script>
     const firebaseConfig = window.PEOPLES_FIREBASE_CONFIG;
     if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
     const db = firebase.database();
     guardStaffPage(['admin']);
     let allOrders = {};
+    let adminOrderModalKey = '';
     const ADMIN_PANELS = ['sales', 'feedback', 'customers', 'delivery', 'shop', 'staff', 'riders', 'menu', 'dishes', 'orders'];
 
     function showAdminPanel(name) {
@@ -2568,24 +2582,171 @@
       document.body.classList.remove('printing-sales');
     });
 
+    function adminOrderTypeLabel(order) {
+      const o = order || {};
+      if (window.isDineInOrder && window.isDineInOrder(o)) {
+        return o.tableId ? ('Table ' + o.tableId) : 'Table';
+      }
+      const meta = o.deliveryMeta || {};
+      if (meta.mode === 'pickme') return 'PickMe';
+      if (meta.mode === 'self') return 'Pickup';
+      if (window.isDoorstepOrder && window.isDoorstepOrder(o)) return 'Doorstep';
+      if (o.tableId) return 'Table ' + o.tableId;
+      const opt = String(o.deliveryOption || '');
+      if (/pickme/i.test(opt)) return 'PickMe';
+      if (/doorstep|deliver/i.test(opt)) return 'Doorstep';
+      if (/pick\s*up|pickup/i.test(opt)) return 'Pickup';
+      return o.type || 'Pickup';
+    }
+
+    function adminOrderMapsUrl(order) {
+      const meta = (order && order.deliveryMeta) || {};
+      if (meta.mapsUrl) return String(meta.mapsUrl);
+      const c = meta.coords || {};
+      if (c.lat && c.lng) return 'https://www.google.com/maps?q=' + Number(c.lat) + ',' + Number(c.lng);
+      return '';
+    }
+
+    function adminOrderDeliveryFee(order) {
+      var fee = window.safeMoney(order && order.deliveryFee);
+      if (fee) return fee;
+      return window.safeMoney(order && order.deliveryMeta && order.deliveryMeta.deliveryFee);
+    }
+
+    function dash(value) {
+      const s = String(value == null ? '' : value).trim();
+      return s ? escapeHtml(s) : '—';
+    }
+
+    function fillAdminOrderModal(order) {
+      const title = document.getElementById('adminOrderModalTitle');
+      const statusEl = document.getElementById('adminOrderModalStatus');
+      const body = document.getElementById('adminOrderModalBody');
+      if (!title || !statusEl || !body) return;
+      const o = order || {};
+      const idText = (o.orderId || 'Order') + (o.legacyOrderId ? ' (old ' + o.legacyOrderId + ')' : '');
+      title.textContent = idText;
+      statusEl.textContent = 'Status: ' + (o.status || '—');
+      const name = o.customerName || (o.tableId ? ('Table ' + o.tableId) : '');
+      const phone = String(o.customerPhone || '').trim();
+      const typeLabel = adminOrderTypeLabel(o);
+      const doorstep = !!(window.isDoorstepOrder && window.isDoorstepOrder(o));
+      const dineIn = !!(window.isDineInOrder && window.isDineInOrder(o));
+      const items = window.orderItemRows ? window.orderItemRows(o) : (Array.isArray(o.items) ? o.items : []);
+      const foodTotal = window.cartFoodTotal ? window.cartFoodTotal(items) : window.safeMoney(o.foodTotal);
+      const fee = adminOrderDeliveryFee(o);
+      const total = window.safeMoney(o.total) || (foodTotal + fee);
+      const money = function (n) { return 'Rs. ' + Number(n || 0).toLocaleString(); };
+      const itemHtml = items.length
+        ? items.map(function (item) {
+            const qty = Math.max(0, window.safeMoney(item && item.qty) || 0);
+            const line = window.lineTotal ? window.lineTotal(item) : (window.safeMoney(item && item.price) * qty);
+            const note = String((item && item.note) || '').trim();
+            return '<div class="flex justify-between gap-2 py-1 border-b border-slate-100 last:border-0">' +
+              '<div class="min-w-0"><span class="font-black text-slate-900">' + escapeHtml(String(qty)) + ' × ' + dash(item && item.name) + '</span>' +
+              (note ? '<p class="text-[10px] text-slate-500 font-semibold">' + escapeHtml(note) + '</p>' : '') +
+              '</div><span class="flex-shrink-0 font-bold text-slate-800">' + money(line) + '</span></div>';
+          }).join('')
+        : '<p class="text-slate-400 font-bold">No items.</p>';
+      const addr = window.orderDeliveryAddress ? window.orderDeliveryAddress(o) : ((o.deliveryMeta && (o.deliveryMeta.address || o.deliveryMeta.landmark)) || '');
+      const km = window.orderDistanceLabel ? window.orderDistanceLabel(o) : '';
+      const maps = adminOrderMapsUrl(o);
+      let deliveryHtml = '';
+      if (doorstep) {
+        deliveryHtml =
+          '<div class="bg-violet-50 border border-violet-100 rounded-2xl p-3 space-y-1">' +
+            '<p class="text-[10px] font-black uppercase tracking-wide text-violet-900">Delivery</p>' +
+            '<p class="font-bold text-slate-800">' + dash(addr) + '</p>' +
+            '<div class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-bold text-slate-600">' +
+              '<span>Distance: ' + dash(km) + '</span>' +
+              '<span>Fee: ' + money(fee) + '</span>' +
+            '</div>' +
+            (maps ? '<a href="' + escapeHtml(maps) + '" target="_blank" rel="noopener" class="inline-block text-[11px] font-black text-purple-900 underline">Open in Google Maps ↗</a>' : '') +
+          '</div>';
+      } else if (dineIn) {
+        deliveryHtml = '<div class="bg-slate-50 border rounded-2xl p-3 font-bold text-slate-700">Dine-in · ' + dash(typeLabel) + '</div>';
+      } else {
+        deliveryHtml = '<div class="bg-slate-50 border rounded-2xl p-3 font-bold text-slate-700">' + dash(typeLabel) + ' at shop</div>';
+      }
+      const pay = window.paymentLabel ? window.paymentLabel(o) : '—';
+      const when = window.formatOrderDateTime ? window.formatOrderDateTime(window.orderTimeMs ? window.orderTimeMs(o) : o.timestamp) : (o.timestamp || '—');
+      const note = String(o.kitchenNote || '').trim();
+      body.innerHTML =
+        '<div class="bg-slate-50 border rounded-2xl p-3 space-y-1">' +
+          '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Customer</p>' +
+          '<p class="font-black text-slate-900">' + dash(name) + '</p>' +
+          (phone
+            ? '<a href="tel:' + escapeHtml(phone) + '" class="font-black text-sky-800">' + escapeHtml(phone) + '</a>'
+            : '<p class="text-slate-400 font-bold">—</p>') +
+          '<p class="text-[11px] font-bold text-purple-900">Type: ' + dash(typeLabel) + '</p>' +
+        '</div>' +
+        deliveryHtml +
+        '<div class="bg-white border rounded-2xl p-3 space-y-1">' +
+          '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Items</p>' +
+          itemHtml +
+          '<div class="flex justify-between pt-2 text-[11px] font-bold text-slate-600"><span>Subtotal</span><span>' + money(foodTotal) + '</span></div>' +
+          (doorstep ? '<div class="flex justify-between text-[11px] font-bold text-slate-600"><span>Delivery fee</span><span>' + money(fee) + '</span></div>' : '') +
+          '<div class="flex justify-between text-sm font-black text-purple-950"><span>Total</span><span>' + money(total) + '</span></div>' +
+          (note ? '<p class="text-[10px] text-slate-500 font-semibold pt-1">Note: ' + escapeHtml(note) + '</p>' : '') +
+        '</div>' +
+        '<div class="bg-slate-50 border rounded-2xl p-3 space-y-1">' +
+          '<p class="text-[10px] font-black uppercase tracking-wide text-slate-500">Payment &amp; time</p>' +
+          '<p class="font-bold text-slate-800">' + dash(pay) + '</p>' +
+          '<p class="text-[11px] font-bold text-slate-600">Created: ' + dash(when) + '</p>' +
+          '<p class="text-[11px] font-bold text-slate-600">Status: ' + dash(o.status) + '</p>' +
+        '</div>';
+    }
+
+    function openAdminOrderModal(key) {
+      const k = String(key || '');
+      const order = allOrders[k];
+      if (!order) {
+        closeAdminOrderModal();
+        return;
+      }
+      adminOrderModalKey = k;
+      fillAdminOrderModal(order);
+      const modal = document.getElementById('adminOrderModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeAdminOrderModal() {
+      adminOrderModalKey = '';
+      const modal = document.getElementById('adminOrderModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && adminOrderModalKey) closeAdminOrderModal();
+    });
+
     function renderAdminArchive() {
       const archiveBox = document.getElementById('adminOrdersList');
       if (!archiveBox) return;
       const keys = Object.keys(allOrders).reverse();
       if (!keys.length) {
         archiveBox.innerHTML = '<p class="text-center text-slate-400 text-xs py-6">No orders.</p>';
+        if (adminOrderModalKey) closeAdminOrderModal();
         return;
       }
       archiveBox.innerHTML = '';
       keys.forEach(function (k) {
         const o = allOrders[k];
+        const sk = safeOrderKey(k);
         archiveBox.innerHTML +=
-          '<div class="flex items-center justify-between p-2.5 bg-slate-50 border rounded-xl">' +
-            '<div><span class="font-black text-xs text-slate-900">' + escapeHtml(o.orderId) + (o.legacyOrderId ? ' <span class="text-[9px] font-bold text-slate-400">(old ' + escapeHtml(o.legacyOrderId) + ')</span>' : '') + ' - ' + escapeHtml(o.customerName || ('Table ' + (o.tableId || ''))) + '</span>' +
+          '<div class="flex items-center justify-between gap-2 p-2.5 bg-slate-50 border rounded-xl cursor-pointer hover:bg-white hover:border-purple-200" data-order-key="' + escapeHtml(k) + '" onclick="openAdminOrderModal(\'' + sk + '\')">' +
+            '<div class="min-w-0"><span class="font-black text-xs text-slate-900">' + escapeHtml(o.orderId) + (o.legacyOrderId ? ' <span class="text-[9px] font-bold text-slate-400">(old ' + escapeHtml(o.legacyOrderId) + ')</span>' : '') + ' - ' + escapeHtml(o.customerName || ('Table ' + (o.tableId || ''))) + '</span>' +
             '<span class="text-[9px] block text-slate-500">Status: ' + escapeHtml(o.status) + ' | Total: Rs. ' + (o.total || 0).toLocaleString() + '</span></div>' +
-            '<button onclick="deleteOrder(\'' + safeOrderKey(k) + '\')" class="bg-rose-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black shadow hover:bg-rose-700 transition">Remove</button>' +
+            '<div class="flex flex-shrink-0 gap-1">' +
+              '<button type="button" onclick="event.stopPropagation(); openAdminOrderModal(\'' + sk + '\')" class="bg-white border border-purple-200 text-purple-900 px-3 py-1.5 rounded-lg text-[10px] font-black shadow-sm hover:bg-purple-50 transition">View Details</button>' +
+              '<button type="button" onclick="event.stopPropagation(); deleteOrder(\'' + sk + '\')" class="bg-rose-600 text-white px-3 py-1.5 rounded-lg text-[10px] font-black shadow hover:bg-rose-700 transition">Remove</button>' +
+            '</div>' +
           '</div>';
       });
+      if (adminOrderModalKey) {
+        if (allOrders[adminOrderModalKey]) fillAdminOrderModal(allOrders[adminOrderModalKey]);
+        else closeAdminOrderModal();
+      }
     }
 
     let orderCounterValue = null;
