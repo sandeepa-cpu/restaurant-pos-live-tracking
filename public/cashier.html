@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <script src="js/firebase-config.js?v=63"></script>
+  <script src="js/firebase-config.js?v=64"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -120,7 +120,28 @@
     .cashier-bottom-nav { padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
     #cashierLiveView.hidden, #cashierTodayView.hidden, #cashierCashView.hidden,
     #slipModal.hidden, #cashierChatDrawer.hidden, #cashierOrderModal.hidden,
-    #stewardAlertBox.hidden, #newOrderToast.hidden, #orderAlarmBanner.hidden, #cashierSoundPanel.hidden { display: none !important; }
+    #stewardAlertBox.hidden, #newOrderToast.hidden, #orderAlarmBanner.hidden, #cashierSoundPanel.hidden,
+    #cashierNewOrderOverlay.hidden { display: none !important; }
+    #cashierNewOrderOverlay {
+      z-index: 90;
+      background: rgba(15, 23, 42, 0.78);
+    }
+    .cashier-overlay-btn {
+      min-height: 48px;
+      display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+      width: 100%; border-radius: 1rem; font-weight: 900; font-size: 0.95rem;
+    }
+    .cashier-overlay-btn.hidden, #cashierOverlayEnableSound.hidden { display: none !important; }
+    .cashier-print-ticket { display: none; }
+    @media print {
+      body * { visibility: hidden !important; }
+      #cashierPrintTicket, #cashierPrintTicket * { visibility: visible !important; }
+      #cashierPrintTicket {
+        display: block !important; position: absolute; left: 0; top: 0;
+        width: 72mm; padding: 8px; color: #000; font-family: ui-monospace, monospace;
+      }
+      #cashierNewOrderOverlay { display: none !important; }
+    }
   </style>
 </head>
 <body class="min-h-screen p-4 md:p-6 pb-4 text-slate-800 antialiased selection:bg-purple-200">
@@ -413,6 +434,43 @@
       </div>
     </div>
   </div>
+
+  <div id="cashierNewOrderOverlay" class="fixed inset-0 hidden flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-[28px] shadow-2xl border-4 border-rose-500 overflow-hidden max-h-[92vh] flex flex-col">
+      <div class="bg-rose-600 text-white px-5 py-4 text-center">
+        <p class="text-[11px] font-black uppercase tracking-[0.2em] text-rose-100">Cashier station</p>
+        <h2 class="text-2xl font-black leading-tight mt-1">NEW ORDER ARRIVED!</h2>
+      </div>
+      <div class="p-5 space-y-3 overflow-y-auto flex-1">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="text-[10px] font-black uppercase tracking-wider text-slate-400">Order</p>
+            <p id="cashierOverlayId" class="text-2xl font-black text-slate-900 leading-none">—</p>
+          </div>
+          <span id="cashierOverlayType" class="flex-shrink-0 bg-violet-100 text-violet-800 text-[11px] font-black px-3 py-1.5 rounded-full">Pickup</span>
+        </div>
+        <p id="cashierOverlayName" class="text-sm font-black text-slate-800"></p>
+        <ul id="cashierOverlayItems" class="text-xs font-bold text-slate-700 bg-slate-50 rounded-2xl p-3 space-y-1"></ul>
+        <div class="flex justify-between items-center bg-amber-50 border border-amber-200 rounded-2xl px-3 py-2.5">
+          <span class="text-[11px] font-black uppercase text-amber-800">Total</span>
+          <span id="cashierOverlayTotal" class="text-lg font-black text-slate-900">Rs. 0</span>
+        </div>
+        <button type="button" id="cashierOverlayEnableSound" onclick="initAudioContext(); this.classList.add('hidden')" class="hidden cashier-overlay-btn bg-amber-100 text-amber-900 border border-amber-300">Enable sound 🔔</button>
+      </div>
+      <div class="p-4 pt-0 space-y-2">
+        <button type="button" onclick="acceptCashierNewOrder()" class="cashier-overlay-btn bg-emerald-600 text-white"><i class="fa-solid fa-check"></i> Accept</button>
+        <button type="button" onclick="printCashierNewOrder()" class="cashier-overlay-btn bg-violet-700 text-white"><i class="fa-solid fa-print"></i> Print</button>
+        <button type="button" onclick="ackCashierNewOrder()" class="cashier-overlay-btn bg-slate-100 text-slate-800 border border-slate-200">Acknowledge</button>
+      </div>
+    </div>
+  </div>
+  <div id="cashierPrintTicket" class="cashier-print-ticket">
+    <h2 style="margin:0 0 6px;font-size:14px;">Peoples Family Restaurant</h2>
+    <p id="cashierPrintId" style="margin:0;font-weight:800;"></p>
+    <p id="cashierPrintMeta" style="margin:4px 0;font-size:11px;"></p>
+    <ul id="cashierPrintItems" style="margin:8px 0;padding-left:16px;font-size:12px;"></ul>
+    <p id="cashierPrintTotal" style="margin:8px 0 0;font-weight:800;"></p>
+  </div>
   <script>
     const firebaseConfig = window.PEOPLES_FIREBASE_CONFIG;
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
@@ -435,6 +493,10 @@
     let orderAlarmTimer = null;
     const baseDocTitle = document.title;
     let knownOrderKeys = {};
+    let cashierOrdersHydrated = false;
+    let cashierNewOrderQueue = [];
+    let cashierOverlayKey = '';
+    let cashierSelfOrderKeys = {};
     let cashierChatRecording = false;
     function tickCashierClock() {
       const now = new Date();
@@ -1189,13 +1251,15 @@
     }
 
     function initAudioContext() {
-      if (typeof window.unlockStaffAudio === 'function') {
-        window.unlockStaffAudio(function () {
-          refreshSoundIndicator();
-          syncOrderAlarm();
-        });
-        return;
-      }
+        if (typeof window.unlockStaffAudio === 'function') {
+          window.unlockStaffAudio(function () {
+            refreshSoundIndicator();
+            syncOrderAlarm();
+          });
+          if (typeof window.peoplesAskNotify === 'function') window.peoplesAskNotify();
+          if (typeof window.registerStaffServiceWorker === 'function') window.registerStaffServiceWorker();
+          return;
+        }
       try {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') {
@@ -1205,6 +1269,8 @@
           }).catch(function () {});
         }
       } catch (e) {}
+      if (typeof window.peoplesAskNotify === 'function') window.peoplesAskNotify();
+      if (typeof window.registerStaffServiceWorker === 'function') window.registerStaffServiceWorker();
       refreshSoundIndicator();
     }
 
@@ -1247,6 +1313,120 @@
       }
     }
 
+    function cashierOrderTypeLabel(order) {
+      if (!order) return 'Order';
+      if (order.type === 'Table' || (window.isDineInOrder && window.isDineInOrder(order))) {
+        return 'Table ' + (order.tableNumber || order.tableId || '');
+      }
+      if (window.isDoorstepOrder && window.isDoorstepOrder(order)) return 'Doorstep';
+      return 'Pickup';
+    }
+
+    function cashierOverlayItemHtml(order) {
+      const rows = (window.orderItemRows && window.orderItemRows(order)) || [];
+      if (!rows.length) return '<li>No items</li>';
+      return rows.map(function (row) {
+        const qty = Number(row.qty || 1);
+        const name = cashierEscape(row.name || 'Item');
+        const note = row.note ? ' <span class="text-slate-400">(' + cashierEscape(row.note) + ')</span>' : '';
+        return '<li>' + qty + ' × ' + name + note + '</li>';
+      }).join('');
+    }
+
+    function hideCashierNewOrderOverlay() {
+      const el = document.getElementById('cashierNewOrderOverlay');
+      if (el) el.classList.add('hidden');
+    }
+
+    function refreshCashierOverlaySoundHint() {
+      const btn = document.getElementById('cashierOverlayEnableSound');
+      if (!btn) return;
+      const unlocked = typeof isAudioUnlocked === 'function' ? isAudioUnlocked() : true;
+      btn.classList.toggle('hidden', unlocked);
+    }
+
+    function renderCashierNewOrderOverlay(key, o) {
+      const el = document.getElementById('cashierNewOrderOverlay');
+      if (!el || !o) return;
+      const idEl = document.getElementById('cashierOverlayId');
+      const typeEl = document.getElementById('cashierOverlayType');
+      const nameEl = document.getElementById('cashierOverlayName');
+      const itemsEl = document.getElementById('cashierOverlayItems');
+      const totalEl = document.getElementById('cashierOverlayTotal');
+      if (idEl) idEl.textContent = o.orderId || key;
+      if (typeEl) typeEl.textContent = cashierOrderTypeLabel(o);
+      if (nameEl) nameEl.textContent = o.customerName || 'Customer';
+      if (itemsEl) itemsEl.innerHTML = cashierOverlayItemHtml(o);
+      if (totalEl) totalEl.textContent = moneyText(o.total);
+      refreshCashierOverlaySoundHint();
+      el.classList.remove('hidden');
+    }
+
+    function fillCashierPrintTicket(key, o) {
+      const idEl = document.getElementById('cashierPrintId');
+      const metaEl = document.getElementById('cashierPrintMeta');
+      const itemsEl = document.getElementById('cashierPrintItems');
+      const totalEl = document.getElementById('cashierPrintTotal');
+      if (idEl) idEl.textContent = o.orderId || key;
+      if (metaEl) metaEl.textContent = cashierOrderTypeLabel(o) + ' · ' + (o.customerName || '');
+      if (itemsEl) itemsEl.innerHTML = cashierOverlayItemHtml(o);
+      if (totalEl) totalEl.textContent = moneyText(o.total);
+    }
+
+    function showNextCashierNewOrder() {
+      while (cashierNewOrderQueue.length) {
+        const key = cashierNewOrderQueue.shift();
+        const o = allOrders[key];
+        if (!o || cashierSelfOrderKeys[key] || !orderNeedsCashierAck(o)) continue;
+        cashierOverlayKey = key;
+        renderCashierNewOrderOverlay(key, o);
+        return;
+      }
+      cashierOverlayKey = '';
+      hideCashierNewOrderOverlay();
+    }
+
+    function enqueueCashierNewOrder(key) {
+      if (!key || cashierSelfOrderKeys[key]) return;
+      if (cashierOverlayKey === key) return;
+      if (cashierNewOrderQueue.indexOf(key) >= 0) return;
+      cashierNewOrderQueue.push(key);
+      if (!cashierOverlayKey) showNextCashierNewOrder();
+    }
+
+    function pruneCashierNewOrderQueue() {
+      cashierNewOrderQueue = cashierNewOrderQueue.filter(function (k) {
+        const o = allOrders[k];
+        return o && !cashierSelfOrderKeys[k] && orderNeedsCashierAck(o);
+      });
+      if (!cashierOverlayKey) return;
+      const current = allOrders[cashierOverlayKey];
+      if (!current || cashierSelfOrderKeys[cashierOverlayKey] || !orderNeedsCashierAck(current)) {
+        cashierOverlayKey = '';
+        showNextCashierNewOrder();
+      }
+    }
+
+    function ackCashierNewOrder() {
+      cashierOverlayKey = '';
+      showNextCashierNewOrder();
+    }
+
+    function acceptCashierNewOrder() {
+      const key = cashierOverlayKey;
+      cashierOverlayKey = '';
+      showNextCashierNewOrder();
+      if (key && typeof updateOrderStatus === 'function') updateOrderStatus(key, 'Preparing');
+    }
+
+    function printCashierNewOrder() {
+      const key = cashierOverlayKey;
+      const o = key ? allOrders[key] : null;
+      if (o) fillCashierPrintTicket(key, o);
+      try { window.print(); } catch (e) {}
+      acceptCashierNewOrder();
+    }
+
     function pendingAckCount() {
       return Object.keys(allOrders || {}).filter(function (k) { return orderNeedsCashierAck(allOrders[k]); }).length;
     }
@@ -1286,7 +1466,7 @@
     document.addEventListener('click', function (e) {
       const t = e.target;
       if (!t || typeof t.closest !== 'function') return;
-      const btn = t.closest('header button, .oc-actions button, .oc-item-btn, .oc-item-del, .oc-prep button, .cashier-bottom-nav button, #cashierOrderModal button, #slipModal button');
+      const btn = t.closest('header button, .oc-actions button, .oc-item-btn, .oc-item-del, .oc-prep button, .cashier-bottom-nav button, #cashierOrderModal button, #slipModal button, #cashierNewOrderOverlay button');
       if (!btn) return;
       if (typeof window.playTapSound === 'function') window.playTapSound();
       btn.classList.add('cashier-tap');
@@ -1413,6 +1593,7 @@
         const deliveryDetail = coMode === 'doorstep'
           ? { mode: 'doorstep', label: 'Deliver to doorstep', address: address, deliveryFee: deliveryFee }
           : { mode: 'self', label: 'Pick up myself', deliveryFee: 0 };
+        cashierSelfOrderKeys[orderRef.key] = true;
         await orderRef.set({
           orderId: orderId,
           orderNo: orderNumber.orderNo,
@@ -1498,11 +1679,14 @@
       if (window._cashierListenOn) return;
       if (window.firebase && firebase.auth && !firebase.auth().currentUser) return;
       window._cashierListenOn = true;
+      if (typeof window.registerStaffServiceWorker === 'function') window.registerStaffServiceWorker();
       db.ref('menu_items').on('value', function (snap) { cashierMenu = snap.val() || {}; }, window.onDbListenError);
       db.ref('settings/delivery_pricing').on('value', function (snap) {
         cashierDeliveryPricing = window.mergeDeliveryPricing(snap.val());
       }, window.onDbListenError);
       db.ref('orders').on('value', function (snap) {
+        const firstSnapshot = !cashierOrdersHydrated;
+        cashierOrdersHydrated = true;
         const prev = knownOrderKeys;
         const incoming = snap.val() || {};
         Object.keys(itemEditBusy || {}).forEach(function (k) {
@@ -1511,14 +1695,34 @@
         allOrders = incoming;
         Object.keys(allOrders).forEach(function (k) {
           const o = allOrders[k] || {};
-          if (!prev[k] && typeof isLiveCashierOrder === 'function' && isLiveCashierOrder(o)) {
-            const toast = document.getElementById('newOrderToast');
-            const details = document.getElementById('toastOrderDetails');
-            if (details) details.innerText = (o.orderId || k) + ' · ' + (o.customerName || '');
-            if (toast) toast.classList.remove('hidden');
+          const isLive = typeof isLiveCashierOrder === 'function' && isLiveCashierOrder(o);
+          if (!prev[k] && isLive) {
+            const showOverlay = window.shouldShowCashierNewOrderOverlay({
+              firstSnapshot: firstSnapshot,
+              selfPlaced: !!cashierSelfOrderKeys[k],
+              isLive: true,
+              needsAck: orderNeedsCashierAck(o)
+            });
+            if (showOverlay) {
+              enqueueCashierNewOrder(k);
+              const toast = document.getElementById('newOrderToast');
+              const details = document.getElementById('toastOrderDetails');
+              if (details) details.innerText = (o.orderId || k) + ' · ' + (o.customerName || '');
+              if (toast) toast.classList.remove('hidden');
+              if (typeof window.peoplesStaffHiddenNotify === 'function') {
+                window.peoplesStaffHiddenNotify(
+                  k,
+                  'cashier_new',
+                  'NEW ORDER ' + (o.orderId || ''),
+                  (o.customerName || 'Customer') + ' · ' + cashierOrderTypeLabel(o) + ' · ' + moneyText(o.total),
+                  '/cashier.html'
+                );
+              }
+            }
           }
           knownOrderKeys[k] = true;
         });
+        pruneCashierNewOrderQueue();
         if (typeof renderCashierOrders === 'function') renderCashierOrders();
         if (typeof refreshCashierDayReport === 'function') refreshCashierDayReport();
         syncOrderAlarm();

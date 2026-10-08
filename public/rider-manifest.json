@@ -1,0 +1,17 @@
+{
+  "name": "Peoples Rider",
+  "short_name": "Rider",
+  "start_url": "/rider.html",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f8fc",
+  "theme_color": "#FFD100",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

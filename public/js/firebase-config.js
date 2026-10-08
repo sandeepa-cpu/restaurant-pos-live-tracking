@@ -1156,17 +1156,31 @@ window.buildSalesOrderRows = function (orders, period) {
 window.peoplesNotify = function (title, body, url) {
   try {
     if (!('Notification' in window) || Notification.permission !== 'granted') return;
-    var n = new Notification(title, {
+    var opts = {
       body: body || '',
       icon: '/LOGO%20NEW.jpg',
       badge: '/LOGO%20NEW.jpg',
-      tag: url || 'peoples-order'
-    });
-    n.onclick = function () {
-      try { window.focus(); } catch (e) {}
-      if (url) location.href = url;
-      n.close();
+      tag: url || 'peoples-order',
+      data: { url: url || '/' }
     };
+    function fallback() {
+      var n = new Notification(title, opts);
+      n.onclick = function () {
+        try { window.focus(); } catch (e) {}
+        if (url) {
+          try { location.href = url; } catch (e2) {}
+        }
+        n.close();
+      };
+    }
+    if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+      navigator.serviceWorker.getRegistration().then(function (reg) {
+        if (reg && reg.showNotification) return reg.showNotification(title, opts);
+        fallback();
+      }).catch(fallback);
+      return;
+    }
+    fallback();
   } catch (e) {}
 };
 
@@ -1185,6 +1199,34 @@ window.peoplesAskNotify = function () {
   if (!('Notification' in window)) return Promise.resolve('unsupported');
   if (Notification.permission !== 'default') return Promise.resolve(Notification.permission);
   return Notification.requestPermission().catch(function () { return 'denied'; });
+};
+
+window.registerStaffServiceWorker = function () {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.serviceWorker) {
+      navigator.serviceWorker.register('/sw.js').catch(function () {});
+    }
+  } catch (e) {}
+};
+
+window.peoplesStaffHiddenNotify = function (orderKey, event, title, body, url) {
+  try {
+    if (typeof document !== 'undefined' && document.hidden === false) return false;
+  } catch (e) {}
+  return window.peoplesNotifyOnce(orderKey, event, title, body, url);
+};
+
+window.shouldShowCashierNewOrderOverlay = function (opts) {
+  opts = opts || {};
+  if (opts.firstSnapshot) return false;
+  if (opts.selfPlaced) return false;
+  if (!opts.isLive || !opts.needsAck) return false;
+  return true;
+};
+
+window.shouldShowRiderAssignOverlay = function (prevClaim, nextClaim, firstSnapshot) {
+  if (firstSnapshot) return false;
+  return nextClaim === 'mine' && prevClaim !== 'mine';
 };
 
 window.peoplesNotifyCopy = function (order, event) {
@@ -1968,7 +2010,7 @@ window.playStaffAlertChime = function (force) {
         try { master.disconnect(); boost.disconnect(); comp.disconnect(); } catch (e) {}
       }
       master.gain.setValueAtTime(Math.max(0.0001, vol), t0);
-      boost.gain.setValueAtTime(6.5, t0);
+      boost.gain.setValueAtTime(8, t0);
       comp.threshold.setValueAtTime(-30, t0);
       comp.knee.setValueAtTime(2, t0);
       comp.ratio.setValueAtTime(18, t0);
