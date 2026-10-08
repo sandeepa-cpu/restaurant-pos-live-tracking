@@ -52,7 +52,7 @@
     "priceRange": "$$"
   }
   </script>
-  <script src="js/firebase-config.js?v=64"></script>
+  <script src="js/firebase-config.js?v=65"></script>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
@@ -1129,6 +1129,7 @@
     let lastGeocodedLandmark = '';
     let locationSource = 'search';
     let deviceGpsCoords = null;
+    let gpsLocateBusy = false;
     let deliveryPinConfirmed = false;
     let selectedPlaceId = '';
     let lastOrdersCache = {};
@@ -1232,7 +1233,15 @@
         lastUsedPin: 'Last used pin loaded. Tap another saved place if this is not the drop-off.',
         searchMiss: 'Address not found. Pin the drop-off on the map.',
         placeSaved: 'Place saved on this device.',
-        pinFirst: 'Pin the drop-off first, then save it.'
+        pinFirst: 'Pin the drop-off first, then save it.',
+        gpsMyLocation: 'My Location (Current GPS Position)',
+        gpsLocating: 'Getting your GPS location… Allow permission if asked.',
+        gpsDenied: 'Location permission denied. Allow it in browser settings, or pin the drop-off on the map.',
+        gpsTimeout: 'GPS timed out. Try outdoors, or pin the drop-off on the map.',
+        gpsUnavailable: 'GPS is off or unavailable. Pin the drop-off on the map.',
+        gpsUnsupported: 'This device has no GPS. Pin the drop-off on the map.',
+        gpsCoarse: 'Location is too approximate. Try outdoors, or pin the drop-off on the map.',
+        gpsPinned: 'GPS location set. Add house number to the address if needed.'
       },
       si: {
         arrivedTitle: 'Delivery Rider ආවා!',
@@ -1316,7 +1325,15 @@
         lastUsedPin: 'කලින් pin එක load වුණා. වෙන තැනක් නම් saved place එකක් tap කරන්න.',
         searchMiss: 'Address හොයාගන්න බැරි වුණා. Map එකේ pin කරන්න.',
         placeSaved: 'මේ phone එකේ save වුණා.',
-        pinFirst: 'මුලින් drop-off එක pin කරන්න, ඊට පස්සේ save කරන්න.'
+        pinFirst: 'මුලින් drop-off එක pin කරන්න, ඊට පස්සේ save කරන්න.',
+        gpsMyLocation: 'මගේ තැන (දැන් GPS Position)',
+        gpsLocating: 'GPS එකෙන් තැන හොයනවා… Allow කරන්න.',
+        gpsDenied: 'Location permission deny වුණා. Browser settings වල allow කරන්න, නැත්නම් map එකේ pin කරන්න.',
+        gpsTimeout: 'GPS timeout වුණා. එළියේ try කරන්න, නැත්නම් map එකේ pin කරන්න.',
+        gpsUnavailable: 'GPS නැහැ / off. Map එකේ pin කරන්න.',
+        gpsUnsupported: 'මේ device එකේ GPS නැහැ. Map එකේ pin කරන්න.',
+        gpsCoarse: 'Location එක approximate වැඩියි. එළියේ try කරන්න, නැත්නම් map එකේ pin කරන්න.',
+        gpsPinned: 'GPS තැන set වුණා. House number ටික address එකට එකතු කරන්න.'
       }
     };
 
@@ -2787,7 +2804,11 @@
       if (src !== 'saved') selectedPlaceId = selectedPlaceId || '';
       paintLocationSourceButtons();
       paintSavedPlacesChips();
-      ensureDeliveryMap();
+      if (src === 'gps') {
+        useCurrentLocation();
+      } else {
+        ensureDeliveryMap();
+      }
       if (src === 'search') {
         const box = document.getElementById('doorstepAddressInput');
         if (box) box.focus();
@@ -2965,11 +2986,6 @@
       const start = lastDeliveryCoords || RESTAURANT_COORDS;
       if (deliveryMap) {
         setTimeout(function () { deliveryMap.invalidateSize(); }, 200);
-        if (lastDeliveryCoords && lastDeliveryCoords.lat) {
-          deliveryMarker.setLatLng([lastDeliveryCoords.lat, lastDeliveryCoords.lng]);
-          deliveryMap.setView([lastDeliveryCoords.lat, lastDeliveryCoords.lng], 16);
-          updateGoogleMapsLink(lastDeliveryCoords.lat, lastDeliveryCoords.lng);
-        }
         return;
       }
       deliveryMap = L.map('deliveryMap').setView([start.lat, start.lng], lastDeliveryCoords ? 16 : 14);
@@ -3005,21 +3021,28 @@
       }
     }
 
-    async function applyPickedLocation(lat, lng, doReverse) {
+    async function applyPickedLocation(lat, lng, doReverse, forceAddress) {
       lastDeliveryCoords = { lat: lat, lng: lng };
       lastGeocodedLandmark = lastGeocodedLandmark || 'Pinned location';
       computedRoadDistance = await calculateRoadDistance(RESTAURANT_COORDS.lat, RESTAURANT_COORDS.lng, lat, lng);
       deliveryPinConfirmed = true;
       refreshDeliveryFeeDisplay();
-      document.getElementById('locationStatus').innerText = 'Location pinned. House number ටික address එකට එකතු කරන්න.';
+      document.getElementById('locationStatus').innerText = forceAddress ? t('gpsPinned') : 'Location pinned. House number ටික address එකට එකතු කරන්න.';
       updateGoogleMapsLink(lat, lng);
       renderCart();
       if (doReverse) {
         const addr = await reverseGeocodeLatLng(lat, lng);
-        if (addr) {
+        const box = document.getElementById('doorstepAddressInput');
+        if (forceAddress) {
+          const label = addr || t('gpsMyLocation');
+          lastGeocodedLandmark = label;
+          if (box) {
+            box.value = label;
+            box.dataset.fromPin = '1';
+          }
+        } else if (addr) {
           lastGeocodedLandmark = addr;
-          const box = document.getElementById('doorstepAddressInput');
-          if (!box.value.trim() || box.dataset.fromPin === '1') {
+          if (box && (!box.value.trim() || box.dataset.fromPin === '1')) {
             box.value = addr;
             box.dataset.fromPin = '1';
           }
@@ -3030,32 +3053,54 @@
       refreshCheckoutProceedState();
     }
 
-    function useCurrentLocation() {
+    function gpsErrorCopy(err) {
+      const code = err && err.code;
+      if (code === 'denied') return t('gpsDenied');
+      if (code === 'timeout') return t('gpsTimeout');
+      if (code === 'coarse') return t('gpsCoarse');
+      if (code === 'unsupported') return t('gpsUnsupported');
+      return t('gpsUnavailable');
+    }
+
+    function finishGpsLocateUi() {
+      gpsLocateBusy = false;
       const btn = document.getElementById('useLocationBtn');
-      if (!navigator.geolocation) {
-        return alert('මේ phone එකේ location support නැහැ. Map එකේ pin එක අදින්න.');
+      if (btn) {
+        btn.disabled = false;
+        btn.innerText = t('locGps');
       }
+    }
+
+    function useCurrentLocation() {
+      if (gpsLocateBusy) return;
+      const btn = document.getElementById('useLocationBtn');
       locationSource = 'gps';
       selectedPlaceId = '';
       paintLocationSourceButtons();
-      btn.disabled = true;
-      btn.innerText = 'Getting your location...';
-      document.getElementById('locationStatus').innerText = 'GPS එකෙන් තැන හොයනවා... Allow කරන්න.';
-      navigator.geolocation.getCurrentPosition(function (pos) {
-        const lat = pos.coords.latitude;
-        const lng = pos.coords.longitude;
+      gpsLocateBusy = true;
+      if (btn) {
+        btn.disabled = true;
+        btn.innerText = t('gpsLocating');
+      }
+      const status = document.getElementById('locationStatus');
+      if (status) status.innerText = t('gpsLocating');
+      const getter = typeof window.peoplesGetDeviceGps === 'function'
+        ? window.peoplesGetDeviceGps
+        : function (_ok, onErr) { onErr({ code: 'unsupported' }); };
+      getter(function (fix) {
+        const lat = Number(fix.lat);
+        const lng = Number(fix.lng);
         deviceGpsCoords = { lat: lat, lng: lng };
+        lastDeliveryCoords = { lat: lat, lng: lng };
         ensureDeliveryMap();
         showPinOnMap(lat, lng, 18);
-        applyPickedLocation(lat, lng, true);
-        btn.disabled = false;
-        btn.innerText = t('locGps');
-      }, function () {
-        btn.disabled = false;
-        btn.innerText = t('locGps');
-        document.getElementById('locationStatus').innerText = 'Location allow කරන්න, නැත්නම් map එකේ pin එක අදින්න.';
-        alert('Location permission allow කරන්න. නැත්නම් map එකේ ඔබගේ ගෙදර pin කරන්න.');
-      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+        applyPickedLocation(lat, lng, true, true).then(finishGpsLocateUi).catch(finishGpsLocateUi);
+      }, function (err) {
+        finishGpsLocateUi();
+        const msg = gpsErrorCopy(err);
+        if (status) status.innerText = msg;
+        if (typeof window.pfrToast === 'function') window.pfrToast(msg);
+      });
     }
 
     async function searchCustomAddress() {

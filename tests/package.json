@@ -2,7 +2,7 @@
   "name": "restaurantapp-tests",
   "private": true,
   "scripts": {
-    "unit": "node active-order-limit.test.js && node delivery-fee.test.js && node delivery-places.test.js && node admin-order-modal.test.js && node staff-alerts.test.js",
+    "unit": "node active-order-limit.test.js && node delivery-fee.test.js && node delivery-places.test.js && node admin-order-modal.test.js && node staff-alerts.test.js && node gps-location.test.js",
     "rules": "firebase emulators:exec --only database \"node tests/rules-customer-active.test.js\""
   }
 }

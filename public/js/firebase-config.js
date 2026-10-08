@@ -829,6 +829,114 @@ window.deliveryPinsDiffer = function (a, b, meters) {
   return window.haversineMeters(a, b) > thresh;
 };
 
+window.PEOPLES_GPS_OPTIONS = {
+  enableHighAccuracy: true,
+  timeout: 10000,
+  maximumAge: 0
+};
+window.PEOPLES_GPS_GOOD_ACCURACY_M = 50;
+window.PEOPLES_GPS_MAX_ACCURACY_M = 500;
+
+window.peoplesGpsFixFromCoords = function (coords) {
+  if (!coords) return null;
+  var lat = Number(coords.latitude);
+  var lng = Number(coords.longitude);
+  var acc = Number(coords.accuracy);
+  if (!isFinite(lat) || !isFinite(lng)) return null;
+  if (!isFinite(acc) || acc < 0) acc = Infinity;
+  return { lat: lat, lng: lng, accuracy: acc };
+};
+
+window.peoplesGpsFixIsUsable = function (fix) {
+  return !!(fix && isFinite(fix.lat) && isFinite(fix.lng) && Number(fix.accuracy) <= (window.PEOPLES_GPS_MAX_ACCURACY_M || 500));
+};
+
+window.peoplesGpsFixIsPrecise = function (fix) {
+  return !!(fix && window.peoplesGpsFixIsUsable(fix) && Number(fix.accuracy) <= (window.PEOPLES_GPS_GOOD_ACCURACY_M || 50));
+};
+
+window.peoplesGetDeviceGps = function (onOk, onErr) {
+  var geo = (typeof navigator !== "undefined" && navigator.geolocation) ? navigator.geolocation : null;
+  if (!geo || typeof geo.getCurrentPosition !== "function") {
+    if (onErr) onErr({ code: "unsupported" });
+    return;
+  }
+  var opts = window.PEOPLES_GPS_OPTIONS || {
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 0
+  };
+  var best = null;
+  var done = false;
+  var watchId = null;
+  var timer = null;
+  function finish(err, fix) {
+    if (done) return;
+    done = true;
+    if (watchId != null && geo.clearWatch) {
+      try { geo.clearWatch(watchId); } catch (e) {}
+    }
+    if (timer) {
+      try { clearTimeout(timer); } catch (e2) {}
+    }
+    if (err) {
+      if (onErr) onErr(err);
+      return;
+    }
+    if (!window.peoplesGpsFixIsUsable(fix)) {
+      if (onErr) onErr({ code: "coarse", accuracy: fix && fix.accuracy });
+      return;
+    }
+    if (onOk) onOk(fix);
+  }
+  function consider(pos) {
+    var fix = window.peoplesGpsFixFromCoords(pos && pos.coords);
+    if (!fix) return;
+    if (!best || fix.accuracy < best.accuracy) best = fix;
+    if (window.peoplesGpsFixIsPrecise(best)) finish(null, best);
+  }
+  function failCode(err) {
+    var code = err && err.code;
+    if (code === 1 || code === "denied") return "denied";
+    if (code === 3 || code === "timeout") return "timeout";
+    if (code === 2 || code === "unavailable") return "unavailable";
+    if (code === "coarse" || code === "unsupported") return code;
+    return "unavailable";
+  }
+  function onFail(err) {
+    if (best && window.peoplesGpsFixIsUsable(best)) {
+      finish(null, best);
+      return;
+    }
+    if (best) {
+      finish({ code: "coarse", accuracy: best.accuracy });
+      return;
+    }
+    finish({ code: failCode(err), raw: err });
+  }
+  timer = setTimeout(function () {
+    if (best && window.peoplesGpsFixIsUsable(best)) finish(null, best);
+    else if (best) finish({ code: "coarse", accuracy: best.accuracy });
+    else finish({ code: "timeout" });
+  }, Math.max(1, Number(opts.timeout) || 10000));
+  if (typeof geo.watchPosition === "function") {
+    try {
+      watchId = geo.watchPosition(consider, onFail, opts);
+    } catch (e3) {
+      watchId = null;
+    }
+  }
+  if (watchId == null) {
+    geo.getCurrentPosition(function (pos) {
+      consider(pos);
+      if (done) return;
+      if (best && window.peoplesGpsFixIsUsable(best)) finish(null, best);
+      else if (best) finish({ code: "coarse", accuracy: best.accuracy });
+      else finish({ code: "unavailable" });
+    }, onFail, opts);
+  }
+};
+
 window.normalizeSavedDeliveryPlace = function (raw) {
   if (!raw || typeof raw !== "object") return null;
   var lat = Number(raw.lat);
