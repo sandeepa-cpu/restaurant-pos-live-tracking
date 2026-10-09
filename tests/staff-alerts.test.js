@@ -90,6 +90,9 @@ assert.ok(cashier.indexOf('cashierSelfOrderKeys') !== -1);
 assert.ok(cashier.indexOf('peoplesStaffHiddenNotify') !== -1);
 assert.ok(cashier.indexOf('registerStaffServiceWorker') !== -1);
 assert.ok(cashier.indexOf('cashier_new') !== -1);
+assert.ok(cashier.indexOf('cashier-manifest.json') !== -1);
+assert.ok(cashier.indexOf('apple-mobile-web-app-capable') !== -1);
+assert.ok(cashier.indexOf("addEventListener('load'") !== -1);
 
 const rider = fs.readFileSync(path.join(__dirname, '..', 'public', 'rider.html'), 'utf8');
 assert.ok(rider.indexOf('id="riderAssignOverlay"') !== -1);
@@ -107,6 +110,17 @@ assert.ok(rider.indexOf('apple-mobile-web-app-capable') !== -1);
 const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'public', 'rider-manifest.json'), 'utf8'));
 assert.strictEqual(manifest.start_url, '/rider.html');
 assert.strictEqual(manifest.display, 'standalone');
+
+const cashierManifest = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'public', 'cashier-manifest.json'), 'utf8'));
+assert.strictEqual(cashierManifest.name, 'Peoples Family Restaurant - Cashier Station');
+assert.strictEqual(cashierManifest.short_name, 'PFR Cashier');
+assert.strictEqual(cashierManifest.start_url, '/cashier.html');
+assert.strictEqual(cashierManifest.display, 'standalone');
+assert.strictEqual(cashierManifest.theme_color, '#7c3aed');
+assert.strictEqual(cashierManifest.background_color, '#f8fafc');
+
+const sw = fs.readFileSync(path.join(__dirname, '..', 'public', 'sw.js'), 'utf8');
+assert.ok(sw.indexOf("addEventListener('fetch'") !== -1);
 
 console.log('staff-alerts overlay + notify helper checks passed');
 process.exit(0);

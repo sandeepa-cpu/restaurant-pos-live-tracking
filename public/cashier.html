@@ -4,8 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="robots" content="noindex, nofollow">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#7c3aed">
   <title>Cashier Station - Peoples Family Restaurant</title>
   <link rel="icon" type="image/jpeg" href="LOGO NEW.jpg">
+  <link rel="apple-touch-icon" href="/favicon.png">
+  <link rel="manifest" href="/cashier-manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
@@ -476,6 +482,9 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     guardStaffPage(['admin', 'cashier']);
+    window.addEventListener('load', function () {
+      if (typeof window.registerStaffServiceWorker === 'function') window.registerStaffServiceWorker();
+    });
 
     let allOrders = {};
     let itemEditBusy = {};
