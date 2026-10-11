@@ -16,7 +16,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <script src="js/firebase-config.js?v=65"></script>
+  <script src="js/firebase-config.js?v=67"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -68,7 +68,8 @@
     #takenByOthersWrap.hidden,
     #batchRouteBar.hidden,
     #riderBikeChip.hidden,
-    #riderAssignOverlay.hidden { display: none !important; }
+    #riderAssignOverlay.hidden,
+    #riderCancelAlert.hidden { display: none !important; }
     .rider-tap {
       min-height: 44px;
       display: flex;
@@ -387,6 +388,15 @@
     </div>
   </div>
 
+  <div id="riderCancelAlert" class="fixed inset-0 hidden flex items-center justify-center p-4" style="z-index: 80; background: rgba(15,23,42,.55);">
+    <div class="bg-white w-full max-w-sm rounded-[28px] border-4 border-rose-500 p-5 text-center space-y-3">
+      <p class="text-[11px] font-black uppercase tracking-[0.2em] text-rose-600">Cancelled</p>
+      <h2 class="text-xl font-black text-slate-900 leading-tight">Order cancel වුණා</h2>
+      <p id="riderCancelAlertText" class="text-sm font-bold text-slate-700"></p>
+      <button type="button" onclick="ackRiderCancelAlert()" class="rider-tap w-full bg-rose-600 text-white font-black rounded-2xl text-sm">OK</button>
+    </div>
+  </div>
+
   <!-- CHAT DRAWER FOR RIDER -->
   <div id="chatDrawer" class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col h-[80vh] sm:h-[550px]">
@@ -570,8 +580,11 @@
             status: 'approved'
           });
           hideAuthGate();
-          claimApprovedRider();
-          listenToDeliveryJobs();
+          claimApprovedRider().then(function () {
+            listenToDeliveryJobs();
+          }).catch(function () {
+            listenToDeliveryJobs();
+          });
           if (sessionStorage.getItem('rider_online')) {
             document.getElementById('startupScreen').classList.add('hidden');
             refreshRiderHeader();
@@ -649,6 +662,7 @@
       if (!user) return Promise.resolve();
       return db.ref('approved_riders/' + user.uid).set(true).catch(function (err) {
         console.warn('approved_riders claim failed', err);
+        throw err;
       });
     }
 
@@ -1302,6 +1316,9 @@
       }
       if (typeof window.stopStaffAlertLoop === 'function') window.stopStaffAlertLoop('rider');
       if (typeof window.startStaffAlertLoop === 'function') window.startStaffAlertLoop('rider-assign', 2000);
+      if (navigator.vibrate) {
+        try { navigator.vibrate([250, 80, 250, 80, 250, 80, 320]); } catch (e) {}
+      }
     }
 
     function riderCollectableText(o) {
@@ -1364,6 +1381,34 @@
       hideRiderAssignOverlay();
     }
 
+    function showRiderCancelledAlert(key, job) {
+      const el = document.getElementById('riderCancelAlert');
+      const text = document.getElementById('riderCancelAlertText');
+      const label = (job && (job.orderId || key)) || 'Order';
+      const name = (job && job.customerName) || 'Customer';
+      if (text) text.textContent = label + ' · ' + name + ' — shop cancelled this delivery. Do not go.';
+      if (el) el.classList.remove('hidden');
+      if (typeof window.startStaffAlertLoop === 'function') window.startStaffAlertLoop('rider-cancel', 2000);
+      if (navigator.vibrate) {
+        try { navigator.vibrate([250, 80, 250]); } catch (e) {}
+      }
+      if (typeof window.peoplesStaffHiddenNotify === 'function') {
+        window.peoplesStaffHiddenNotify(
+          key,
+          'rider_cancel',
+          'ORDER CANCELLED ' + label,
+          name + ' — shop cancelled this delivery',
+          '/rider.html'
+        );
+      }
+    }
+
+    function ackRiderCancelAlert() {
+      const el = document.getElementById('riderCancelAlert');
+      if (el) el.classList.add('hidden');
+      if (typeof window.stopStaffAlertLoop === 'function') window.stopStaffAlertLoop('rider-cancel');
+    }
+
     function enqueueRiderAssign(key) {
       if (!key || riderAssignAcked[key]) return;
       if (riderAssignOverlayKey === key) return;
@@ -1420,13 +1465,18 @@
       document.getElementById('startupScreen').classList.add('hidden');
       refreshRiderHeader();
       refreshOriginButtons();
-      listenToDeliveryJobs();
+      claimApprovedRider().then(function () {
+        listenToDeliveryJobs();
+      }).catch(function () {
+        listenToDeliveryJobs();
+      });
       showRiderTab('jobs');
       speakVoice("Rider app is online. Ready for orders.");
     }
 
     window.addEventListener('load', function () {
       if (typeof window.registerStaffServiceWorker === 'function') window.registerStaffServiceWorker();
+      if (typeof window.peoplesAskNotify === 'function') window.peoplesAskNotify();
       firebase.auth().onAuthStateChanged(function (user) {
         if (riderBlockedNotice) return;
         const session = getRiderSession();
@@ -1487,6 +1537,8 @@
       return /^rider_\d{9}(_[a-z0-9]+)?@peoples-family-restaurant\.web\.app$/i.test(email);
     }
 
+    let riderOrdersListenTries = 0;
+
     function listenToDeliveryJobs() {
       if (!isRiderAuthReady()) {
         if (window._riderAuthWait) return;
@@ -1503,6 +1555,7 @@
       if (ordersListenerOn) return;
       ordersListenerOn = true;
       db.ref('orders').on('value', snap => {
+        riderOrdersListenTries = 0;
         allOrders = snap.val() || {};
         
         const liveKeys = Object.keys(allOrders).filter(function (k) {
@@ -1535,13 +1588,45 @@
           if (nextClaim[k] !== 'mine') delete riderAssignAcked[k];
         });
 
-        if (isInitialLoaded) {
+        const firstSnapshot = !isInitialLoaded;
+        if (firstSnapshot) {
+          liveKeys.forEach(function (k) {
+            const job = allOrders[k] || {};
+            const startupAlert = typeof window.shouldAlertStartupRiderJob === 'function'
+              ? window.shouldAlertStartupRiderJob(nextClaim[k], job.status)
+              : (nextClaim[k] === 'mine' && (job.status === 'Dispatched' || job.status === 'Arrived' || job.status === 'on_way'));
+            if (startupAlert) enqueueRiderAssign(k);
+          });
+        } else {
+          const cancelKeys = {};
+          Object.keys(previousJobStatus).forEach(function (k) { cancelKeys[k] = true; });
+          Object.keys(allOrders).forEach(function (k) { cancelKeys[k] = true; });
+          Object.keys(cancelKeys).forEach(function (k) {
+            const job = allOrders[k] || {};
+            const opts = {
+              firstSnapshot: false,
+              prevClaim: riderPrevClaim[k] || '',
+              nextClaim: getClaimState(job),
+              prevStatus: previousJobStatus[k] || '',
+              nextStatus: job.status || ''
+            };
+            const cancelled = typeof window.shouldAlertRiderStaffCancel === 'function'
+              ? window.shouldAlertRiderStaffCancel(opts)
+              : (opts.prevClaim === 'mine' && opts.nextStatus === 'Cancelled' && opts.prevStatus && opts.prevStatus !== 'Cancelled');
+            if (cancelled) showRiderCancelledAlert(k, job);
+          });
           liveKeys.forEach(function (k) {
             const now = nextClaim[k];
             const prev = riderPrevClaim[k] || '';
-            if (window.shouldShowRiderAssignOverlay(prev, now, false)) {
+            const job = allOrders[k] || {};
+            const st = job.status;
+            const justDispatched = now === 'mine'
+              && (st === 'Dispatched' || st === 'Arrived' || st === 'on_way')
+              && previousJobStatus[k]
+              && previousJobStatus[k] !== st;
+            if (justDispatched) delete riderAssignAcked[k];
+            if (window.shouldShowRiderAssignOverlay(prev, now, false) || justDispatched) {
               enqueueRiderAssign(k);
-              const job = allOrders[k] || {};
               if (typeof window.peoplesStaffHiddenNotify === 'function') {
                 window.peoplesStaffHiddenNotify(
                   k,
@@ -1626,6 +1711,22 @@
       }, function (err) {
         ordersListenerOn = false;
         try { db.ref('orders').off(); } catch (e) {}
+        const denied = typeof window.isDbPermissionDenied === 'function' && window.isDbPermissionDenied(err);
+        if (denied && riderOrdersListenTries < 3) {
+          riderOrdersListenTries += 1;
+          claimApprovedRider().then(function () {
+            setTimeout(function () {
+              const s = getRiderSession();
+              if (s && s.status === 'approved' && isRiderAuthReady()) listenToDeliveryJobs();
+            }, 1000);
+          }).catch(function () {
+            setTimeout(function () {
+              const s = getRiderSession();
+              if (s && s.status === 'approved' && isRiderAuthReady()) listenToDeliveryJobs();
+            }, 1000);
+          });
+          return;
+        }
         const hint = document.getElementById('startupJobHint');
         if (hint) hint.innerText = 'Jobs load වුණේ නැහැ — login ආයෙන් කරන්න';
         const box = document.getElementById('activeDeliveriesList');
@@ -1851,7 +1952,8 @@
           assignedRiderId: null,
           assignedRiderName: null,
           assignedRiderBike: null,
-          assignedAt: null
+          assignedAt: null,
+          riderAssigned: null
         });
       }).catch(window.alertDbError);
     }

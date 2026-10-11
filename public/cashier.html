@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <script src="js/firebase-config.js?v=65"></script>
+  <script src="js/firebase-config.js?v=67"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -1144,6 +1144,37 @@
       db.ref(`orders/${key}`).update({ prepTimeMins: updated, readyTimestamp: newReadyTimestamp }).catch(window.alertDbError);
     }
 
+    function pickApprovedRider() {
+      return db.ref('riders').once('value').then(function (snap) {
+        const rows = snap.val() || {};
+        const list = Object.keys(rows).filter(function (id) {
+          return rows[id] && rows[id].status === 'approved';
+        }).map(function (id) {
+          return {
+            id: id,
+            name: rows[id].name || id,
+            phone: rows[id].phone || id,
+            bikeNumber: rows[id].bikeNumber || ''
+          };
+        });
+        if (!list.length) {
+          alert('Approved rider නැහැ. Admin එකෙන් rider approve කරන්න.');
+          return null;
+        }
+        if (list.length === 1) return list[0];
+        const labels = list.map(function (r, i) {
+          return (i + 1) + '. ' + r.name + ' · ' + r.phone;
+        }).join('\n');
+        const pick = prompt('Rider තෝරන්න:\n' + labels, '1');
+        if (pick === null) return null;
+        const idx = Math.max(1, parseInt(pick, 10) || 1) - 1;
+        return list[idx] || list[0];
+      }).catch(function (err) {
+        window.alertDbError(err);
+        return null;
+      });
+    }
+
     function dispatchToRider(key) {
       const order = allOrders[key] || {};
       if (cashierBlocksDispatch(order)) {
@@ -1152,8 +1183,42 @@
       if (order.status !== 'Ready' && order.status !== 'Dispatched') {
         return alert('මුලින් Mark as Ready ඔබන්න. Rider Take කරන්න පුළුවන් kitchen එකේ හදන ගමන්ම — cashier Send වෙන්නේ Ready එකට පස්සේ.');
       }
-      if (!confirm('මෙම ඇණවුම ඩිලිවරි රයිඩර් වෙත යොමු කිරීමට අවශ්‍යද?')) return;
-      db.ref(`orders/${key}`).update({ status: 'Dispatched', riderAssigned: true }).catch(window.alertDbError);
+      const writeDispatch = function (riderId, riderName, riderBike) {
+        if (!riderId) return alert('Rider assign කරන්න බැරි වුණා. Approved rider තෝරන්න.');
+        if (!confirm('මෙම ඇණවුම ' + (riderName || riderId) + ' වෙත යොමු කරන්නද?')) return;
+        const wantId = String(riderId);
+        db.ref('orders/' + key).transaction(function (current) {
+          if (!current) return;
+          if (typeof window.canCommitCashierDispatch === 'function') {
+            if (!window.canCommitCashierDispatch(current, wantId)) return;
+          } else {
+            if (cashierBlocksDispatch(current)) return;
+            if (current.status !== 'Ready' && current.status !== 'Dispatched') return;
+            const existing = current.assignedRiderId ? String(current.assignedRiderId) : '';
+            if (existing && existing !== wantId) return;
+          }
+          current.status = 'Dispatched';
+          current.riderAssigned = true;
+          current.assignedRiderId = wantId;
+          current.assignedRiderName = riderName || current.assignedRiderName || null;
+          current.assignedRiderBike = riderBike || current.assignedRiderBike || null;
+          current.assignedAt = Date.now();
+          return current;
+        }).then(function (result) {
+          const val = result.snapshot ? result.snapshot.val() : null;
+          if (!result.committed || !val || String(val.assignedRiderId) !== wantId) {
+            alert('වෙන cashier / rider කෙනෙක් මේ order එක assign කරලා තියෙනවා. List එක refresh වෙනකම් ඉන්න.');
+          }
+        }).catch(window.alertDbError);
+      };
+      if (order.assignedRiderId) {
+        writeDispatch(order.assignedRiderId, order.assignedRiderName, order.assignedRiderBike);
+        return;
+      }
+      pickApprovedRider().then(function (picked) {
+        if (!picked) return;
+        writeDispatch(picked.id, picked.name, picked.bikeNumber);
+      });
     }
 
     function confirmCashPaid(key) {

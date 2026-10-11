@@ -1269,6 +1269,7 @@ window.peoplesNotify = function (title, body, url) {
       icon: '/LOGO%20NEW.jpg',
       badge: '/LOGO%20NEW.jpg',
       tag: url || 'peoples-order',
+      vibrate: [200, 100, 200, 100, 200],
       data: { url: url || '/' }
     };
     function fallback() {
@@ -1335,6 +1336,31 @@ window.shouldShowCashierNewOrderOverlay = function (opts) {
 window.shouldShowRiderAssignOverlay = function (prevClaim, nextClaim, firstSnapshot) {
   if (firstSnapshot) return false;
   return nextClaim === 'mine' && prevClaim !== 'mine';
+};
+
+window.shouldAlertStartupRiderJob = function (claim, status) {
+  if (claim !== 'mine') return false;
+  var st = String(status || '');
+  return st === 'Dispatched' || st === 'Arrived' || st === 'on_way';
+};
+
+window.shouldAlertRiderStaffCancel = function (opts) {
+  opts = opts || {};
+  if (opts.firstSnapshot) return false;
+  if (opts.prevClaim !== 'mine' && opts.nextClaim !== 'mine') return false;
+  return String(opts.nextStatus || '') === 'Cancelled' && !!opts.prevStatus && String(opts.prevStatus) !== 'Cancelled';
+};
+
+window.canCommitCashierDispatch = function (order, riderId) {
+  if (!order || !riderId) return false;
+  if (typeof window.paymentBlocksDispatch === 'function' && window.paymentBlocksDispatch(order)) return false;
+  var st = String(order.status || '');
+  if (st !== 'Ready' && st !== 'Dispatched') return false;
+  var existing = order.assignedRiderId != null && String(order.assignedRiderId) !== ''
+    ? String(order.assignedRiderId)
+    : '';
+  if (existing && existing !== String(riderId)) return false;
+  return true;
 };
 
 window.peoplesNotifyCopy = function (order, event) {

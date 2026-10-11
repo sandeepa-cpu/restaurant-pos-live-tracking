@@ -78,6 +78,30 @@ assert.strictEqual(sandbox.shouldShowRiderAssignOverlay('mine', 'mine', false), 
 assert.strictEqual(sandbox.shouldShowRiderAssignOverlay('taken', 'mine', false), true);
 assert.strictEqual(sandbox.shouldShowRiderAssignOverlay('mine', 'unclaimed', false), false);
 
+assert.strictEqual(sandbox.shouldAlertStartupRiderJob('mine', 'Dispatched'), true);
+assert.strictEqual(sandbox.shouldAlertStartupRiderJob('mine', 'Arrived'), true);
+assert.strictEqual(sandbox.shouldAlertStartupRiderJob('unclaimed', 'Dispatched'), false);
+assert.strictEqual(sandbox.shouldAlertStartupRiderJob('taken', 'Dispatched'), false);
+assert.strictEqual(sandbox.shouldAlertStartupRiderJob('mine', 'Ready'), false);
+
+assert.strictEqual(sandbox.shouldAlertRiderStaffCancel({
+  firstSnapshot: true, prevClaim: 'mine', nextClaim: 'mine', prevStatus: 'Dispatched', nextStatus: 'Cancelled'
+}), false);
+assert.strictEqual(sandbox.shouldAlertRiderStaffCancel({
+  firstSnapshot: false, prevClaim: 'mine', nextClaim: 'mine', prevStatus: 'Dispatched', nextStatus: 'Cancelled'
+}), true);
+assert.strictEqual(sandbox.shouldAlertRiderStaffCancel({
+  firstSnapshot: false, prevClaim: 'mine', nextClaim: 'unclaimed', prevStatus: 'Preparing', nextStatus: 'Cancelled'
+}), true);
+assert.strictEqual(sandbox.shouldAlertRiderStaffCancel({
+  firstSnapshot: false, prevClaim: 'unclaimed', nextClaim: 'unclaimed', prevStatus: 'Received', nextStatus: 'Cancelled'
+}), false);
+
+assert.strictEqual(sandbox.canCommitCashierDispatch({ status: 'Ready' }, '077123456'), true);
+assert.strictEqual(sandbox.canCommitCashierDispatch({ status: 'Ready', assignedRiderId: '077123456' }, '077123456'), true);
+assert.strictEqual(sandbox.canCommitCashierDispatch({ status: 'Ready', assignedRiderId: '077999999' }, '077123456'), false);
+assert.strictEqual(sandbox.canCommitCashierDispatch({ status: 'Preparing' }, '077123456'), false);
+
 const cashier = fs.readFileSync(path.join(__dirname, '..', 'public', 'cashier.html'), 'utf8');
 assert.ok(cashier.indexOf('id="cashierNewOrderOverlay"') !== -1);
 assert.ok(cashier.indexOf('NEW ORDER ARRIVED') !== -1);
@@ -93,6 +117,10 @@ assert.ok(cashier.indexOf('cashier_new') !== -1);
 assert.ok(cashier.indexOf('cashier-manifest.json') !== -1);
 assert.ok(cashier.indexOf('apple-mobile-web-app-capable') !== -1);
 assert.ok(cashier.indexOf("addEventListener('load'") !== -1);
+assert.ok(cashier.indexOf('assignedRiderId = wantId') !== -1);
+assert.ok(cashier.indexOf('.transaction(function (current)') !== -1);
+assert.ok(cashier.indexOf('canCommitCashierDispatch') !== -1);
+assert.ok(cashier.indexOf('function pickApprovedRider') !== -1);
 
 const rider = fs.readFileSync(path.join(__dirname, '..', 'public', 'rider.html'), 'utf8');
 assert.ok(rider.indexOf('id="riderAssignOverlay"') !== -1);
@@ -106,6 +134,18 @@ assert.ok(rider.indexOf('takeThisOrder(key)') !== -1);
 assert.ok(!/updateJobStatus\([^)]*Settled/.test(rider), 'rider must not write Settled');
 assert.ok(rider.indexOf('class="rider-tap') !== -1);
 assert.ok(rider.indexOf('apple-mobile-web-app-capable') !== -1);
+assert.ok(rider.indexOf('peoplesAskNotify') !== -1);
+assert.ok(rider.indexOf('startStaffAlertLoop') !== -1);
+assert.ok(rider.indexOf('rider_assign') !== -1);
+assert.ok(rider.indexOf('claimApprovedRider().then') !== -1);
+assert.ok(rider.indexOf('riderOrdersListenTries') !== -1);
+assert.ok(rider.indexOf('justDispatched') !== -1);
+assert.ok(rider.indexOf("navigator.vibrate([250, 80, 250, 80, 250, 80, 320])") !== -1);
+assert.ok(rider.indexOf('shouldAlertStartupRiderJob') !== -1);
+assert.ok(rider.indexOf('riderAssigned: null') !== -1);
+assert.ok(rider.indexOf('id="riderCancelAlert"') !== -1);
+assert.ok(rider.indexOf('showRiderCancelledAlert') !== -1);
+assert.ok(rider.indexOf('shouldAlertRiderStaffCancel') !== -1);
 
 const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'public', 'rider-manifest.json'), 'utf8'));
 assert.strictEqual(manifest.start_url, '/rider.html');
@@ -121,6 +161,13 @@ assert.strictEqual(cashierManifest.background_color, '#f8fafc');
 
 const sw = fs.readFileSync(path.join(__dirname, '..', 'public', 'sw.js'), 'utf8');
 assert.ok(sw.indexOf("addEventListener('fetch'") !== -1);
+assert.ok(sw.indexOf("openWindow('/rider.html')") !== -1);
+assert.ok(sw.indexOf("indexOf('/rider.html')") !== -1);
+assert.ok(sw.indexOf('riderClick') !== -1);
+
+const cfg = fs.readFileSync(path.join(__dirname, '..', 'public', 'js', 'firebase-config.js'), 'utf8');
+assert.ok(cfg.indexOf('vibrate: [200, 100, 200, 100, 200]') !== -1);
+assert.ok(cfg.indexOf('showNotification') !== -1);
 
 console.log('staff-alerts overlay + notify helper checks passed');
 process.exit(0);
