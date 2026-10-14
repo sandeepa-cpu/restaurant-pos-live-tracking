@@ -76,6 +76,32 @@ const mid = sandbox.peoplesGpsFixFromCoords({ latitude: 6.72, longitude: 80.07, 
 assert.strictEqual(sandbox.peoplesGpsFixIsUsable(mid), true);
 assert.strictEqual(sandbox.peoplesGpsFixIsPrecise(mid), false);
 
+assert.strictEqual(sandbox.isUsableMapCoord(6.719, 80.068), true);
+assert.strictEqual(sandbox.isUsableMapCoord(0, 0), false);
+assert.strictEqual(sandbox.isUsableMapCoord(NaN, 80), false);
+assert.strictEqual(sandbox.isUsableMapCoord(undefined, 80.06), false);
+assert.strictEqual(sandbox.isUsableMapCoord(91, 80), false);
+assert.ok(isNaN(sandbox.haversineKm(undefined, 80, 6.7, 80.06)));
+assert.ok(isFinite(sandbox.haversineKm(6.719, 80.068, 6.72, 80.07)));
+
+assert.strictEqual(sandbox.isLiveRiderLocFresh(Date.now(), Date.now()), true);
+assert.strictEqual(sandbox.isLiveRiderLocFresh(Date.now() - 120000, Date.now()), false);
+assert.strictEqual(sandbox.isLiveRiderLocFresh(0, Date.now()), false);
+assert.strictEqual(sandbox.isLiveRiderLocFresh(null, Date.now()), false);
+
+assert.strictEqual(sandbox.shouldRestartLiveLocationWatch({
+  visible: true, hasKeys: true, denied: false
+}), true);
+assert.strictEqual(sandbox.shouldRestartLiveLocationWatch({
+  visible: false, hasKeys: true, denied: false
+}), false);
+assert.strictEqual(sandbox.shouldRestartLiveLocationWatch({
+  visible: true, hasKeys: true, denied: true
+}), false);
+assert.strictEqual(sandbox.shouldRestartLiveLocationWatch({
+  visible: true, hasKeys: false, denied: false
+}), false);
+
 let unsupportedErr = null;
 sandbox.peoplesGetDeviceGps(function () { throw new Error('should not succeed'); }, function (err) {
   unsupportedErr = err;
@@ -165,6 +191,27 @@ const table = fs.readFileSync(path.join(__dirname, '..', 'public', 'table.html')
   assert.ok(html.indexOf('lastDeliveryCoords = { lat: lat, lng: lng }') !== -1, name + ' sets coords before map');
   assert.ok(!/timeout:\s*15000/.test(html), name + ' no old 15s GPS timeout');
 });
+
+const rider = fs.readFileSync(path.join(__dirname, '..', 'public', 'rider.html'), 'utf8');
+assert.ok(rider.indexOf('function restartLiveLocationWatch') !== -1);
+assert.ok(rider.indexOf("addEventListener('pageshow'") !== -1);
+assert.ok(rider.indexOf('liveLocDegraded') !== -1);
+assert.ok(rider.indexOf('err.code === 2 || err.code === 3') !== -1);
+assert.ok(rider.indexOf('liveLocKeys.forEach(clearLiveLocation)') !== -1);
+assert.ok(rider.indexOf('liveLocLastSent = fix') !== -1);
+assert.ok(rider.indexOf('.update(patch).then(function ()') !== -1);
+assert.ok(rider.indexOf('isUsableMapCoord') !== -1);
+
+const cashier = fs.readFileSync(path.join(__dirname, '..', 'public', 'cashier.html'), 'utf8');
+assert.ok(cashier.indexOf('syncCashierRiderLocs') !== -1);
+assert.ok(cashier.indexOf("db.ref('rider_locations/' + k)") !== -1);
+assert.ok(cashier.indexOf('Waiting for rider GPS') !== -1);
+assert.ok(cashier.indexOf('cashierRiderLiveHtml') !== -1);
+
+const order = fs.readFileSync(path.join(__dirname, '..', 'public', 'order.html'), 'utf8');
+assert.ok(order.indexOf('isUsableMapCoord') !== -1);
+assert.ok(order.indexOf('isLiveRiderLocFresh') !== -1);
+assert.ok(order.indexOf('!Number(c.lat)') === -1);
 
 const ensureIdx = takeaway.indexOf('function ensureDeliveryMap');
 const ensureSlice = takeaway.slice(ensureIdx, ensureIdx + 450);

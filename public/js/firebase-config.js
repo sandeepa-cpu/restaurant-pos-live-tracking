@@ -328,16 +328,6 @@ window.startPayHereCheckout = function (orderKey) {
   });
 };
 
-window.haversineKm = function (lat1, lng1, lat2, lng2) {
-  var R = 6371;
-  var dLat = (lat2 - lat1) * Math.PI / 180;
-  var dLng = (lng2 - lng1) * Math.PI / 180;
-  var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-};
-
 window.orderDistanceKm = function (order) {
   var meta = (order && order.deliveryMeta) || {};
   var stored = parseFloat(meta.distanceKm);
@@ -685,7 +675,35 @@ window.orderTrackerFlags = function (order) {
   };
 };
 
+window.LIVE_RIDER_STALE_MS = 90000;
+
+window.isUsableMapCoord = function (lat, lng) {
+  lat = Number(lat);
+  lng = Number(lng);
+  if (!isFinite(lat) || !isFinite(lng)) return false;
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return false;
+  if (Math.abs(lat) < 1e-6 && Math.abs(lng) < 1e-6) return false;
+  return true;
+};
+
+window.isLiveRiderLocFresh = function (at, now) {
+  now = now == null ? Date.now() : Number(now);
+  var t = Number(at);
+  if (!isFinite(now) || !isFinite(t) || t <= 0) return false;
+  return (now - t) <= (window.LIVE_RIDER_STALE_MS || 90000);
+};
+
+window.shouldRestartLiveLocationWatch = function (opts) {
+  opts = opts || {};
+  return opts.visible === true && !!opts.hasKeys && !opts.denied;
+};
+
 window.haversineKm = function (lat1, lng1, lat2, lng2) {
+  lat1 = Number(lat1);
+  lng1 = Number(lng1);
+  lat2 = Number(lat2);
+  lng2 = Number(lng2);
+  if (!isFinite(lat1) || !isFinite(lng1) || !isFinite(lat2) || !isFinite(lng2)) return NaN;
   var toRad = Math.PI / 180;
   var dLat = (lat2 - lat1) * toRad;
   var dLng = (lng2 - lng1) * toRad;

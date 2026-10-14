@@ -14,7 +14,7 @@
   <title>Track Order | Peoples Bakers Horana</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/jpeg" href="LOGO NEW.jpg">
-  <script src="js/firebase-config.js?v=66"></script>
+  <script src="js/firebase-config.js?v=68"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -881,7 +881,7 @@
     const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
     const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
     const LIVE_ETA_KMH = 25;
-    const LIVE_STALE_MS = 90000;
+    const LIVE_STALE_MS = window.LIVE_RIDER_STALE_MS || 90000;
     const LIVE_USER_PAN_HOLD_MS = 20000;
     let liveOpen = false;
     let liveCardOrder = null;
@@ -1005,7 +1005,10 @@
 
     function liveCustomerLatLng(order) {
       const c = order && order.deliveryMeta && order.deliveryMeta.coords;
-      if (!c || !isFinite(Number(c.lat)) || !isFinite(Number(c.lng)) || !Number(c.lat)) return null;
+      if (!c) return null;
+      if (typeof window.isUsableMapCoord === 'function') {
+        if (!window.isUsableMapCoord(c.lat, c.lng)) return null;
+      } else if (!isFinite(Number(c.lat)) || !isFinite(Number(c.lng))) return null;
       return L.latLng(Number(c.lat), Number(c.lng));
     }
 
@@ -1033,7 +1036,10 @@
     function onLiveLoc(snap) {
       if (!liveMap) return;
       const v = snap.val();
-      if (!v || !isFinite(Number(v.lat)) || !isFinite(Number(v.lng))) {
+      const usable = typeof window.isUsableMapCoord === 'function'
+        ? window.isUsableMapCoord(v && v.lat, v && v.lng)
+        : !!(v && isFinite(Number(v.lat)) && isFinite(Number(v.lng)));
+      if (!usable) {
         liveLoc = null;
         cancelAnimationFrame(liveAnimFrame);
         if (liveRiderMarker) { liveRiderMarker.remove(); liveRiderMarker = null; }
@@ -1134,7 +1140,9 @@
         parts.push('~' + Math.max(1, Math.round(km / LIVE_ETA_KMH * 60)) + ' min (approx.)');
       }
       parts.push('updated ' + window.formatAgo(liveLoc.at));
-      const stale = Date.now() - Number(liveLoc.at || 0) > LIVE_STALE_MS;
+      const stale = typeof window.isLiveRiderLocFresh === 'function'
+        ? !window.isLiveRiderLocFresh(liveLoc.at)
+        : (Date.now() - Number(liveLoc.at || 0) > LIVE_STALE_MS);
       setLiveInfo((stale ? '⚠️ Rider signal weak · ' : '📍 ') + parts.join(' · '), stale);
     }
 

@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <script src="js/firebase-config.js?v=67"></script>
+  <script src="js/firebase-config.js?v=68"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -507,6 +507,8 @@
     let cashierOverlayKey = '';
     let cashierSelfOrderKeys = {};
     let cashierChatRecording = false;
+    let cashierRiderLocs = {};
+    let cashierRiderLocListen = {};
     function tickCashierClock() {
       const now = new Date();
       const time = now.toLocaleTimeString('en-GB', { timeZone: 'Asia/Colombo', hour: '2-digit', minute: '2-digit' });
@@ -892,6 +894,55 @@
       return typeof window.paymentBlocksDispatch === 'function' ? window.paymentBlocksDispatch(order) : false;
     }
 
+    function wantsCashierRiderLoc(order) {
+      if (!order || !(window.isDoorstepOrder && window.isDoorstepOrder(order))) return false;
+      return order.status === 'Dispatched' || order.status === 'Arrived';
+    }
+
+    function cashierRiderLiveHtml(key, order) {
+      if (!wantsCashierRiderLoc(order)) return '';
+      const loc = cashierRiderLocs[key];
+      const usable = loc && (typeof window.isUsableMapCoord === 'function'
+        ? window.isUsableMapCoord(loc.lat, loc.lng)
+        : (isFinite(Number(loc.lat)) && isFinite(Number(loc.lng))));
+      if (!usable) {
+        return '<div class="oc-row items-center mt-1.5"><div class="oc-ico bg-slate-100 text-slate-500"><i class="fa-solid fa-satellite-dish"></i></div><p class="min-w-0 flex-1 text-[11px] font-black text-slate-500">Waiting for rider GPS</p></div>';
+      }
+      const fresh = typeof window.isLiveRiderLocFresh === 'function'
+        ? window.isLiveRiderLocFresh(loc.at)
+        : true;
+      const ago = window.formatAgo ? window.formatAgo(loc.at) : '';
+      const riderMaps = 'https://www.google.com/maps?q=' + Number(loc.lat) + ',' + Number(loc.lng);
+      const tone = fresh ? 'text-emerald-800' : 'text-amber-800';
+      const bg = fresh ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600';
+      const label = fresh
+        ? ('Rider GPS · ' + ago)
+        : ('Rider signal weak · ' + ago);
+      return '<div class="oc-row items-center mt-1.5"><div class="oc-ico ' + bg + '"><i class="fa-solid fa-motorcycle"></i></div><p class="min-w-0 flex-1 text-[11px] font-black ' + tone + '">' + cashierEscape(label) + ' · <a href="' + window.safeUrl(riderMaps) + '" target="_blank" rel="noopener" class="underline">Live map</a></p></div>';
+    }
+
+    function syncCashierRiderLocs() {
+      const next = {};
+      Object.keys(allOrders || {}).forEach(function (k) {
+        if (wantsCashierRiderLoc(allOrders[k])) next[k] = true;
+      });
+      Object.keys(cashierRiderLocListen).forEach(function (k) {
+        if (next[k]) return;
+        try { db.ref('rider_locations/' + k).off('value', cashierRiderLocListen[k]); } catch (e) {}
+        delete cashierRiderLocListen[k];
+        delete cashierRiderLocs[k];
+      });
+      Object.keys(next).forEach(function (k) {
+        if (cashierRiderLocListen[k]) return;
+        const fn = function (snap) {
+          cashierRiderLocs[k] = snap.val() || null;
+          renderCashierOrders();
+        };
+        cashierRiderLocListen[k] = fn;
+        db.ref('rider_locations/' + k).on('value', fn, window.onDbListenError);
+      });
+    }
+
     function renderCashierOrders() {
       const grid = document.getElementById('liveOrdersGrid');
       if (!grid) return;
@@ -952,7 +1003,8 @@
               '<p class="text-[10.5px] font-black text-slate-500 mt-0.5">' + (kmText ? cashierEscape(kmText) + ' · ' : '') + 'Collect Rs. ' + (o.total || 0).toLocaleString() +
                 (mapsUrl ? ' · <a href="' + window.safeUrl(mapsUrl) + '" target="_blank" rel="noopener" class="text-emerald-700"><i class="fa-solid fa-map-location-dot"></i> Map</a>' : '') + '</p>' +
             '</div>' +
-            '</div>';
+            '</div>' +
+            cashierRiderLiveHtml(k, o);
         }
         const safeK = cashierEscape(String(k).replace(/\\/g, '\\\\').replace(/'/g, "\\'"));
         const canEditItems = canEditOrderItems(o);
@@ -1797,6 +1849,7 @@
           knownOrderKeys[k] = true;
         });
         pruneCashierNewOrderQueue();
+        if (typeof syncCashierRiderLocs === 'function') syncCashierRiderLocs();
         if (typeof renderCashierOrders === 'function') renderCashierOrders();
         if (typeof refreshCashierDayReport === 'function') refreshCashierDayReport();
         syncOrderAlarm();
