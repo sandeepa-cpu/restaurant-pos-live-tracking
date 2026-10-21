@@ -41,7 +41,9 @@ bower_components
 # node-waf configuration
 .lock-wscript
 
-# Compiled binary addons (http://nodejs.org/api/addons.html)
+# Build outputs
+dist/
+build/
 build/Release
 
 # Dependency directories
@@ -64,6 +66,8 @@ node_modules/
 
 # dotenv environment variables file
 .env
+.env.*
+!.env.example
 
 # dataconnect generated files
 .dataconnect
